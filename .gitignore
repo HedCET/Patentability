@@ -1,0 +1,3 @@
+*.DS_Store
+client/config.push.js
+sever/config.google.js

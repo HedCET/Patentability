@@ -1,0 +1,96 @@
+<dom-module id="selectable-icon">
+
+    <style>
+    .icon {
+        background: #EEE;
+        border-radius: 50%;
+        color: black;
+        height: 36px;
+        transition: transform 400ms ease-in-out;
+        width: 36px;
+        will-change: transform;
+    }
+    
+    img,
+    .letter {
+        border-radius: inherit;
+        font-size: 1.15em;
+        height: 100%;
+        text-transform: uppercase;
+        transition: opacity 300ms ease-in-out 100ms;
+        width: 100%;
+        will-change: opacity;
+    }
+    
+    iron-icon {
+        left: 20%;
+        position: absolute!important;
+        opacity: 0;
+        top: 20%;
+        transform: rotate3d(0, 1, 0, 180deg) scale(0);
+        transition: transform 300ms ease-in-out 100ms;
+        will-change: opacity;
+    }
+    
+    :host([selected]) .icon {
+        transform: rotate3d(0, 1, 0, -180deg);
+    }
+    
+    :host([selected]) img,
+    :host([selected]) .letter {
+        opacity: 0;
+    }
+    
+    :host([selected]) iron-icon {
+        transform: rotate3d(0, 1, 0, -180deg) scale(1);
+        opacity: 1;
+    }
+    </style>
+
+    <template>
+        <div class="icon">
+
+            <template if="[[icon_img_src]]" is="dom-if">
+                <img class$="{{echo_class(icon_class)}}" src="[[icon_img_src]]">
+            </template>
+
+            <span class$="{{echo_class(icon_class + 'center-center horizontal layout letter')}}" hidden?="[[icon_img_src]]">[[icon_text]]</span>
+
+            <iron-icon icon="check"></iron-icon>
+
+        </div>
+    </template>
+
+    <script>
+    Polymer({
+
+        echo_class: function(class_A, class_Z) {
+            return class_Z ? class_A + " " + class_Z : class_A;
+        },
+
+        is: "selectable-icon",
+
+        properties: {
+            icon_class: {
+                type: String,
+                value: null
+            },
+            icon_img_src: {
+                type: String,
+                value: null
+            },
+            icon_text: {
+                type: String,
+                value: null
+            },
+            selected: {
+                reflectToAttribute: true,
+                type: Boolean,
+                value: false
+            }
+        }
+
+    });
+    </script>
+
+</dom-module>
