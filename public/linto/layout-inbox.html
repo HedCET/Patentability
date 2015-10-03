@@ -11,31 +11,43 @@
 
         <paper-drawer-panel id="paper_drawer_panel">
             <paper-header-panel drawer>
-                <div class="padding-4"></div>
+                <iron-selector selected="{{selected}}">
 
-                <div class="horizontal justified layout menu-li padding-4" on-tap="{{open_github_source}}">
-                    <div class="padding-4 self-start">
-                        <selectable-icon icon_img_src="/img/github.png"></selectable-icon>
-                    </div>
-                    <div class="flex layout vertical padding-4">
-                        <div class="li-title">open source</div>
-                        <div class="li-description">build break develop</div>
-                    </div>
-                </div>
+                    <paper-icon-item class="cursor-pointer hover relative">
+                        <div item-icon>
+                            <selectable-icon icon_img_src="/img/github.png"></selectable-icon>
+                        </div>
+                        <paper-item-body two-line>
+                            <div>open source</div>
+                            <div secondary>build break develop</div>
+                        </paper-item-body>
+                        <paper-ripple></paper-ripple>
+                    </paper-icon-item>
 
-                <div class="padding-4"></div>
+                    <paper-icon-item class="cursor-pointer hover relative">
+                        <div item-icon>
+                            <selectable-icon icon_img_src="/img/github.png"></selectable-icon>
+                        </div>
+                        <paper-item-body two-line>
+                            <div>open source</div>
+                            <div secondary>build break develop</div>
+                        </paper-item-body>
+                        <paper-ripple></paper-ripple>
+                    </paper-icon-item>
+
+                </iron-selector>
             </paper-header-panel>
 
             <paper-header-panel main>
                 <paper-toolbar>
                     <paper-icon-button icon="menu" on-tap="menuToggle"></paper-icon-button>
                     <div class="title">{{toolBarTitle}}</div>
-                    <paper-icon-button icon="search"></paper-icon-button>
+                    <paper-icon-button icon="search" on-tap="search"></paper-icon-button>
                 </paper-toolbar>
             </paper-header-panel>
         </paper-drawer-panel>
 
-        <search-bar enable="true"></search-bar>
+        <search-bar id="searchBar"></search-bar>
 
     </template>
 
@@ -59,7 +71,11 @@
             }
         },
 
-        ready: function() {}
+        ready: function() {},
+
+        search: function() {
+            this.$.searchBar.active = true;
+        }
 
     });
     </script>

@@ -5,7 +5,7 @@
         display: none;
     }
     
-    :host([enable]) {
+    :host([active]) {
         display: block;
     }
     
@@ -22,12 +22,17 @@
     </style>
 
     <template>
-        <paper-header-panel class="fit layout vertical" style="background: rgba(238, 238, 238, 0.8);">
+        <paper-header-panel class="fit" style="background: rgba(238, 238, 238, 0.75);">
             <paper-toolbar>
                 <paper-icon-button icon="arrow-back" on-tap="toggle"></paper-icon-button>
-                <input class="flex" placeholder="search .." value="{{searchInput}}">
+                <input class="flex" on-keyup="doSearch" placeholder="search .." value="{{searchInput}}">
                 <paper-icon-button icon="filter-list"></paper-icon-button>
             </paper-toolbar>
+            <paper-menu on-iron-activate="onSelect">
+                <template is="dom-repeat" items="[[list]]">
+
+                </template>
+            </paper-menu>
         </paper-header-panel>
     </template>
 
@@ -37,14 +42,25 @@
         is: "search-bar",
 
         properties: {
-            enable: {
+            active: {
                 reflectToAttribute: true,
                 type: Boolean,
                 value: false
-            }
+            },
+
+            list: {
+                type: Array,
+                value: function() {
+                    return ["test"];
+                }
+            },
         },
 
-        ready: function() {}
+        ready: function() {},
+
+        toggle: function() {
+            this.active = false;
+        }
 
     });
     </script>
