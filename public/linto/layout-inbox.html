@@ -10,9 +10,21 @@
     <template>
 
         <paper-drawer-panel id="paper_drawer_panel">
-            <div drawer>
-                _
-            </div>
+            <paper-header-panel drawer>
+                <div class="padding-4"></div>
+
+                <div class="horizontal justified layout menu-li padding-4" on-tap="{{open_github_source}}">
+                    <div class="padding-4 self-start">
+                        <selectable-icon icon_img_src="/img/github.png"></selectable-icon>
+                    </div>
+                    <div class="flex layout vertical padding-4">
+                        <div class="li-title">open source</div>
+                        <div class="li-description">build break develop</div>
+                    </div>
+                </div>
+
+                <div class="padding-4"></div>
+            </paper-header-panel>
 
             <paper-header-panel main>
                 <paper-toolbar>
@@ -22,6 +34,8 @@
                 </paper-toolbar>
             </paper-header-panel>
         </paper-drawer-panel>
+
+        <search-bar enable="true"></search-bar>
 
     </template>
 

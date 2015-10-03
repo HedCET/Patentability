@@ -64,8 +64,8 @@
     <script>
     Polymer({
 
-        echo_class: function(class_A, class_Z) {
-            return class_Z ? class_A + " " + class_Z : class_A;
+        echo_class: function(class_name) {
+            return (class_name ? class_name : "");
         },
 
         is: "selectable-icon",

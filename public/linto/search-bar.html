@@ -1,0 +1,52 @@
+<dom-module id="search-bar">
+
+    <style>
+    :host {
+        display: none;
+    }
+    
+    :host([enable]) {
+        display: block;
+    }
+    
+    paper-toolbar {
+        --paper-toolbar-background: white;
+        --paper-toolbar-color: black;
+    }
+    
+    input {
+        background: transparent;
+        border: none;
+        font-size: 20px;
+    }
+    </style>
+
+    <template>
+        <paper-header-panel class="fit layout vertical" style="background: rgba(238, 238, 238, 0.8);">
+            <paper-toolbar>
+                <paper-icon-button icon="arrow-back" on-tap="toggle"></paper-icon-button>
+                <input class="flex" placeholder="search .." value="{{searchInput}}">
+                <paper-icon-button icon="filter-list"></paper-icon-button>
+            </paper-toolbar>
+        </paper-header-panel>
+    </template>
+
+    <script>
+    Polymer({
+
+        is: "search-bar",
+
+        properties: {
+            enable: {
+                reflectToAttribute: true,
+                type: Boolean,
+                value: false
+            }
+        },
+
+        ready: function() {}
+
+    });
+    </script>
+
+</dom-module>
