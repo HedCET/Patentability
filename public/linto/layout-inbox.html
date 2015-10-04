@@ -44,6 +44,39 @@
                     <div class="title">{{toolBarTitle}}</div>
                     <paper-icon-button icon="search" on-tap="search"></paper-icon-button>
                 </paper-toolbar>
+
+                <neon-animated-pages class="fit" selected="[[main_page]]">
+                    <neon-animatable class="center-center layout vertical">
+                        <div>how to use ?</div>
+                    </neon-animatable>
+                    <neon-animatable class="layout vertical">
+                        <div class="center-justified horizontal layout">
+                            <div class="li">
+                                <iron-selector on-iron-activate="onSelect" selectable="paper-icon-item">
+                                    <div class="bordered center horizontal justified layout">
+                                        <div class="cursor-d etc" style="padding: 16px;">what happened ? long keyword .. | what happened ? long keyword ..</div>
+                                        <paper-icon-button icon="close" on-tap="delete"></paper-icon-button>
+                                    </div>
+                                    <template is="dom-repeat" items="[[list]]">
+                                        <paper-icon-item class="bg-white bordered cursor-p hover relative" data-keyword$="[[item.keyword]]">
+                                            <div class="fit" item-icon style="padding: 16px;">
+                                                <selectable-icon icon_img_src="/img/24/US.png"></selectable-icon>
+                                            </div>
+                                            <paper-item-body two-line style="margin-right: 0; min-height: 0; padding: 14px 0;">
+                                                <div class="lowercase" style="white-space: normal;">[[item.keyword]]</div>
+                                                <div class="center horizontal justified layout" secondary>
+                                                    <div class="etc">HedCET Private Limited - <span>[[item.count]]</span></div>
+                                                    <div>Filed 10 Month Ago</div>
+                                                </div>
+                                            </paper-item-body>
+                                            <paper-ripple></paper-ripple>
+                                        </paper-icon-item>
+                                    </template>
+                                </iron-selector>
+                            </div>
+                        </div>
+                    </neon-animatable>
+                </neon-animated-pages>
             </paper-header-panel>
         </paper-drawer-panel>
 
@@ -65,6 +98,22 @@
         },
 
         properties: {
+            list: {
+                type: Array,
+                value: function() {
+                    return [{
+                        count: "8H",
+                        keyword: "patent title"
+                    }, {
+                        count: "8",
+                        keyword: "semantic search engine to check patentability which map one concept to other relative concept"
+                    }];
+                }
+            },
+            main_page: {
+                type: Number,
+                value: 1
+            },
             toolBarTitle: {
                 type: String,
                 value: "Welcome"
