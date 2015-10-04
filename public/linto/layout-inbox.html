@@ -13,7 +13,7 @@
             <paper-header-panel drawer>
                 <iron-selector selected="{{selected}}">
 
-                    <paper-icon-item class="cursor-pointer hover relative">
+                    <paper-icon-item class="cursor-p hover relative">
                         <div item-icon>
                             <selectable-icon icon_img_src="/img/github.png"></selectable-icon>
                         </div>
@@ -24,12 +24,12 @@
                         <paper-ripple></paper-ripple>
                     </paper-icon-item>
 
-                    <paper-icon-item class="cursor-pointer hover relative">
+                    <paper-icon-item class="cursor-p hover relative">
                         <div item-icon>
-                            <selectable-icon icon_class="deep-orange-500" icon_text="A"></selectable-icon>
+                            <selectable-icon icon_class="red-500" icon_text="W"></selectable-icon>
                         </div>
                         <paper-item-body two-line>
-                            <div>open source</div>
+                            <div>what happened ? long keyword ..</div>
                             <div secondary>build break develop</div>
                         </paper-item-body>
                         <paper-ripple></paper-ripple>
@@ -40,7 +40,7 @@
 
             <paper-header-panel main>
                 <paper-toolbar>
-                    <paper-icon-button icon="menu" on-tap="menuToggle"></paper-icon-button>
+                    <paper-icon-button icon="menu" on-tap="menuToggle" style="margin-right: 0;"></paper-icon-button>
                     <div class="title">{{toolBarTitle}}</div>
                     <paper-icon-button icon="search" on-tap="search"></paper-icon-button>
                 </paper-toolbar>

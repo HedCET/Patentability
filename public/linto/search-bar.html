@@ -28,18 +28,25 @@
                 <input class="flex" on-keyup="doSearch" placeholder="search .." value="{{searchInput}}">
                 <paper-icon-button icon="filter-list"></paper-icon-button>
             </paper-toolbar>
-            <iron-selector on-iron-activate="onSelect">
-                <template is="dom-repeat" items="[[list]]">
-
-                    <paper-icon-item class="cursor-pointer flex hover relative" data-keyword$="[[item.keyword]]">
-                        <paper-icon-item>
-                            <selectable-icon icon_class="red-500" icon_text$="[[item.count]]" item-icon></selectable-icon><span>[[item.keyword]]</span>
-                        </paper-icon-item>
-                        <paper-ripple></paper-ripple>
-                    </paper-icon-item>
-
-                </template>
-            </iron-selector>
+            <div class="center-justified horizontal layout">
+                <div class="li">
+                    <div class="bordered center cursor-d etc" style="padding: 16px;">keyword long text what happened keyword long text what happened</div>
+                    <iron-selector on-iron-activate="onSelect">
+                        <template is="dom-repeat" items="[[list]]">
+                            <paper-icon-item class="bg-white bordered cursor-p hover relative" data-keyword$="[[item.keyword]]">
+                                <div item-icon>
+                                    <selectable-icon icon_class="red-500" icon_text="A"></selectable-icon>
+                                </div>
+                                <paper-item-body two-line>
+                                    <div class="lowercase">[[item.keyword]]</div>
+                                    <div secondary>patent count - <span>[[item.count]]</span></div>
+                                </paper-item-body>
+                                <paper-ripple></paper-ripple>
+                            </paper-icon-item>
+                        </template>
+                    </iron-selector>
+                </div>
+            </div>
         </paper-header-panel>
     </template>
 
@@ -65,7 +72,10 @@
                 value: function() {
                     return [{
                         count: "8H",
-                        keyword: "long keyword"
+                        keyword: "normal keyword"
+                    }, {
+                        count: "8",
+                        keyword: "what happened ? long keyword .."
                     }];
                 }
             },
