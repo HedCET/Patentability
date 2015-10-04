@@ -28,21 +28,33 @@
                 <input class="flex" on-keyup="doSearch" placeholder="search .." value="{{searchInput}}">
                 <paper-icon-button icon="filter-list"></paper-icon-button>
             </paper-toolbar>
-            <paper-menu on-iron-activate="onSelect">
+            <iron-selector on-iron-activate="onSelect">
                 <template is="dom-repeat" items="[[list]]">
 
+                    <paper-icon-item class="cursor-pointer flex hover relative" data-keyword$="[[item.keyword]]">
+                        <paper-icon-item>
+                            <selectable-icon icon_class="red-500" icon_text$="[[item.count]]" item-icon></selectable-icon><span>[[item.keyword]]</span>
+                        </paper-icon-item>
+                        <paper-ripple></paper-ripple>
+                    </paper-icon-item>
+
                 </template>
-            </paper-menu>
+            </iron-selector>
         </paper-header-panel>
     </template>
 
     <script>
     Polymer({
 
+        onSelect: function(e, d) {
+            console.log(d.item.dataset.keyword);
+        },
+
         is: "search-bar",
 
         properties: {
             active: {
+                notify: true,
                 reflectToAttribute: true,
                 type: Boolean,
                 value: false
@@ -51,7 +63,10 @@
             list: {
                 type: Array,
                 value: function() {
-                    return ["test"];
+                    return [{
+                        count: "8H",
+                        keyword: "long keyword"
+                    }];
                 }
             },
         },
