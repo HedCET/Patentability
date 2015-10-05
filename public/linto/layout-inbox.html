@@ -1,6 +1,11 @@
 <dom-module id="layout-inbox">
 
     <style>
+    paper-drawer-panel /deep/ #drawer,
+    paper-drawer-panel /deep/ #main #scrim {
+        z-index: 1;
+    }
+    
     paper-toolbar .title {
         padding: 0 8px;
     }
@@ -124,7 +129,7 @@
             </paper-header-panel>
         </paper-drawer-panel>
 
-        <paper-fab class="menu-b red-500" id="fab" icon="add"></paper-fab>
+        <paper-fab class="red-500 menu-b" id="fab" icon="add"></paper-fab>
 
 
         <search-bar id="searchBar"></search-bar>
