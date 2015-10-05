@@ -10,12 +10,11 @@
         padding: 0 8px;
     }
     
-    paper-toolbar .selection-hidden {
-        margin: 0;
+    paper-toolbar paper-icon-button {
+        margin: 0!important;
     }
     
     paper-toolbar .selection-visible {
-        margin: 0;
         padding: 0;
         transform: rotateX(90deg);
         transition: transform 400ms ease-in-out;
@@ -25,7 +24,6 @@
     }
     
     paper-toolbar paper-icon-button[icon="arrow-back"] {
-        transform: rotateX(90deg)!important;
         transform: translateX(-42px);
     }
     
@@ -41,7 +39,6 @@
     }
     
     paper-toolbar.selection paper-icon-button[icon="arrow-back"] {
-        transform: rotateX(0)!important;
         transform: translateX(0);
     }
     
@@ -98,7 +95,9 @@
                 <paper-toolbar class="teal-500" id="toolBar">
                     <paper-icon-button class="selection-visible" icon="arrow-back" on-tap="clear_list_selection"></paper-icon-button>
                     <paper-icon-button class="selection-hidden" icon="menu" on-tap="menuToggle"></paper-icon-button>
-                    <div class="title"></div>
+
+                    <div class="title" id="toolBarTitle"></div>
+
                     <paper-icon-button class="selection-visible" icon="delete"></paper-icon-button>
                     <paper-icon-button class="selection-visible" icon="social:share"></paper-icon-button>
                     <paper-icon-button class="selection-visible" icon="more-vert"></paper-icon-button>
@@ -118,7 +117,7 @@
                                         <paper-icon-button icon="close" on-tap="delete"></paper-icon-button>
                                     </div>
                                     <template is="dom-repeat" items="[[list]]">
-                                        <inbox-item item="[[item]]" data-index$="[[index]]"></inbox-item>
+                                        <inbox-item item="[[item]]" data-id$="[[index]]"></inbox-item>
                                     </template>
                                 </iron-selector>
                                 <div style="min-height: 88px;"></div>
@@ -186,39 +185,16 @@
         ready: function() {},
 
         search: function() {
-            this.$.searchBar.active = true;
+            this.$.searchBar.toggle();
         },
 
         _listSelectedChanged: function(change) {
-            if (this.list_selected.length) {
-                $(this.$.toolBar).find(".title").text(this.list_selected.length);
+            this.$.toolBarTitle.textContent = (this.list_selected.length ? this.list_selected.length : "patentability store");
 
-                if (!$(this.$.toolBar).hasClass("selection")) {
-                    $(this.$.toolBar).addClass("selection");
-                }
+            this.$.toolBar.toggleClass("grey-500", this.list_selected.length);
+            this.$.toolBar.toggleClass("selection", this.list_selected.length);
 
-                if (!$(this.$.fab).hasClass("move-down")) {
-                    $(this.$.fab).addClass("move-down");
-                }
-
-                if (!$(this.$.toolBar).hasClass("grey-500")) {
-                    $(this.$.toolBar).addClass("grey-500");
-                }
-            } else {
-                $(this.$.toolBar).find(".title").text("patentability store");
-
-                if ($(this.$.toolBar).hasClass("selection")) {
-                    $(this.$.toolBar).removeClass("selection");
-                }
-
-                if ($(this.$.fab).hasClass("move-down")) {
-                    $(this.$.fab).removeClass("move-down");
-                }
-
-                if ($(this.$.toolBar).hasClass("grey-500")) {
-                    $(this.$.toolBar).removeClass("grey-500");
-                }
-            }
+            this.$.fab.toggleClass("move-down", this.list_selected.length);
         }
 
     });

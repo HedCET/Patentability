@@ -26,7 +26,7 @@
         <paper-header-panel class="fit" style="background: rgba(238, 238, 238, 0.75);">
             <paper-toolbar>
                 <paper-icon-button icon="arrow-back" on-tap="toggle"></paper-icon-button>
-                <input class="flex" on-keyup="doSearch" placeholder="patentability search" value="{{searchInput}}">
+                <input class="flex" id="searchInput" on-keyup="doSearch" placeholder="patentability search">
                 <paper-icon-button icon="filter-list"></paper-icon-button>
             </paper-toolbar>
             <div class="center-justified horizontal layout">
@@ -85,7 +85,13 @@
         ready: function() {},
 
         toggle: function() {
-            this.active = false;
+            this.active = !this.active;
+
+            if (this.active) {
+                this.async(function() {
+                    this.$.searchInput.focus();
+                }, 400);
+            }
         }
 
     });
