@@ -1,21 +1,23 @@
 <dom-module id="inbox-item">
 
     <template>
-        <paper-icon-item class="bg-white bordered cursor-p hover relative">
-            <div class="fit" item-icon style="padding: 16px;">
-                <selectable-icon icon_img_src="/img/24/US.png" selected$="[[selected]]"></selectable-icon>
-            </div>
-
-            <paper-item-body two-line style="margin-right: 0; min-height: 0; padding: 14px 0;">
-                <div class="lowercase" style="white-space: normal;">[[item.keyword]]</div>
-                <div class="center horizontal justified layout" secondary>
-                    <div class="etc">HedCET Private Limited - <span>[[item.count]]</span></div>
-                    <div>Filed 10 Month Ago</div>
+        <template if="[[item]]" is="dom-if">
+            <paper-icon-item class="bg-white bordered cursor-p hover relative">
+                <div class="fit" item-icon style="padding: 16px;">
+                    <selectable-icon icon_img_src="/img/24/US.png" selected$="[[selected]]"></selectable-icon>
                 </div>
-            </paper-item-body>
 
-            <paper-ripple></paper-ripple>
-        </paper-icon-item>
+                <paper-item-body two-line style="margin-right: 0; min-height: 0; padding: 14px 0;">
+                    <div class="lowercase" style="white-space: normal;">[[item.keyword]]</div>
+                    <div class="center horizontal justified layout" secondary>
+                        <div class="etc">HedCET Private Limited - <span>[[item.count]]</span></div>
+                        <div>Filed 10 Month Ago</div>
+                    </div>
+                </paper-item-body>
+
+                <paper-ripple></paper-ripple>
+            </paper-icon-item>
+        </template>
     </template>
 
     <script>
@@ -24,12 +26,7 @@
         is: "inbox-item",
 
         properties: {
-            item: {
-                type: Object,
-                value: function() {
-                    return {};
-                }
-            },
+            item: Object,
             selected: {
                 notify: true,
                 reflectToAttribute: true,

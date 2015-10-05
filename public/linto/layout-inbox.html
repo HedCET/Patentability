@@ -1,13 +1,43 @@
 <dom-module id="layout-inbox">
 
     <style>
-    paper-fab {
-        --paper-fab-background: var(--paper-red-500);
+    paper-toolbar .title {
+        padding: 0 8px;
     }
     
-    paper-toolbar {
-        --paper-toolbar-background: var(--paper-teal-500);
-        --paper-toolbar-color: white;
+    paper-toolbar .selection-hidden {
+        margin: 0;
+    }
+    
+    paper-toolbar .selection-visible {
+        margin: 0;
+        padding: 0;
+        transform: rotateX(90deg);
+        transition: transform 400ms ease-in-out;
+        visibility: hidden;
+        width: 0;
+        will-change: transform;
+    }
+    
+    paper-toolbar paper-icon-button[icon="arrow-back"] {
+        transform: rotateX(90deg)!important;
+        transform: translateX(-42px);
+    }
+    
+    paper-toolbar.selection .selection-hidden {
+        display: none;
+    }
+    
+    paper-toolbar.selection .selection-visible {
+        padding: 8px;
+        transform: rotateX(0);
+        visibility: visible;
+        width: auto;
+    }
+    
+    paper-toolbar.selection paper-icon-button[icon="arrow-back"] {
+        transform: rotateX(0)!important;
+        transform: translateX(0);
     }
     
     .menu-b {
@@ -20,7 +50,7 @@
     }
     
     .menu-b.move-down {
-        transform: translate3d(0, 480px, 0);
+        transform: translate3d(0, 88px, 0);
     }
     
     .menu-b.move-up {
@@ -32,7 +62,7 @@
 
         <paper-drawer-panel id="paper_drawer_panel">
             <paper-header-panel drawer>
-                <iron-selector selected="{{selected}}">
+                <iron-selector>
 
                     <paper-icon-item class="cursor-p hover relative">
                         <div item-icon>
@@ -60,10 +90,14 @@
             </paper-header-panel>
 
             <paper-header-panel main>
-                <paper-toolbar>
-                    <paper-icon-button icon="menu" on-tap="menuToggle"></paper-icon-button>
-                    <div class="title">{{toolBarTitle}}</div>
-                    <paper-icon-button icon="search" on-tap="search"></paper-icon-button>
+                <paper-toolbar class="teal-500" id="toolBar">
+                    <paper-icon-button class="selection-visible" icon="arrow-back" on-tap="clear_list_selection"></paper-icon-button>
+                    <paper-icon-button class="selection-hidden" icon="menu" on-tap="menuToggle"></paper-icon-button>
+                    <div class="title"></div>
+                    <paper-icon-button class="selection-visible" icon="delete"></paper-icon-button>
+                    <paper-icon-button class="selection-visible" icon="social:share"></paper-icon-button>
+                    <paper-icon-button class="selection-visible" icon="more-vert"></paper-icon-button>
+                    <paper-icon-button class="selection-hidden" icon="search" on-tap="search"></paper-icon-button>
                 </paper-toolbar>
 
                 <neon-animated-pages class="fit" selected="[[main_page]]">
@@ -73,13 +107,13 @@
                     <neon-animatable class="layout vertical">
                         <div class="center-justified horizontal layout">
                             <div class="li">
-                                <iron-selector multi selectable="inbox-item" selected-attribute="selected">
+                                <iron-selector attr-for-selected="item" multi selectable="inbox-item" selected-attribute="selected" selected-values="{{list_selected}}">
                                     <div class="bordered center horizontal justified layout">
                                         <div class="cursor-d etc" style="padding: 16px;">what happened ? long keyword .. | what happened ? long keyword ..</div>
                                         <paper-icon-button icon="close" on-tap="delete"></paper-icon-button>
                                     </div>
                                     <template is="dom-repeat" items="[[list]]">
-                                        <inbox-item item="[[item]]" data-id$=""></inbox-item>
+                                        <inbox-item item="[[item]]" data-index$="[[index]]"></inbox-item>
                                     </template>
                                 </iron-selector>
                                 <div style="min-height: 88px;"></div>
@@ -90,7 +124,7 @@
             </paper-header-panel>
         </paper-drawer-panel>
 
-        <paper-fab class="menu-b" icon="add"></paper-fab>
+        <paper-fab class="menu-b red-500" id="fab" icon="add"></paper-fab>
 
 
         <search-bar id="searchBar"></search-bar>
@@ -101,6 +135,10 @@
     <script>
     Polymer({
 
+        clear_list_selection: function() {
+            this.list_selected = [];
+        },
+
         is: "layout-inbox",
 
         menuToggle: function() {
@@ -110,6 +148,10 @@
                 this.$.paper_drawer_panel.forceNarrow = !this.$.paper_drawer_panel.forceNarrow;
             }
         },
+
+        observers: [
+            "_listSelectedChanged(list_selected.splices)"
+        ],
 
         properties: {
             list: {
@@ -124,13 +166,15 @@
                     }];
                 }
             },
+            list_selected: {
+                type: Array,
+                value: function() {
+                    return [];
+                }
+            },
             main_page: {
                 type: Number,
                 value: 1
-            },
-            toolBarTitle: {
-                type: String,
-                value: "Welcome"
             }
         },
 
@@ -138,6 +182,38 @@
 
         search: function() {
             this.$.searchBar.active = true;
+        },
+
+        _listSelectedChanged: function(change) {
+            if (this.list_selected.length) {
+                $(this.$.toolBar).find(".title").text(this.list_selected.length);
+
+                if (!$(this.$.toolBar).hasClass("selection")) {
+                    $(this.$.toolBar).addClass("selection");
+                }
+
+                if (!$(this.$.fab).hasClass("move-down")) {
+                    $(this.$.fab).addClass("move-down");
+                }
+
+                if (!$(this.$.toolBar).hasClass("grey-500")) {
+                    $(this.$.toolBar).addClass("grey-500");
+                }
+            } else {
+                $(this.$.toolBar).find(".title").text("patentability store");
+
+                if ($(this.$.toolBar).hasClass("selection")) {
+                    $(this.$.toolBar).removeClass("selection");
+                }
+
+                if ($(this.$.fab).hasClass("move-down")) {
+                    $(this.$.fab).removeClass("move-down");
+                }
+
+                if ($(this.$.toolBar).hasClass("grey-500")) {
+                    $(this.$.toolBar).removeClass("grey-500");
+                }
+            }
         }
 
     });

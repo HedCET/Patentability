@@ -54,7 +54,7 @@
                 <img class$="[[icon_class]]" src$="[[icon_img_src]]">
             </template>
 
-            <span class$="[[two_class('center-center horizontal layout letter', icon_class)]]" hidden$="[[icon_img_src]]">[[icon_text]]</span>
+            <span class$="[[icon_text_class('center-center horizontal layout letter', icon_class)]]" hidden$="[[icon_img_src]]">[[icon_text]]</span>
 
             <iron-icon icon="check"></iron-icon>
         </div>
@@ -84,7 +84,7 @@
             }
         },
 
-        two_class: function(one, two) {
+        icon_text_class: function(one, two) {
             return ((one ? one + " " : "") + (two ? two : ""));
         },
 

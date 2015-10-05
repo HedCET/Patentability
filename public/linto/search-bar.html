@@ -17,7 +17,8 @@
     input {
         background: transparent;
         border: none;
-        font-size: 20px;
+        font-size: 18px;
+        padding: 0 8px;
     }
     </style>
 
@@ -25,7 +26,7 @@
         <paper-header-panel class="fit" style="background: rgba(238, 238, 238, 0.75);">
             <paper-toolbar>
                 <paper-icon-button icon="arrow-back" on-tap="toggle"></paper-icon-button>
-                <input class="flex" on-keyup="doSearch" placeholder="search .." value="{{searchInput}}">
+                <input class="flex" on-keyup="doSearch" placeholder="patentability search" value="{{searchInput}}">
                 <paper-icon-button icon="filter-list"></paper-icon-button>
             </paper-toolbar>
             <div class="center-justified horizontal layout">
