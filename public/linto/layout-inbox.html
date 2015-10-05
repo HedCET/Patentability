@@ -56,7 +56,7 @@
     }
     
     .menu-b.move-up {
-        transform: translate3d(0, -48px, 0);
+        transform: translate3d(0, -60px, 0);
     }
     </style>
 
@@ -128,22 +128,36 @@
             </paper-header-panel>
         </paper-drawer-panel>
 
-        <paper-fab class="red-500 menu-b" id="fab" icon="add"></paper-fab>
+        <paper-fab class="red-500 menu-b" id="fab" icon="add" on-tap="addItem"></paper-fab>
 
 
         <search-bar id="searchBar"></search-bar>
 
-
+        <paper-toast class="center horizontal justified layout" duration="4000" id="layout_inbox_toast" on-transitionend="layout_inbox_toast" style="font-size: 16px; padding: 16px;" text="toast message">
+            <div class="cursor-p" style="color: #FFEB3B; margin-left: 16px;">UNDO</div>
+        </paper-toast>
     </template>
 
     <script>
     Polymer({
+
+        addItem: function() {
+            this.$.layout_inbox_toast.show();
+        },
 
         clear_list_selection: function() {
             this.list_selected = [];
         },
 
         is: "layout-inbox",
+
+        layout_inbox_toast: function(e) {
+            this.$.fab.toggleClass("move-up", this.$.layout_inbox_toast.visible);
+
+            if (!this.$.layout_inbox_toast.visible) {
+                console.log("undoOverFlow");
+            }
+        },
 
         menuToggle: function() {
             if (this.$.paper_drawer_panel.narrow && $(this.$.paper_drawer_panel).width() <= parseInt(this.$.paper_drawer_panel.responsiveWidth)) {
