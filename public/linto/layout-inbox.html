@@ -1,9 +1,30 @@
 <dom-module id="layout-inbox">
 
     <style>
+    paper-fab {
+        --paper-fab-background: var(--paper-red-500);
+    }
+    
     paper-toolbar {
-        --paper-toolbar-background: #009688;
+        --paper-toolbar-background: var(--paper-teal-500);
         --paper-toolbar-color: white;
+    }
+    
+    .menu-b {
+        bottom: 16px;
+        position: fixed;
+        right: 16px;
+        -webkit-transition: -webkit-transform 0.2s ease-in-out;
+        transition: transform 0.2s ease-in-out;
+        will-change: transform;
+    }
+    
+    .menu-b.move-down {
+        transform: translate3d(0, 480px, 0);
+    }
+    
+    .menu-b.move-up {
+        transform: translate3d(0, -48px, 0);
     }
     </style>
 
@@ -61,6 +82,7 @@
                                         <inbox-item item="[[item]]" data-id$=""></inbox-item>
                                     </template>
                                 </iron-selector>
+                                <div style="min-height: 88px;"></div>
                             </div>
                         </div>
                     </neon-animatable>
@@ -68,7 +90,11 @@
             </paper-header-panel>
         </paper-drawer-panel>
 
+        <paper-fab class="menu-b" icon="add"></paper-fab>
+
+
         <search-bar id="searchBar"></search-bar>
+
 
     </template>
 
