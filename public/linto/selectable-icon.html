@@ -50,15 +50,13 @@
 
     <template>
         <div class="icon">
-
             <template if="[[icon_img_src]]" is="dom-if">
-                <img class$="{{icon_class}}" src$="[[icon_img_src]]">
+                <img class$="[[icon_class]]" src$="[[icon_img_src]]">
             </template>
 
-            <span class$="{{two_class('center-center horizontal layout letter', icon_class)}}" hidden$="[[icon_img_src]]">[[icon_text]]</span>
+            <span class$="[[two_class('center-center horizontal layout letter', icon_class)]]" hidden$="[[icon_img_src]]">[[icon_text]]</span>
 
             <iron-icon icon="check"></iron-icon>
-
         </div>
     </template>
 
@@ -81,8 +79,6 @@
                 value: null
             },
             selected: {
-                notify: true,
-                reflectToAttribute: true,
                 type: Boolean,
                 value: false
             }
