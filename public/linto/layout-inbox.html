@@ -6,6 +6,11 @@
         z-index: 1;
     }
     
+    paper-fab {
+        --paper-fab-background: var(--paper-red-500);
+        --paper-fab-keyboard-focus-background: var(--paper-red-700);
+    }
+    
     paper-toolbar .title {
         padding: 0 8px;
     }
@@ -43,7 +48,7 @@
     }
     
     .menu-b {
-        bottom: 16px;
+        bottom: 12px;
         position: fixed;
         right: 16px;
         -webkit-transition: -webkit-transform 0.2s ease-in-out;
@@ -52,11 +57,7 @@
     }
     
     .menu-b.move-down {
-        transform: translate3d(0, 88px, 0);
-    }
-    
-    .menu-b.move-up {
-        transform: translate3d(0, -60px, 0);
+        transform: translate3d(0, 80px, 0);
     }
     </style>
 
@@ -120,7 +121,7 @@
                                         <inbox-item item="[[item]]" data-id$="[[index]]"></inbox-item>
                                     </template>
                                 </iron-selector>
-                                <div style="min-height: 88px;"></div>
+                                <div style="min-height: 80px;"></div>
                             </div>
                         </div>
                     </neon-animatable>
@@ -128,13 +129,13 @@
             </paper-header-panel>
         </paper-drawer-panel>
 
-        <paper-fab class="red-500 menu-b" id="fab" icon="add" on-tap="addItem"></paper-fab>
+        <paper-fab class="menu-b" id="fab" icon="add" on-tap="addItem"></paper-fab>
 
 
         <search-bar id="searchBar"></search-bar>
 
-        <paper-toast class="center horizontal justified layout" duration="4000" id="layout_inbox_toast" on-transitionend="layout_inbox_toast" style="font-size: 16px; padding: 16px;" text="toast message">
-            <div class="cursor-p" style="color: #FFEB3B; margin-left: 16px;">UNDO</div>
+        <paper-toast class="cursor-d horizontal justified layout" duration="4000" id="layout_inbox_toast" on-transitionend="layout_inbox_toast" style="font-size: 14px; margin-right: 12px; padding: 16px;" text="what happened ? long keyword ..">
+            <div class="cursor-p self-start" style="color: #FFEB3B; margin-left: 8px;">UNDO</div>
         </paper-toast>
     </template>
 
@@ -152,9 +153,11 @@
         is: "layout-inbox",
 
         layout_inbox_toast: function(e) {
-            this.$.fab.toggleClass("move-up", this.$.layout_inbox_toast.visible);
+            if (this.$.layout_inbox_toast.visible) {
+                this.$.fab.translate3d(0, "-" + ($("#layout_inbox_toast #label").height() + 46) + "px", 0);
+            } else {
+                this.$.fab.translate3d(0, 0, 0);
 
-            if (!this.$.layout_inbox_toast.visible) {
                 console.log("undoOverFlow");
             }
         },
