@@ -41,16 +41,18 @@
                     </div>
                     <iron-selector on-iron-activate="onSelect">
                         <template is="dom-repeat" items="[[list]]">
-                            <paper-icon-item class="bg-white bordered cursor-p hover relative" data-keyword$="[[item.keyword]]">
-                                <div item-icon>
-                                    <selectable-icon icon_class$="[[icon_class(item.keyword)]]" icon_text$="[[icon_text(item.keyword)]]"></selectable-icon>
-                                </div>
-                                <paper-item-body two-line>
-                                    <div class="lowercase">[[item.keyword]]</div>
-                                    <div secondary>patent count - <span>[[item.count]]</span></div>
-                                </paper-item-body>
-                                <paper-ripple></paper-ripple>
-                            </paper-icon-item>
+                            <template if="[[lessThan(item.count, 100)]]" is="dom-if">
+                                <paper-icon-item class="bg-white bordered cursor-p hover relative" data-cluster_keyword$="[[item.cluster_keyword]]" data-keyword$="[[item.keyword]]">
+                                    <div item-icon>
+                                        <selectable-icon icon_class$="[[icon_class(item.count)]]" icon_text$="[[item.count]]"></selectable-icon>
+                                    </div>
+                                    <paper-item-body two-line>
+                                        <div class="lowercase">[[item.cluster_keyword]]</div>
+                                        <div secondary>topic - <span class="lowercase">[[item.keyword]]</span></div>
+                                    </paper-item-body>
+                                    <paper-ripple></paper-ripple>
+                                </paper-icon-item>
+                            </template>
                         </template>
                     </iron-selector>
                     <div style="min-height: 80px;"></div>
@@ -63,82 +65,64 @@
     Polymer({
 
         doSearch: function() {
-            var q = this.$.input.value.replace(/[^0-9a-zA-Z]/g, " ").replace(/\s+/g, " ").trim();
+            this.list = [];
 
-            if (q.length) {
-                this.$.progress.hidden = false;
-                this.$.title.textContent = "searching ..";
+            this.$.progress.hidden = false;
+            this.$.title.textContent = "searching ..";
 
-                this.debounce("search", function() {
-                    var _this = this;
+            this.debounce("search", function() {
+                var _this = this;
 
-                    Meteor.call("cluster", q, function(error, response) {
-                        _this.list = [];
+                Meteor.call("cluster", this.$.input.value.trim(), function(error, response) {
+                    _this.$.progress.hidden = true;
+                    _this.$.title.textContent = "empty";
 
-                        _this.$.progress.hidden = true;
-                        _this.$.title.textContent = "empty";
+                    if (error) {
+                        document.querySelector("layout-inbox").toast(error.reason);
+                    } else {
+                        _this.list = response;
 
-                        if (error) {
-                            document.querySelector("layout-inbox").toast(error.reason);
-                        } else {
-                            if (JSON.parse(response) instanceof Array) {
-                                _this.list = JSON.parse(response);
-
-                                if (_this.list.length) {
-                                    _this.$.title.textContent = _this.list.length + " patent category exists";
-                                }
-                            }
+                        if (_this.list.length) {
+                            _this.$.title.textContent = _this.list.length + " patent category exists";
                         }
-                    });
-                }, 2000);
-            } else {
-                this.$.progress.hidden = true;
-                this.$.title.textContent = "empty";
-            }
+                    }
+                });
+            }, 2000);
         },
 
         filter: function() {
             document.querySelector("layout-inbox").toast("searchFilterNotFound");
         },
 
-        onSelect: function(e, d) {
-            this.async(function() {
-                var q = d.item.dataset.keyword.replace(/[^0-9a-zA-Z]/g, " ").replace(/\s+/g, " ").trim();
-
-                if (q.length) {
-                    var _this = this;
-
-                    Meteor.call("insert_keyword", q, function(error, response) {
-                        _this.toggle();
-
-                        if (error) {
-                            document.querySelector("layout-inbox").toast(error.reason);
-                        } else {
-                            document.querySelector("layout-inbox").store(response);
-                            document.querySelector("layout-inbox").toast("1 concept stored");
-                        }
-                    });
-                } else {
-                    document.querySelector("layout-inbox").toast("blank concept");
-                }
-            }, 200);
-        },
-
         icon_class: function(text) {
-            return polymer_color(text);
-        },
-
-        icon_text: function(text) {
-            var A = text.charAt(0);
-
-            if (isNaN(parseInt(A))) {
-                return A;
-            } else {
-                return "#";
-            }
+            return polymer_color(text.toString());
         },
 
         is: "search-bar",
+
+        lessThan: function(A, B) {
+            return A < B;
+        },
+
+        onSelect: function(e, d) {
+            this.async(function() {
+                var _this = this;
+
+                Meteor.call("insert_patentability", {
+                    cluster_keyword: d.item.dataset.cluster_keyword,
+                    keyword: d.item.dataset.keyword
+                }, function(error, response) {
+                    _this.toggle();
+
+                    if (error) {
+                        document.querySelector("layout-inbox").toast(error.reason);
+                    } else {
+                        document.querySelector("layout-inbox").store(response);
+                        document.querySelector("layout-inbox").toast("1 concept stored");
+                    }
+                });
+            }, 200);
+        },
 
         properties: {
             active: {

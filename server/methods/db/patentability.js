@@ -1,35 +1,34 @@
 Meteor.methods({
 
-    insert_keyword: function(input) {
+    insert_patentability: function(input) {
         this.unblock();
 
-        check(input, String);
+        check(input, {
+            cluster_keyword: String,
+            keyword: String
+        });
 
         // var user = Meteor.user();
         // if (!user) throw new Meteor.Error(422, "userNotFound");
 
-        var q = input.replace(/[^0-9a-zA-Z]/g, " ").replace(/\s+/g, " ").trim();
+        var row = patentability.findOne(input);
 
-        if (q.length) {
-            var row = patentability.findOne({
-                keyword: q
-            });
-
-            if (row) {
-                return row;
-            } else {
-                row = {
-                    keyword: q
-                };
-
-                row._id = patentability.insert(row);
-
-                // http_proxy(keyword);
-
-                return row;
-            }
+        if (row) {
+            return row;
         } else {
-            throw new Meteor.Error(422, "blank input");
+            input._id = patentability.insert(input);
+
+            //     var http_proxy_response = HTTP.call("GET", http_proxy, {
+            //         params: {
+            //             post: "getData.php",
+            //             post_opt: "q=(ft:" + input.keyword + ")&cluster_keyword=" + input.cluster_keyword + "&action_page=cluster_keywords&start=" + start
+            //         },
+            //         timeout: 1000 * 60
+            //     });
+
+            // http_proxy(input);
+
+            return input;
         }
     }
 
