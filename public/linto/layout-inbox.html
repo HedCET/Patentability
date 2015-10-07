@@ -8,7 +8,7 @@
     
     paper-fab {
         --paper-fab-background: var(--paper-red-500);
-        --paper-fab-keyboard-focus-background: var(--paper-red-700);
+        --paper-fab-keyboard-focus-background: var(--paper-red-500);
     }
     
     paper-toolbar .title {
@@ -57,16 +57,16 @@
     }
     
     .menu-b.move-down {
-        transform: translate3d(0, 80px, 0);
+        transform: translate3d(0, 80px, 0)!important;
     }
     </style>
 
     <template>
 
+
         <paper-drawer-panel id="paper_drawer_panel">
             <paper-header-panel drawer>
                 <iron-selector>
-
                     <paper-icon-item class="cursor-p hover relative">
                         <div item-icon>
                             <selectable-icon icon_img_src="/img/github.png"></selectable-icon>
@@ -88,7 +88,6 @@
                         </paper-item-body>
                         <paper-ripple></paper-ripple>
                     </paper-icon-item>
-
                 </iron-selector>
             </paper-header-panel>
 
@@ -110,6 +109,8 @@
                         <div>how to use ?</div>
                     </neon-animatable>
                     <neon-animatable class="layout vertical">
+
+
                         <div class="center-justified horizontal layout">
                             <div class="li">
                                 <iron-selector attr-for-selected="item" multi selectable="inbox-item" selected-attribute="selected" selected-values="{{list_selected}}">
@@ -134,7 +135,7 @@
 
         <search-bar id="searchBar"></search-bar>
 
-        <paper-toast class="cursor-d horizontal justified layout" duration="4000" id="layout_inbox_toast" on-transitionend="layout_inbox_toast" style="font-size: 14px; margin-right: 12px; padding: 16px;" text="what happened ? long keyword ..">
+        <paper-toast class="cursor-d horizontal justified layout" duration="4000" id="layout_inbox_toast" on-transitionend="layout_inbox_toast" style="font-size: 14px; margin-right: 12px; padding: 16px; z-index: 1;" text="">
             <div class="cursor-p self-start" style="color: #FFEB3B; margin-left: 8px;">UNDO</div>
         </paper-toast>
     </template>
@@ -143,7 +144,7 @@
     Polymer({
 
         addItem: function() {
-            this.$.layout_inbox_toast.show();
+            this.toast("what happened ? long keyword ..");
         },
 
         clear_list_selection: function() {
@@ -184,6 +185,15 @@
                     }, {
                         count: "8",
                         keyword: "semantic search engine to check patentability which map one concept to other relative concept"
+                    }, {
+                        count: "2",
+                        keyword: "HedCET"
+                    }, {
+                        count: "16",
+                        keyword: "Malayalam Movie"
+                    }, {
+                        count: "8",
+                        keyword: "US 8320578 B2"
                     }];
                 }
             },
@@ -203,6 +213,15 @@
 
         search: function() {
             this.$.searchBar.toggle();
+        },
+
+        toast: function(text) {
+            this.$.layout_inbox_toast.hide();
+
+            this.async(function() {
+                this.$.layout_inbox_toast.text = text;
+                this.$.layout_inbox_toast.show();
+            }, 400);
         },
 
         _listSelectedChanged: function(change) {
