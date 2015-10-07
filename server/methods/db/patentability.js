@@ -18,15 +18,14 @@ Meteor.methods({
         } else {
             input._id = patentability.insert(input);
 
-            //     var http_proxy_response = HTTP.call("GET", http_proxy, {
-            //         params: {
-            //             post: "getData.php",
-            //             post_opt: "q=(ft:" + input.keyword + ")&cluster_keyword=" + input.cluster_keyword + "&action_page=cluster_keywords&start=" + start
-            //         },
-            //         timeout: 1000 * 60
-            //     });
-
-            // http_proxy(input);
+            Meteor.call("cluster_loop", {
+                id: input._id,
+                start: 0
+            }, function(error, response) {
+                if (error) {
+                    console.log(error);
+                }
+            });
 
             return input;
         }
