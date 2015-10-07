@@ -43,7 +43,7 @@
                         <template is="dom-repeat" items="[[list]]">
                             <paper-icon-item class="bg-white bordered cursor-p hover relative" data-keyword$="[[item.keyword]]">
                                 <div item-icon>
-                                    <selectable-icon icon_class="red-500" icon_text="A"></selectable-icon>
+                                    <selectable-icon icon_class$="[[icon_class(item.keyword)]]" icon_text$="[[icon_text(item.keyword)]]"></selectable-icon>
                                 </div>
                                 <paper-item-body two-line>
                                     <div class="lowercase">[[item.keyword]]</div>
@@ -85,7 +85,7 @@
                                 _this.list = JSON.parse(response);
 
                                 if (_this.list.length) {
-                                    _this.$.title.textContent = _this.list.length + " existing patent concept";
+                                    _this.$.title.textContent = _this.list.length + " existing patent category";
                                 }
                             }
                         }
@@ -98,7 +98,21 @@
         },
 
         onSelect: function(e, d) {
-            console.log(d.item.dataset.keyword);
+            this.toast(d.item.dataset.keyword);
+        },
+
+        icon_class: function(text) {
+            return polymer_color(text);
+        },
+
+        icon_text: function(text) {
+            var A = text.charAt(0);
+
+            if (isNaN(parseInt(A))) {
+                return A;
+            } else {
+                return "#";
+            }
         },
 
         is: "search-bar",
