@@ -7,8 +7,8 @@
 accounts-base
 accounts-google
 accounts-password
-audit-argument-checks
 blaze-html-templates    # Compile .html files into Meteor Blaze views
+check
 crosswalk
 email
 http

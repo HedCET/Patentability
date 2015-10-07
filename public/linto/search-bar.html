@@ -14,6 +14,10 @@
         --paper-toolbar-color: black;
     }
     
+    paper-progress {
+        --paper-progress-active-color: #009688;
+    }
+    
     input {
         background: transparent;
         border: none;
@@ -26,12 +30,15 @@
         <paper-header-panel class="fit" style="background: rgba(238, 238, 238, 0.75);">
             <paper-toolbar>
                 <paper-icon-button icon="arrow-back" on-tap="toggle"></paper-icon-button>
-                <input class="flex" id="searchInput" on-keyup="doSearch" placeholder="patentability search">
+                <input class="flex" id="input" on-keyup="doSearch" placeholder="patentability search">
                 <paper-icon-button icon="filter-list"></paper-icon-button>
             </paper-toolbar>
             <div class="center-justified horizontal layout">
                 <div class="li">
-                    <div class="bordered cursor-d etc" style="padding: 16px;">what happened ? long keyword .. | what happened ? long keyword ..</div>
+                    <div class="bordered cursor-d etc" id="title" style="padding: 16px;">empty</div>
+                    <div style="padding: 0 8px;">
+                        <paper-progress hidden id="progress" indeterminate style="width: 100%;"></paper-progress>
+                    </div>
                     <iron-selector on-iron-activate="onSelect">
                         <template is="dom-repeat" items="[[list]]">
                             <paper-icon-item class="bg-white bordered cursor-p hover relative" data-keyword$="[[item.keyword]]">
@@ -55,6 +62,41 @@
     <script>
     Polymer({
 
+        doSearch: function() {
+            var q = this.$.input.value.replace(/[^0-9a-zA-Z]/g, " ").replace(/\s+/g, " ").trim();
+
+            if (q.length) {
+                this.$.progress.hidden = false;
+                this.$.title.textContent = "searching ..";
+
+                this.debounce("search", function() {
+                    var _this = this;
+
+                    Meteor.call("cluster", q, function(error, response) {
+                        _this.list = [];
+
+                        _this.$.progress.hidden = true;
+                        _this.$.title.textContent = "empty";
+
+                        if (error) {
+                            _this.toast(error.reason);
+                        } else {
+                            if (JSON.parse(response) instanceof Array) {
+                                _this.list = JSON.parse(response);
+
+                                if (_this.list.length) {
+                                    _this.$.title.textContent = _this.list.length + " existing patent concept";
+                                }
+                            }
+                        }
+                    });
+                }, 2000);
+            } else {
+                this.$.progress.hidden = true;
+                this.$.title.textContent = "empty";
+            }
+        },
+
         onSelect: function(e, d) {
             console.log(d.item.dataset.keyword);
         },
@@ -71,25 +113,28 @@
             list: {
                 type: Array,
                 value: function() {
-                    return [{
-                        count: "8H",
-                        keyword: "normal keyword"
-                    }, {
-                        count: "8",
-                        keyword: "what happened ? long keyword .."
-                    }];
+                    return [];
                 }
             }
         },
 
         ready: function() {},
 
+        toast: function(text) {
+            document.querySelector("#layout_inbox_toast").hide();
+
+            this.async(function() {
+                document.querySelector("#layout_inbox_toast").text = text;
+                document.querySelector("#layout_inbox_toast").show();
+            }, 400);
+        },
+
         toggle: function() {
             this.active = !this.active;
 
             if (this.active) {
                 this.async(function() {
-                    this.$.searchInput.focus();
+                    this.$.input.focus();
                 }, 400);
             }
         }
