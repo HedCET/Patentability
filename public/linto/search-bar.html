@@ -31,7 +31,7 @@
             <paper-toolbar>
                 <paper-icon-button icon="arrow-back" on-tap="toggle"></paper-icon-button>
                 <input class="flex" id="input" on-keyup="doSearch" placeholder="patentability search">
-                <paper-icon-button icon="filter-list"></paper-icon-button>
+                <paper-icon-button icon="filter-list" on-tap="filter"></paper-icon-button>
             </paper-toolbar>
             <div class="center-justified horizontal layout">
                 <div class="li">
@@ -79,13 +79,13 @@
                         _this.$.title.textContent = "empty";
 
                         if (error) {
-                            _this.toast(error.reason);
+                            document.querySelector("layout-inbox").toast(error.reason);
                         } else {
                             if (JSON.parse(response) instanceof Array) {
                                 _this.list = JSON.parse(response);
 
                                 if (_this.list.length) {
-                                    _this.$.title.textContent = _this.list.length + " existing patent category";
+                                    _this.$.title.textContent = _this.list.length + " patent category exists";
                                 }
                             }
                         }
@@ -97,8 +97,31 @@
             }
         },
 
+        filter: function() {
+            document.querySelector("layout-inbox").toast("searchFilterNotFound");
+        },
+
         onSelect: function(e, d) {
-            this.toast(d.item.dataset.keyword);
+            this.async(function() {
+                var q = d.item.dataset.keyword.replace(/[^0-9a-zA-Z]/g, " ").replace(/\s+/g, " ").trim();
+
+                if (q.length) {
+                    var _this = this;
+
+                    Meteor.call("insert_keyword", q, function(error, response) {
+                        _this.toggle();
+
+                        if (error) {
+                            document.querySelector("layout-inbox").toast(error.reason);
+                        } else {
+                            document.querySelector("layout-inbox").store(response);
+                            document.querySelector("layout-inbox").toast("1 concept stored");
+                        }
+                    });
+                } else {
+                    document.querySelector("layout-inbox").toast("blank concept");
+                }
+            }, 200);
         },
 
         icon_class: function(text) {
@@ -130,17 +153,6 @@
                     return [];
                 }
             }
-        },
-
-        ready: function() {},
-
-        toast: function(text) {
-            document.querySelector("#layout_inbox_toast").hide();
-
-            this.async(function() {
-                document.querySelector("#layout_inbox_toast").text = text;
-                document.querySelector("#layout_inbox_toast").show();
-            }, 400);
         },
 
         toggle: function() {

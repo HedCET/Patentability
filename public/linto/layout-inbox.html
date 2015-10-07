@@ -132,6 +132,7 @@
 
         <paper-fab class="menu-b" id="fab" icon="add" on-tap="addItem"></paper-fab>
 
+        <!-- dialogBox -->
 
         <search-bar id="searchBar"></search-bar>
 
@@ -149,6 +150,20 @@
 
         clear_list_selection: function() {
             this.list_selected = [];
+        },
+
+        icon_class: function(text) {
+            return polymer_color(text);
+        },
+
+        icon_text: function(text) {
+            var A = text.charAt(0);
+
+            if (isNaN(parseInt(A))) {
+                return A;
+            } else {
+                return "#";
+            }
         },
 
         is: "layout-inbox",
@@ -180,20 +195,8 @@
                 type: Array,
                 value: function() {
                     return [{
-                        count: "8H",
+                        _id: "12345",
                         keyword: "patent title"
-                    }, {
-                        count: "8",
-                        keyword: "semantic search engine to check patentability which map one concept to other relative concept"
-                    }, {
-                        count: "2",
-                        keyword: "HedCET"
-                    }, {
-                        count: "16",
-                        keyword: "Malayalam Movie"
-                    }, {
-                        count: "8",
-                        keyword: "US 8320578 B2"
                     }];
                 }
             },
@@ -213,6 +216,16 @@
 
         search: function() {
             this.$.searchBar.toggle();
+        },
+
+        store: function(item) {
+            var exists = _.find(this.list, function(A) {
+                return (item._id == A._id);
+            });
+
+            if (!exists) {
+                this.push("list", item);
+            }
         },
 
         toast: function(text) {
