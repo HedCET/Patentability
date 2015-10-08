@@ -47,6 +47,11 @@
         transform: translateX(0);
     }
     
+    .menu-li {
+        border-bottom: 2px solid #EEE;
+        border-top: 2px solid #EEE;
+    }
+    
     .menu-b {
         bottom: 12px;
         position: fixed;
@@ -67,22 +72,10 @@
         <paper-drawer-panel id="paper_drawer_panel">
             <paper-header-panel drawer>
                 <iron-selector>
-                    <paper-icon-item class="cursor-p hover relative">
-                        <div item-icon>
-                            <selectable-icon icon_img_src="/img/github.png"></selectable-icon>
-                        </div>
-                        <paper-item-body two-line>
-                            <div>open source</div>
-                            <div secondary>build break develop</div>
-                        </paper-item-body>
-
-                        <!-- <paper-ripple></paper-ripple> -->
-                    </paper-icon-item>
-
                     <template is="dom-repeat" items="[[list]]">
                         <template if="[[lessThan(item.cluster.length, 100)]]" is="dom-if">
 
-                            <paper-icon-item class="cursor-p hover relative" data-id$="[[item._id]]">
+                            <paper-icon-item class="cursor-p hover menu-li relative" data-id$="[[item._id]]">
                                 <div item-icon>
                                     <selectable-icon icon_class$="[[icon_class(item.cluster_keyword)]]" icon_text$="[[icon_count(item.cluster.length)]]"></selectable-icon>
                                 </div>
@@ -96,6 +89,18 @@
 
                         </template>
                     </template>
+
+                    <paper-icon-item class="cursor-p hover menu-li relative">
+                        <div item-icon>
+                            <selectable-icon icon_img_src="/img/github.png"></selectable-icon>
+                        </div>
+                        <paper-item-body two-line>
+                            <div>open source</div>
+                            <div secondary>build break develop</div>
+                        </paper-item-body>
+
+                        <!-- <paper-ripple></paper-ripple> -->
+                    </paper-icon-item>
                 </iron-selector>
             </paper-header-panel>
 
