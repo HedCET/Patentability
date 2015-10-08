@@ -33,28 +33,34 @@
                 <input class="flex" id="input" on-keyup="doSearch" placeholder="patentability search">
                 <paper-icon-button icon="filter-list" on-tap="filter"></paper-icon-button>
             </paper-toolbar>
+
             <div class="center-justified horizontal layout">
                 <div class="li">
                     <div class="bordered cursor-d etc" id="title" style="padding: 16px;">empty</div>
                     <div style="padding: 0 8px;">
                         <paper-progress hidden id="progress" indeterminate style="width: 100%;"></paper-progress>
                     </div>
+
                     <iron-selector on-iron-activate="onSelect">
                         <template is="dom-repeat" items="[[list]]">
                             <template if="[[lessThan(item.count, 100)]]" is="dom-if">
+
                                 <paper-icon-item class="bg-white bordered cursor-p hover relative" data-cluster_keyword$="[[item.cluster_keyword]]" data-keyword$="[[item.keyword]]">
                                     <div item-icon>
-                                        <selectable-icon icon_class$="[[icon_class(item.count)]]" icon_text$="[[item.count]]"></selectable-icon>
+                                        <selectable-icon icon_class$="[[icon_class(item.cluster_keyword)]]" icon_text$="[[item.count]]"></selectable-icon>
                                     </div>
                                     <paper-item-body two-line>
                                         <div class="lowercase">[[item.cluster_keyword]]</div>
                                         <div secondary>topic - <span class="lowercase">[[item.keyword]]</span></div>
                                     </paper-item-body>
-                                    <paper-ripple></paper-ripple>
+
+                                    <!-- <paper-ripple></paper-ripple> -->
                                 </paper-icon-item>
+
                             </template>
                         </template>
                     </iron-selector>
+
                     <div style="min-height: 80px;"></div>
                 </div>
             </div>

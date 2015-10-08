@@ -75,19 +75,27 @@
                             <div>open source</div>
                             <div secondary>build break develop</div>
                         </paper-item-body>
-                        <paper-ripple></paper-ripple>
+
+                        <!-- <paper-ripple></paper-ripple> -->
                     </paper-icon-item>
 
-                    <paper-icon-item class="cursor-p hover relative">
-                        <div item-icon>
-                            <selectable-icon icon_class="red-500" icon_text="W"></selectable-icon>
-                        </div>
-                        <paper-item-body two-line>
-                            <div>what happened ? long keyword ..</div>
-                            <div secondary>build break develop</div>
-                        </paper-item-body>
-                        <paper-ripple></paper-ripple>
-                    </paper-icon-item>
+                    <template is="dom-repeat" items="[[list]]">
+                        <template if="[[lessThan(item.cluster.length, 100)]]" is="dom-if">
+
+                            <paper-icon-item class="cursor-p hover relative" data-id$="[[item._id]]">
+                                <div item-icon>
+                                    <selectable-icon icon_class$="[[icon_class(item.cluster_keyword)]]" icon_text$="[[icon_count(item.cluster.length)]]"></selectable-icon>
+                                </div>
+                                <paper-item-body two-line>
+                                    <div class="lowercase">[[item.cluster_keyword]]</div>
+                                    <div secondary>topic - <span class="lowercase">[[item.keyword]]</span></div>
+                                </paper-item-body>
+
+                                <!-- <paper-ripple></paper-ripple> -->
+                            </paper-icon-item>
+
+                        </template>
+                    </template>
                 </iron-selector>
             </paper-header-panel>
 
@@ -106,11 +114,10 @@
 
                 <neon-animated-pages class="fit" selected="[[main_page]]">
                     <neon-animatable class="center-center layout vertical">
-                        <div>how to use ?</div>
+                        <div>Empty ..</div>
                     </neon-animatable>
+
                     <neon-animatable class="layout vertical">
-
-
                         <div class="center-justified horizontal layout">
                             <div class="li">
                                 <iron-selector attr-for-selected="item" multi selectable="inbox-item" selected-attribute="selected" selected-values="{{list_selected}}">
@@ -122,6 +129,7 @@
                                         <inbox-item item="[[item]]" data-id$="[[index]]"></inbox-item>
                                     </template>
                                 </iron-selector>
+
                                 <div style="min-height: 80px;"></div>
                             </div>
                         </div>
@@ -156,14 +164,8 @@
             return polymer_color(text);
         },
 
-        icon_text: function(text) {
-            var A = text.charAt(0);
-
-            if (isNaN(parseInt(A))) {
-                return A;
-            } else {
-                return "#";
-            }
+        icon_count: function(count) {
+            return (1 < count ? count : "#");
         },
 
         is: "layout-inbox",
@@ -176,6 +178,10 @@
 
                 console.log("undoOverFlow");
             }
+        },
+
+        lessThan: function(A, B) {
+            return A < B;
         },
 
         menuToggle: function() {
@@ -194,10 +200,7 @@
             list: {
                 type: Array,
                 value: function() {
-                    return [{
-                        _id: "12345",
-                        keyword: "patent title"
-                    }];
+                    return [];
                 }
             },
             list_selected: {

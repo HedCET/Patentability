@@ -87,10 +87,10 @@ Meteor.methods({
                                     console.log(cluster.d[A].pubnum, "1 < result");
                                 }
                             } else {
-                                throw new Meteor.Error(422, "patent_loop JSON parse error");
+                                throw new Meteor.Error(422, "patent_loop JSON parse");
                             }
                         } else {
-                            throw new Meteor.Error(422, "patent_loop error");
+                            throw new Meteor.Error(422, "patent_loop");
                         }
 
                         cluster.d[A].p_no = cluster.d[A].pubnum;
