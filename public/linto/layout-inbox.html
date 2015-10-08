@@ -121,12 +121,14 @@
                         <div class="center-justified horizontal layout">
                             <div class="li">
                                 <iron-selector attr-for-selected="item" multi selectable="inbox-item" selected-attribute="selected" selected-values="{{list_selected}}">
-                                    <div class="bordered center horizontal justified layout">
-                                        <div class="cursor-d etc" style="padding: 16px;">what happened ? long keyword .. | what happened ? long keyword ..</div>
-                                        <paper-icon-button icon="close" on-tap="delete"></paper-icon-button>
-                                    </div>
-                                    <template is="dom-repeat" items="[[list]]">
-                                        <inbox-item item="[[item]]" data-id$="[[index]]"></inbox-item>
+                                    <template as="cluster" is="dom-repeat" items="[[list]]">
+                                        <div class="bordered center horizontal justified layout">
+                                            <div class="cursor-d etc lowercase" style="padding: 16px;">[[cluster.cluster_keyword]]</div>
+                                            <paper-icon-button icon="close" on-tap="delete"></paper-icon-button>
+                                        </div>
+                                        <template as="patent" is="dom-repeat" items="[[cluster.cluster]]">
+                                            <inbox-item item="[[patent]]" data-id$="[[patent._id]]"></inbox-item>
+                                        </template>
                                     </template>
                                 </iron-selector>
 

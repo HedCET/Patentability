@@ -96,6 +96,8 @@ Meteor.methods({
                         cluster.d[A].p_no = cluster.d[A].pubnum;
                         delete cluster.d[A].pubnum;
 
+                        cluster.d[A]._id = Random.id();
+
                         patentability.update({
                             _id: input.id
                         }, {

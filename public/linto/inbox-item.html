@@ -10,8 +10,8 @@
                 <paper-item-body two-line style="margin-right: 0; min-height: 0; padding: 14px 0;">
                     <div class="lowercase" style="white-space: normal;">[[item.keyword]]</div>
                     <div class="center horizontal justified layout" secondary>
-                        <div class="etc">HedCET Private Limited - <span>[[item.count]]</span></div>
-                        <div>Filed 10 Month Ago</div>
+                        <div class="etc lowercase">[[item.assignee]]</div>
+                        <div>[[fromNow(item.app_date)]]</div>
                     </div>
                 </paper-item-body>
 
@@ -23,6 +23,10 @@
     <script>
     Polymer({
 
+        fromNow: function(time) {
+            return moment(time, ["YYYY-MM-DD"]).fromNow();
+        },
+
         is: "inbox-item",
 
         properties: {
@@ -33,9 +37,7 @@
                 type: Boolean,
                 value: false
             }
-        },
-
-        ready: function() {}
+        }
 
     });
     </script>
