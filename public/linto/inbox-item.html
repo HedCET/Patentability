@@ -4,7 +4,7 @@
         <template if="[[item]]" is="dom-if">
             <paper-icon-item class="bg-white bordered cursor-p hover relative">
                 <div class="fit" item-icon style="padding: 16px;">
-                    <selectable-icon icon_img_src="/img/24/US.png" selected$="[[selected]]"></selectable-icon>
+                    <selectable-icon icon_img_src$="[[icon_src(item.p_no)]]" selected$="[[selected]]"></selectable-icon>
                 </div>
 
                 <paper-item-body two-line style="margin-right: 0; min-height: 0; padding: 14px 0;">
@@ -25,6 +25,10 @@
 
         fromNow: function(time) {
             return moment(time, ["YYYY-MM-DD"]).fromNow();
+        },
+
+        icon_src: function(text) {
+            return "/img/40/" + (text.match(/^[A-Z]{2}/) ? text.match(/^[A-Z]{2}/) : "_") + ".png";
         },
 
         is: "inbox-item",
