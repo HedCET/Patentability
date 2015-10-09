@@ -87,7 +87,7 @@
                     if (error) {
                         document.querySelector("layout-inbox").toast(error.reason);
                     } else {
-                        _this.list = response;
+                        _this.set("list", response);
 
                         if (_this.list.length) {
                             _this.$.title.textContent = _this.list.length + " patent category exists";
@@ -112,22 +112,20 @@
         },
 
         onSelect: function(e, d) {
-            this.async(function() {
-                var _this = this;
+            var _this = this;
 
-                Meteor.call("insert_cluster", {
-                    cluster_keyword: d.item.dataset.cluster_keyword,
-                    keyword: d.item.dataset.keyword
-                }, function(error, response) {
-                    _this.toggle();
+            Meteor.call("insert_cluster", {
+                cluster_keyword: d.item.dataset.cluster_keyword,
+                keyword: d.item.dataset.keyword
+            }, function(error, response) {
+                _this.toggle();
 
-                    if (error) {
-                        document.querySelector("layout-inbox").toast(error.reason);
-                    } else {
-                        document.querySelector("layout-inbox").store(response);
-                    }
-                });
-            }, 200);
+                if (error) {
+                    document.querySelector("layout-inbox").toast(error.reason);
+                } else {
+                    document.querySelector("layout-inbox").store(response);
+                }
+            });
         },
 
         properties: {
