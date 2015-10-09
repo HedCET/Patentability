@@ -72,7 +72,7 @@
     </style>
 
     <template>
-
+        <iron-localstorage name="patentability" on-iron-localstorage-load-empty="initialize" value="{{list}}"></iron-localstorage>
 
         <paper-drawer-panel id="paper_drawer_panel">
             <paper-header-panel drawer>
@@ -123,7 +123,7 @@
 
                     <div class="title" id="toolBarTitle"></div>
 
-                    <paper-icon-button class="selection-visible" icon="hidden"></paper-icon-button>
+                    <paper-icon-button class="selection-visible" icon="delete" on-tap="remove_patent"></paper-icon-button>
                     <paper-icon-button class="selection-visible" icon="social:share"></paper-icon-button>
                     <paper-icon-button class="selection-visible" icon="more-vert"></paper-icon-button>
                     <paper-icon-button class="selection-hidden" icon="search" on-tap="search"></paper-icon-button>
@@ -145,7 +145,7 @@
                                                 <span hidden$="[[row.cluster_keyword]]">[[row.keyword]]</span>
                                             </div>
 
-                                            <paper-icon-button icon="close" on-tap="delete"></paper-icon-row>
+                                            <paper-icon-button icon="close" id$="[[row._id]]" on-tap="removeIcon"></paper-icon-row>
                                         </div>
 
                                         <div style="padding: 0 8px;">
@@ -153,7 +153,9 @@
                                         </div>
 
                                         <template as="patent" is="dom-repeat" items="[[row.patent]]">
-                                            <inbox-item item="[[patent]]" data-id$="[[patent._id]]"></inbox-item>
+                                            <template if="[[!patent.hidden]]" is="dom-if">
+                                                <inbox-item item="[[patent]]"></inbox-item>
+                                            </template>
                                         </template>
                                     </template>
                                 </iron-selector>
@@ -170,7 +172,9 @@
 
         <paper-dialog id="add" style="width: 320px;">
             <div>Add your concept in single line, Our semantic search will check patentability</div>
+
             <paper-input id="keyword" label="add concept"></paper-input>
+
             <div class="buttons">
                 <paper-button dialog-dismiss>
                     <iron-icon icon="close"></iron-icon>
@@ -183,10 +187,25 @@
             </div>
         </paper-dialog>
 
+        <paper-dialog data-queue="12345" id="remove" style="width: 320px;">
+            <div>Are you sure to delete this item ?</div>
+
+            <div class="buttons">
+                <paper-button dialog-dismiss>
+                    <iron-icon icon="close"></iron-icon>
+                    cancel
+                </paper-button>
+                <paper-button dialog-confirm on-tap="removeButton">
+                    <iron-icon icon="check"></iron-icon>
+                    ok
+                </paper-button>
+            </div>
+        </paper-dialog>
+
         <search-bar id="searchBar"></search-bar>
 
         <paper-toast class="cursor-d horizontal justified layout" duration="4000" id="layout_inbox_toast" on-transitionend="layout_inbox_toast" style="font-size: 14px; margin-right: 12px; padding: 16px; z-index: 1000;" text="">
-            <div class="cursor-p self-start" id="undo" hidden style="color: #FFEB3B; margin-left: 8px;">UNDO</div>
+            <div class="cursor-p self-start" hidden$="[[!boolean(undo.length)]]" on-tap="undo_patent" style="color: #FFEB3B; margin-left: 8px;">UNDO</div>
         </paper-toast>
     </template>
 
@@ -207,7 +226,7 @@
                     if (error) {
                         _this.toast(error.reason);
                     } else {
-                        _this.store(response);
+                        _this.bind(response);
                     }
                 });
             } else {
@@ -227,12 +246,43 @@
             this.list_selected = [];
         },
 
+        bind: function(item, removed) {
+            var index = -1;
+
+            var exists = _.find(this.list, function(A) {
+                index++;
+
+                return (item._id == A._id);
+            });
+
+            if (exists) {
+                if (removed) {
+                    this.splice("list", index, 1);
+                    this.toast("1 concept removed");
+                } else {
+                    this.set("list." + index, item);
+                    this.toast("1 concept changed");
+                }
+            } else {
+                this.push("list", item);
+                this.toast("1 concept added");
+
+                Meteor.subscribe("patentability", _.map(this.list, function(A) {
+                    return A._id;
+                }));
+            }
+        },
+
         icon_class: function(text) {
             return polymer_color(text);
         },
 
         icon_count: function(count) {
             return (1 < count ? count : "#");
+        },
+
+        initialize: function() {
+            this.set("list", []);
         },
 
         is: "layout-inbox",
@@ -243,7 +293,9 @@
             } else {
                 this.$.fab.translate3d(0, 0, 0);
 
-                console.log("undoOverFlow");
+                if (this.undo.length) {
+                    this.set("undo", []);
+                }
             }
         },
 
@@ -280,38 +332,54 @@
             page_index: {
                 type: Number,
                 value: 1
+            },
+            undo: {
+                type: Array,
+                value: function() {
+                    return [];
+                }
+            }
+        },
+
+        remove_patent: function() {
+            this.undo = _.map(this.list_selected, function(A) {
+                return A._id;
+            });
+
+            for (var A = 0; A < this.list.length; A++) {
+                for (var Z = 0; Z < this.list[A].patent.length; Z++) {
+                    if (-1 < this.undo.indexOf(this.list[A].patent[Z]._id)) {
+                        this.set("list." + A + ".patent." + Z + ".hidden", true);
+                    }
+                }
+            }
+
+            this.toast(this.undo.length + " patent removed");
+        },
+
+        removeIcon: function(e) {
+            this.$.remove.dataset.queue = Polymer.dom(e).localTarget.id;
+            this.$.remove.open();
+        },
+
+        removeButton: function() {
+            var id = this.$.remove.dataset.queue,
+                index = -1;
+
+            var exists = _.find(this.list, function(A) {
+                index++;
+
+                return (id == A._id);
+            });
+
+            if (exists) {
+                this.splice("list", index, 1);
+                this.toast("1 concept removed");
             }
         },
 
         search: function() {
             this.$.searchBar.toggle();
-        },
-
-        store: function(item, removed) {
-            var index = -1;
-
-            var exists = _.find(this.list, function(A) {
-                index++;
-
-                return (item._id == A._id);
-            });
-
-            if (exists) {
-                if (removed) {
-                    this.splice("list", index, 1);
-                    this.toast("1 concept removed");
-                } else {
-                    this.set("list." + index, item);
-                    this.toast("1 concept changed");
-                }
-            } else {
-                this.push("list", item);
-                this.toast("1 concept added");
-
-                Meteor.subscribe("patentability", _.map(this.list, function(A) {
-                    return A._id;
-                }));
-            }
         },
 
         toast: function(text) {
@@ -321,6 +389,16 @@
                 this.$.layout_inbox_toast.text = text;
                 this.$.layout_inbox_toast.show();
             }, 400);
+        },
+
+        undo_patent: function() {
+            for (var A = 0; A < this.list.length; A++) {
+                for (var Z = 0; Z < this.list[A].patent.length; Z++) {
+                    if (-1 < this.undo.indexOf(this.list[A].patent[Z]._id)) {
+                        this.set("list." + A + ".patent." + Z + ".hidden", false);
+                    }
+                }
+            }
         },
 
         _listChanged: function(change) {
