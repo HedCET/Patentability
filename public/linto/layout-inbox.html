@@ -126,7 +126,7 @@
 
                 <neon-animated-pages class="fit" selected="[[page_index]]">
                     <neon-animatable class="center-center layout vertical">
-                        <div>Empty ..</div>
+                        <div>empty</div>
                     </neon-animatable>
 
                     <neon-animatable class="layout vertical">
@@ -155,6 +155,8 @@
         <paper-fab class="menu-b" id="fab" icon="add" on-tap="addFab"></paper-fab>
 
         <paper-dialog id="add" style="width: 320px;">
+            <p>Add your concept in single line, Our semantic search will check patentability</p>
+
             <paper-input label="add concept" value="{{keyword}}"></paper-input>
 
             <div class="buttons">
