@@ -124,8 +124,8 @@
                     <div class="title" id="toolBarTitle"></div>
 
                     <paper-icon-button class="selection-visible" icon="delete" on-tap="remove_patent"></paper-icon-button>
-                    <paper-icon-button class="selection-visible" icon="social:share"></paper-icon-button>
-                    <paper-icon-button class="selection-visible" icon="more-vert"></paper-icon-button>
+                    <paper-icon-button class="selection-visible" icon="social:share" on-tap="share"></paper-icon-button>
+                    <paper-icon-button class="selection-visible" icon="more-vert" on-tap="more"></paper-icon-button>
                     <paper-icon-button class="selection-hidden" icon="search" on-tap="search"></paper-icon-button>
                 </paper-toolbar>
 
@@ -260,8 +260,8 @@
                     this.splice("list", index, 1);
                     this.toast("1 concept removed");
                 } else {
-                    this.set("list." + index, item);
-                    this.toast("1 concept changed");
+                    this.set("list." + index, $.extend(true, this.list[index], item));
+                    // this.toast("1 concept changed");
                 }
             } else {
                 this.push("list", item);
@@ -309,6 +309,10 @@
             } else {
                 this.$.paper_drawer_panel.forceNarrow = !this.$.paper_drawer_panel.forceNarrow;
             }
+        },
+
+        more: function() {
+            this.toast("moreNotFound");
         },
 
         observers: [
@@ -376,12 +380,16 @@
 
             if (exists) {
                 this.splice("list", index, 1);
-                this.toast("1 concept removed");
+                // this.toast("1 concept removed");
             }
         },
 
         search: function() {
             this.$.searchBar.toggle();
+        },
+
+        share: function() {
+            this.toast("shareNotFound");
         },
 
         toast: function(text) {
