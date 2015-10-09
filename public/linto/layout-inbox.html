@@ -148,6 +148,10 @@
                                             <paper-icon-button icon="close" on-tap="delete"></paper-icon-row>
                                         </div>
 
+                                        <div style="padding: 0 8px;">
+                                            <paper-progress hidden$="[[boolean(row.patent.length)]]" indeterminate style="width: 100%;"></paper-progress>
+                                        </div>
+
                                         <template as="patent" is="dom-repeat" items="[[row.patent]]">
                                             <inbox-item item="[[patent]]" data-id$="[[patent._id]]"></inbox-item>
                                         </template>
@@ -193,6 +197,8 @@
             var keyword = this.$.keyword.value.trim();
 
             if (keyword.length) {
+                this.$.keyword.value = "";
+
                 var _this = this;
 
                 Meteor.call("insert_seed", {
@@ -211,6 +217,10 @@
 
         addFab: function() {
             this.$.add.open();
+        },
+
+        boolean: function(boolean) {
+            return (boolean ? true : false);
         },
 
         clear_list_selection: function() {

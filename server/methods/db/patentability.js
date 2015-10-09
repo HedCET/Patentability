@@ -55,15 +55,14 @@ Meteor.methods({
             input.patent = [];
             input._id = patentability.insert(input);
 
-            // Meteor.call("seed_loop", input._id, function(error, response) {
-            //     if (error) {
-            //         console.log(error);
-            //     }
-            // });
+            Meteor.call("seed_loop", input._id, function(error, response) {
+                if (error) {
+                    console.log(error);
+                }
+            });
 
             return input;
         }
-
     }
 
 });

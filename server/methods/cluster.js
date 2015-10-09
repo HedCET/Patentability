@@ -60,9 +60,6 @@ Meteor.methods({
 
             if (cluster_loop.statusCode === 200) {
                 if (JSON.parse(cluster_loop.content) instanceof Object) {
-
-                    console.log(cluster_loop.content);
-
                     var cluster = JSON.parse(cluster_loop.content);
 
                     for (var A = 0; A < cluster.d.length; A++) {
