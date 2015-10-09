@@ -11,25 +11,21 @@
         --paper-fab-keyboard-focus-background: var(--paper-red-700);
     }
     
-    paper-toolbar .title {
-        padding: 0 8px;
+    paper-toolbar {
+        --paper-toolbar-background: #009688;
+        --paper-toolbar-color: white;
     }
     
     paper-toolbar paper-icon-button {
         margin: 0!important;
     }
     
-    paper-toolbar .selection-visible {
-        padding: 0;
-        transform: rotateX(90deg);
-        transition: transform 400ms ease-in-out;
-        visibility: hidden;
-        width: 0;
-        will-change: transform;
-    }
-    
     paper-toolbar paper-icon-button[icon="arrow-back"] {
         transform: translateX(-42px);
+    }
+    
+    paper-toolbar.selection paper-icon-button[icon="arrow-back"] {
+        transform: translateX(0);
     }
     
     paper-toolbar.selection .selection-hidden {
@@ -43,8 +39,17 @@
         width: auto;
     }
     
-    paper-toolbar.selection paper-icon-button[icon="arrow-back"] {
-        transform: translateX(0);
+    paper-toolbar .selection-visible {
+        padding: 0;
+        transform: rotateX(90deg);
+        transition: transform 400ms ease-in-out;
+        visibility: hidden;
+        width: 0;
+        will-change: transform;
+    }
+    
+    paper-toolbar .title {
+        padding: 0 12px;
     }
     
     .menu-li {
@@ -79,7 +84,8 @@
                                 <div item-icon>
                                     <selectable-icon icon_class$="[[icon_class(item.cluster_keyword)]]" icon_text$="[[icon_count(item.cluster.length)]]"></selectable-icon>
                                 </div>
-                                <paper-item-body two-line>
+
+                                <paper-item-body two-line style="margin-right: 0; min-height: 0; padding: 14px 0;">
                                     <div class="lowercase">[[item.cluster_keyword]]</div>
                                     <div secondary>topic - <span class="lowercase">[[item.keyword]]</span></div>
                                 </paper-item-body>
@@ -94,7 +100,8 @@
                         <div item-icon>
                             <selectable-icon icon_img_src="/img/github.png"></selectable-icon>
                         </div>
-                        <paper-item-body two-line>
+
+                        <paper-item-body two-line style="margin-right: 0; min-height: 0; padding: 14px 0;">
                             <div>open source</div>
                             <div secondary>build break develop</div>
                         </paper-item-body>
@@ -105,7 +112,7 @@
             </paper-header-panel>
 
             <paper-header-panel main>
-                <paper-toolbar class="teal-500" id="toolBar">
+                <paper-toolbar id="toolBar">
                     <paper-icon-button class="selection-visible" icon="arrow-back" on-tap="clear_list_selection"></paper-icon-button>
                     <paper-icon-button class="selection-hidden" icon="menu" on-tap="menuToggle"></paper-icon-button>
 
@@ -145,13 +152,26 @@
             </paper-header-panel>
         </paper-drawer-panel>
 
-        <paper-fab class="menu-b" id="fab" icon="add" on-tap="addItem"></paper-fab>
+        <paper-fab class="menu-b" id="fab" icon="add" on-tap="addFab"></paper-fab>
 
-        <!-- dialogBox -->
+        <paper-dialog id="add" style="width: 320px;">
+            <paper-input label="add concept" value="{{keyword}}"></paper-input>
+
+            <div class="buttons">
+                <paper-button dialog-dismiss>
+                    <iron-icon icon="close"></iron-icon>
+                    cancel
+                </paper-button>
+                <paper-button dialog-confirm on-tap="addButton">
+                    <iron-icon icon="check"></iron-icon>
+                    ok
+                </paper-button>
+            </div>
+        </paper-dialog>
 
         <search-bar id="searchBar"></search-bar>
 
-        <paper-toast class="cursor-d horizontal justified layout" duration="4000" id="layout_inbox_toast" on-transitionend="layout_inbox_toast" style="font-size: 14px; margin-right: 12px; padding: 16px; z-index: 1;" text="">
+        <paper-toast class="cursor-d horizontal justified layout" duration="4000" id="layout_inbox_toast" on-transitionend="layout_inbox_toast" style="font-size: 14px; margin-right: 12px; padding: 16px; z-index: 1000;" text="">
             <div class="cursor-p self-start" id="undo" hidden style="color: #FFEB3B; margin-left: 8px;">UNDO</div>
         </paper-toast>
     </template>
@@ -159,8 +179,12 @@
     <script>
     Polymer({
 
-        addItem: function() {
-            this.toast("what happened ? long keyword ..");
+        addButton: function() {
+            this.toast("OK");
+        },
+
+        addFab: function() {
+            this.$.add.open();
         },
 
         clear_list_selection: function() {
