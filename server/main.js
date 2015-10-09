@@ -1,3 +1,2 @@
 fibers = Npm.require("fibers");
-
-http_proxy = "http://patent.vcompile.com/index.php";
+http_proxy = "http://vcompile.com/patentability/index.php";
