@@ -346,6 +346,8 @@
                 return A._id;
             });
 
+            this.clear_list_selection();
+
             for (var A = 0; A < this.list.length; A++) {
                 for (var Z = 0; Z < this.list[A].patent.length; Z++) {
                     if (-1 < this.undo.indexOf(this.list[A].patent[Z]._id)) {
