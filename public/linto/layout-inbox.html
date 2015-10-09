@@ -76,20 +76,20 @@
 
         <paper-drawer-panel id="paper_drawer_panel">
             <paper-header-panel drawer>
-                <iron-selector>
-                    <paper-icon-item class="cursor-p hover menu-li relative">
-                        <div item-icon>
-                            <selectable-icon icon_img_src="/img/github.png"></selectable-icon>
-                        </div>
+                <paper-icon-item class="cursor-p hover menu-li relative">
+                    <div item-icon>
+                        <selectable-icon icon_img_src="/img/github.png"></selectable-icon>
+                    </div>
 
-                        <paper-item-body two-line style="margin-right: 0; min-height: 0; padding: 14px 0;">
-                            <div>open source</div>
-                            <div secondary>build break develop</div>
-                        </paper-item-body>
+                    <paper-item-body two-line style="margin-right: 0; min-height: 0; padding: 14px 0;">
+                        <div>open source</div>
+                        <div secondary>build break develop</div>
+                    </paper-item-body>
 
-                        <!-- <paper-ripple></paper-ripple> -->
-                    </paper-icon-item>
+                    <!-- <paper-ripple></paper-ripple> -->
+                </paper-icon-item>
 
+                <iron-selector on-iron-activate="select_menu">
                     <template is="dom-repeat" items="[[list]]">
                         <template if="[[lessThan(item.patent.length, 100)]]" is="dom-if">
                             <paper-icon-item class="cursor-p hover menu-li relative" data-id$="[[item._id]]">
@@ -139,22 +139,24 @@
                             <div class="li">
                                 <iron-selector attr-for-selected="item" multi selectable="inbox-item" selected-attribute="selected" selected-values="{{list_selected}}">
                                     <template as="row" is="dom-repeat" items="[[list]]">
-                                        <div class="bordered center horizontal justified layout">
-                                            <div class="cursor-d etc lowercase" style="padding: 16px;">
-                                                <span hidden$="[[!row.cluster_keyword]]">[[row.cluster_keyword]]</span>
-                                                <span hidden$="[[row.cluster_keyword]]">[[row.keyword]]</span>
+                                        <template if="[[selected_menu(row._id, selected_menu_id, '')]]" is="dom-if">
+                                            <div class="bordered center horizontal justified layout">
+                                                <div class="cursor-d etc lowercase" style="padding: 16px;">
+                                                    <span hidden$="[[!row.cluster_keyword]]">[[row.cluster_keyword]]</span>
+                                                    <span hidden$="[[row.cluster_keyword]]">[[row.keyword]]</span>
+                                                </div>
+
+                                                <paper-icon-button icon="close" id$="[[row._id]]" on-tap="removeIcon"></paper-icon-row>
                                             </div>
 
-                                            <paper-icon-button icon="close" id$="[[row._id]]" on-tap="removeIcon"></paper-icon-row>
-                                        </div>
+                                            <div style="padding: 0 8px;">
+                                                <paper-progress hidden$="[[boolean(row.patent.length)]]" indeterminate style="width: 100%;"></paper-progress>
+                                            </div>
 
-                                        <div style="padding: 0 8px;">
-                                            <paper-progress hidden$="[[boolean(row.patent.length)]]" indeterminate style="width: 100%;"></paper-progress>
-                                        </div>
-
-                                        <template as="patent" is="dom-repeat" items="[[row.patent]]">
-                                            <template if="[[!patent.hidden]]" is="dom-if">
-                                                <inbox-item item="[[patent]]"></inbox-item>
+                                            <template as="patent" is="dom-repeat" items="[[row.patent]]">
+                                                <template if="[[!patent.hidden]]" is="dom-if">
+                                                    <inbox-item item="[[patent]]"></inbox-item>
+                                                </template>
                                             </template>
                                         </template>
                                     </template>
@@ -333,6 +335,10 @@
                     return [];
                 }
             },
+            selected_menu_id: {
+                type: String,
+                value: ""
+            },
             page_index: {
                 type: Number,
                 value: 1
@@ -386,6 +392,15 @@
 
         search: function() {
             this.$.searchBar.toggle();
+        },
+
+        select_menu: function(e, d) {
+            this.selected_menu_id = d.item.dataset.id;
+            this.menuToggle();
+        },
+
+        selected_menu: function(A, B, C) {
+            return (B != C) ? (A == B) : true;
         },
 
         share: function() {
