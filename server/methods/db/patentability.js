@@ -1,6 +1,6 @@
 Meteor.methods({
 
-    insert_patentability: function(input) {
+    insert_cluster: function(input) {
         this.unblock();
 
         check(input, {
@@ -16,6 +16,7 @@ Meteor.methods({
         if (row) {
             return row;
         } else {
+            input.patent = [];
             input._id = patentability.insert(input);
 
             Meteor.call("cluster_loop", {
@@ -29,6 +30,40 @@ Meteor.methods({
 
             return input;
         }
+    },
+
+    insert_seed: function(input) {
+        this.unblock();
+
+        check(input, {
+            keyword: String
+        });
+
+        // var user = Meteor.user();
+        // if (!user) throw new Meteor.Error(422, "userNotFound");
+
+        var row = patentability.findOne({
+            cluster_keyword: {
+                $exists: false
+            },
+            keyword: input.keyword
+        });
+
+        if (row) {
+            return row;
+        } else {
+            input.patent = [];
+            input._id = patentability.insert(input);
+
+            // Meteor.call("seed_loop", input._id, function(error, response) {
+            //     if (error) {
+            //         console.log(error);
+            //     }
+            // });
+
+            return input;
+        }
+
     }
 
 });

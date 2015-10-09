@@ -78,21 +78,26 @@
             <paper-header-panel drawer>
                 <iron-selector>
                     <template is="dom-repeat" items="[[list]]">
-                        <template if="[[lessThan(item.cluster.length, 100)]]" is="dom-if">
-
+                        <template if="[[lessThan(item.patent.length, 100)]]" is="dom-if">
                             <paper-icon-item class="cursor-p hover menu-li relative" data-id$="[[item._id]]">
                                 <div item-icon>
-                                    <selectable-icon icon_class$="[[icon_class(item.cluster_keyword)]]" icon_text$="[[icon_count(item.cluster.length)]]"></selectable-icon>
+                                    <selectable-icon icon_class$="[[icon_class(item.keyword)]]" icon_text$="[[icon_count(item.patent.length)]]"></selectable-icon>
                                 </div>
 
                                 <paper-item-body two-line style="margin-right: 0; min-height: 0; padding: 14px 0;">
-                                    <div class="lowercase">[[item.cluster_keyword]]</div>
-                                    <div secondary>topic - <span class="lowercase">[[item.keyword]]</span></div>
+                                    <div class="lowercase">
+                                        <span hidden$="[[!item.cluster_keyword]]">[[item.cluster_keyword]]</span>
+                                        <span hidden$="[[item.cluster_keyword]]">[[item.keyword]]</span>
+                                    </div>
+
+                                    <div secondary>
+                                        <span hidden$="[[!item.cluster_keyword]]">topic - <span class="lowercase">[[item.keyword]]</span></span>
+                                        <span hidden$="[[item.cluster_keyword]]">concept</span>
+                                    </div>
                                 </paper-item-body>
 
                                 <!-- <paper-ripple></paper-ripple> -->
                             </paper-icon-item>
-
                         </template>
                     </template>
 
@@ -133,12 +138,17 @@
                         <div class="center-justified horizontal layout">
                             <div class="li">
                                 <iron-selector attr-for-selected="item" multi selectable="inbox-item" selected-attribute="selected" selected-values="{{list_selected}}">
-                                    <template as="cluster" is="dom-repeat" items="[[list]]">
+                                    <template as="row" is="dom-repeat" items="[[list]]">
                                         <div class="bordered center horizontal justified layout">
-                                            <div class="cursor-d etc lowercase" style="padding: 16px;">[[cluster.cluster_keyword]]</div>
-                                            <paper-icon-button icon="close" on-tap="delete"></paper-icon-button>
+                                            <div class="cursor-d etc lowercase" style="padding: 16px;">
+                                                <span hidden$="[[!row.cluster_keyword]]">[[row.cluster_keyword]]</span>
+                                                <span hidden$="[[row.cluster_keyword]]">[[row.keyword]]</span>
+                                            </div>
+
+                                            <paper-icon-button icon="close" on-tap="delete"></paper-icon-row>
                                         </div>
-                                        <template as="patent" is="dom-repeat" items="[[cluster.cluster]]">
+
+                                        <template as="patent" is="dom-repeat" items="[[row.patent]]">
                                             <inbox-item item="[[patent]]" data-id$="[[patent._id]]"></inbox-item>
                                         </template>
                                     </template>
@@ -156,7 +166,7 @@
 
         <paper-dialog id="add" style="width: 320px;">
             <div>Add your concept in single line, Our semantic search will check patentability</div>
-            <paper-input label="add concept" value="{{keyword}}"></paper-input>
+            <paper-input id="keyword" label="add concept"></paper-input>
             <div class="buttons">
                 <paper-button dialog-dismiss>
                     <iron-icon icon="close"></iron-icon>
@@ -180,7 +190,23 @@
     Polymer({
 
         addButton: function() {
-            this.toast("OK");
+            var keyword = this.$.keyword.value.trim();
+
+            if (keyword.length) {
+                var _this = this;
+
+                Meteor.call("insert_seed", {
+                    keyword: keyword
+                }, function(error, response) {
+                    if (error) {
+                        _this.toast(error.reason);
+                    } else {
+                        _this.store(response);
+                    }
+                });
+            } else {
+                this.toast("empty concept");
+            }
         },
 
         addFab: function() {

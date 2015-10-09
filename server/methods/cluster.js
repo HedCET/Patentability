@@ -23,8 +23,6 @@ Meteor.methods({
                 for (var A = 0; A < response.length; A++) {
                     response[A].cluster_keyword = response[A].keyword;
                     response[A].keyword = input;
-
-                    response[A].cluster = [];
                 }
 
                 return response;
@@ -62,6 +60,9 @@ Meteor.methods({
 
             if (cluster_loop.statusCode === 200) {
                 if (JSON.parse(cluster_loop.content) instanceof Object) {
+
+                    console.log(cluster_loop.content);
+
                     var cluster = JSON.parse(cluster_loop.content);
 
                     for (var A = 0; A < cluster.d.length; A++) {
@@ -102,12 +103,12 @@ Meteor.methods({
                             _id: input.id
                         }, {
                             $addToSet: {
-                                cluster: cluster.d[A]
+                                patent: cluster.d[A]
                             }
                         });
                     }
 
-                    if (cluster.count.NumRows < cluster.count.nextStart) {
+                    if (cluster.count.nextStart < cluster.count.NumRows) {
                         Meteor.call("cluster_loop", {
                             id: input.id,
                             start: cluster.count.nextStart

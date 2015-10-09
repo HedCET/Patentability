@@ -115,7 +115,7 @@
             this.async(function() {
                 var _this = this;
 
-                Meteor.call("insert_patentability", {
+                Meteor.call("insert_cluster", {
                     cluster_keyword: d.item.dataset.cluster_keyword,
                     keyword: d.item.dataset.keyword
                 }, function(error, response) {
