@@ -124,7 +124,7 @@
                     <paper-icon-button class="selection-hidden" icon="search" on-tap="search"></paper-icon-button>
                 </paper-toolbar>
 
-                <neon-animated-pages class="fit" selected="[[main_page]]">
+                <neon-animated-pages class="fit" selected="[[page_index]]">
                     <neon-animatable class="center-center layout vertical">
                         <div>Empty ..</div>
                     </neon-animatable>
@@ -224,6 +224,7 @@
         },
 
         observers: [
+            "_listChanged(list.splices)",
             "_listSelectedChanged(list_selected.splices)"
         ],
 
@@ -240,7 +241,7 @@
                     return [];
                 }
             },
-            main_page: {
+            page_index: {
                 type: Number,
                 value: 1
             }
@@ -259,6 +260,7 @@
 
             if (!exists) {
                 this.push("list", item);
+                this.toast("1 concept stored");
             }
         },
 
@@ -269,6 +271,10 @@
                 this.$.layout_inbox_toast.text = text;
                 this.$.layout_inbox_toast.show();
             }, 400);
+        },
+
+        _listChanged: function(change) {
+            this.page_index = (this.list.length ? 1 : 0);
         },
 
         _listSelectedChanged: function(change) {
