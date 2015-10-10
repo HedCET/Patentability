@@ -41,7 +41,8 @@
             if (Polymer.dom(e).localTarget.id != "selector") {
                 e.stopPropagation();
 
-                console.log(this.item._id);
+                document.querySelector("patent-view").item = this.item;
+                document.querySelector("patent-view").toggle();
             }
         },
 

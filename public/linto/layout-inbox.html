@@ -204,7 +204,8 @@
             </div>
         </paper-dialog>
 
-        <search-bar id="searchBar"></search-bar>
+        <search-bar id="search_bar"></search-bar>
+        <patent-view id="patent_view"></patent-view>
 
         <paper-toast class="cursor-d horizontal justified layout" duration="4000" id="layout_inbox_toast" on-transitionend="layout_inbox_toast" style="font-size: 14px; margin-right: 12px; padding: 16px; z-index: 1000;" text="">
             <div class="cursor-p self-start" hidden$="[[!boolean(undo.length)]]" on-tap="undo_patent" style="color: #FFEB3B; margin-left: 8px;">UNDO</div>
@@ -265,7 +266,7 @@
                     Meteor.subscribe("patentability", _.map(this.list, function(A) {
                         return A._id;
                     }));
-                }, 400);
+                }, 4000);
             }
         },
 
@@ -416,7 +417,7 @@
         },
 
         search: function() {
-            this.$.searchBar.toggle();
+            this.$.search_bar.toggle();
         },
 
         share: function() {

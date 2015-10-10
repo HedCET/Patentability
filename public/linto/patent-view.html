@@ -1,0 +1,107 @@
+<dom-module id="patent-view">
+
+    <style>
+    :host {
+        display: none;
+    }
+    
+    :host([active]) {
+        display: block;
+    }
+    
+    paper-toolbar {
+        --paper-toolbar-background: #9E9E9E;
+        --paper-toolbar-color: white;
+    }
+    
+    paper-toolbar .title {
+        padding: 0 12px;
+    }
+    </style>
+
+    <template>
+        <template if="[[item]]" is="dom-if">
+            <paper-header-panel class="fit" style="background: white; z-index: 1;">
+                <paper-toolbar>
+                    <paper-icon-button icon="arrow-back" on-tap="toggle"></paper-icon-button>
+                    <div class="title">[[item.p_no]]</div>
+                    <paper-icon-button icon="more-vert" on-tap="more"></paper-icon-button>
+                </paper-toolbar>
+
+                <div class="center-justified horizontal layout">
+                    <div class="li">
+
+                        <!-- <row-code> -->
+
+                        <div style="padding: 24px 12px;">
+                            <div class="vertical layout">
+                                <div style="border-bottom: 2px solid #AAA; color: #AAA; padding: 4px 12px;">Title</div>
+                                <div style="padding: 12px;">[[item.title]]</div>
+                            </div>
+
+                            <div class="vertical layout">
+                                <div style="border-bottom: 2px solid #AAA; color: #AAA; padding: 4px 12px;">Filed</div>
+                                <div style="padding: 12px;">[[item.app_date]]</div>
+                            </div>
+
+                            <div class="vertical layout">
+                                <div style="border-bottom: 2px solid #AAA; color: #AAA; padding: 4px 12px;">Assignee</div>
+                                <div style="padding: 12px;">[[formatText(item.assignee)]]</div>
+                            </div>
+
+                            <div class="vertical layout">
+                                <div style="border-bottom: 2px solid #AAA; color: #AAA; padding: 4px 12px;">Abstract</div>
+                                <div style="padding: 12px;">[[item.abstract]]</div>
+                            </div>
+
+                            <div class="vertical layout">
+                                <div style="border-bottom: 2px solid #AAA; color: #AAA; padding: 4px 12px;">Concept</div>
+                                <div style="padding: 12px;">[[formatText(item.concept)]]</div>
+                            </div>
+
+                            <div class="vertical layout">
+                                <div style="border-bottom: 2px solid #AAA; color: #AAA; padding: 4px 12px;">Keyword</div>
+                                <div style="padding: 12px;">[[formatText(item.keyword)]]</div>
+                            </div>
+                        </div>
+
+                        <!-- </row-code> -->
+
+                        <div style="min-height: 80px;"></div>
+                    </div>
+                </div>
+            </paper-header-panel>
+        </template>
+    </template>
+
+    <script>
+    Polymer({
+
+        more: function() {
+            document.querySelector("layout-inbox").toast("moreNotFound");
+        },
+
+        is: "patent-view",
+
+        properties: {
+            active: {
+                notify: true,
+                reflectToAttribute: true,
+                type: Boolean,
+                value: false
+            },
+            item: Object
+        },
+
+        formatText: function(text) {
+            return text.replace(/;/g, ", ");
+        },
+
+        toggle: function() {
+            this.active = !this.active;
+        }
+
+    });
+    </script>
+
+</dom-module>
