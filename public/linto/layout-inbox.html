@@ -72,7 +72,7 @@
     </style>
 
     <template>
-        <iron-localstorage name="patentability" on-iron-localstorage-load-empty="initialize" value="{{list}}"></iron-localstorage>
+        <!-- <iron-localstorage name="patentability" on-iron-localstorage-load-empty="initialize" value="{{list}}"></iron-localstorage> -->
 
         <paper-drawer-panel id="paper_drawer_panel">
             <paper-header-panel drawer>
@@ -255,7 +255,7 @@
                     this.splice("list", index, 1);
                     this.toast("1 concept removed");
                 } else {
-                    this.set("list." + index, $.extend(true, this.list[index], item));
+                    // this.set("list." + index, $.extend(true, this.list[index], item));
                     // this.toast("1 concept changed");
                 }
             } else {
