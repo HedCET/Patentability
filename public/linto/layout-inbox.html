@@ -89,10 +89,10 @@
                     <!-- <paper-ripple></paper-ripple> -->
                 </paper-icon-item>
 
-                <iron-selector on-iron-activate="select_menu">
+                <iron-selector on-iron-activate="menu_select">
                     <template is="dom-repeat" items="[[list]]">
                         <template if="[[lessThan(item.patent.length, 100)]]" is="dom-if">
-                            <paper-icon-item class="cursor-p hover menu-li relative" data-id$="[[item._id]]">
+                            <paper-icon-item class="cursor-p hover menu-li relative" data-class$="[[icon_class(item.keyword)]]" data-id$="[[item._id]]">
                                 <div item-icon>
                                     <selectable-icon icon_class$="[[icon_class(item.keyword)]]" icon_text$="[[icon_count(item.patent.length)]]"></selectable-icon>
                                 </div>
@@ -139,7 +139,7 @@
                             <div class="li">
                                 <iron-selector attr-for-selected="item" multi selectable="inbox-item" selected-attribute="selected" selected-values="{{list_selected}}">
                                     <template as="row" is="dom-repeat" items="[[list]]">
-                                        <template if="[[selected_menu(row._id, selected_menu_id, '')]]" is="dom-if">
+                                        <template if="[[menu_selected(row._id, selected_menu_id, '')]]" is="dom-if">
                                             <div class="bordered center horizontal justified layout">
                                                 <div class="cursor-d etc lowercase" style="padding: 16px;">
                                                     <span hidden$="[[!row.cluster_keyword]]">[[row.cluster_keyword]]</span>
@@ -240,14 +240,6 @@
             this.$.add.open();
         },
 
-        boolean: function(boolean) {
-            return (boolean ? true : false);
-        },
-
-        clear_list_selection: function() {
-            this.list_selected = [];
-        },
-
         bind: function(item, removed) {
             var index = -1;
 
@@ -269,10 +261,20 @@
                 this.push("list", item);
                 this.toast("1 concept added");
 
-                Meteor.subscribe("patentability", _.map(this.list, function(A) {
-                    return A._id;
-                }));
+                this.async(function() {
+                    Meteor.subscribe("patentability", _.map(this.list, function(A) {
+                        return A._id;
+                    }));
+                }, 400);
             }
+        },
+
+        boolean: function(boolean) {
+            return (boolean ? true : false);
+        },
+
+        clear_list_selection: function() {
+            this.list_selected = [];
         },
 
         icon_class: function(text) {
@@ -303,6 +305,20 @@
 
         lessThan: function(A, B) {
             return A < B;
+        },
+
+        menu_select: function(e, d) {
+            $(this.$.toolBar).removeClass(function(index, A) {
+                return (A.match(/ [a-z]{1,}-[0-9]{3,} /g) || []).join(" ");
+            }).addClass(d.item.dataset.class);
+
+            this.selected_menu_id = d.item.dataset.id;
+
+            this.menuToggle();
+        },
+
+        menu_selected: function(A, B, C) {
+            return (B != C) ? (A == B) : true;
         },
 
         menuToggle: function() {
@@ -392,15 +408,6 @@
 
         search: function() {
             this.$.searchBar.toggle();
-        },
-
-        select_menu: function(e, d) {
-            this.selected_menu_id = d.item.dataset.id;
-            this.menuToggle();
-        },
-
-        selected_menu: function(A, B, C) {
-            return (B != C) ? (A == B) : true;
         },
 
         share: function() {
