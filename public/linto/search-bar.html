@@ -87,7 +87,7 @@
                     if (error) {
                         document.querySelector("layout-inbox").toast(error.reason);
                     } else {
-                        _this.set("list", response);
+                        _this.list = response;
 
                         if (_this.list.length) {
                             _this.$.title.textContent = _this.list.length + " patent category exists";

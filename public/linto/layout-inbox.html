@@ -152,7 +152,7 @@
                                             <div style="padding: 0 8px;">
                                                 <paper-progress hidden$="[[boolean(row.patent.length)]]" indeterminate style="width: 100%;"></paper-progress>
                                             </div>
-
+                                            <inbox-item item="[[patent]]"></inbox-item>
                                             <template as="patent" is="dom-repeat" items="[[row.patent]]">
                                                 <template if="[[!patent.hidden]]" is="dom-if">
                                                     <inbox-item item="[[patent]]"></inbox-item>
@@ -252,14 +252,21 @@
 
             if (exists) {
                 if (removed) {
-                    this.splice("list", index, 1);
+                    this.list.splice(index, 1);
+
                     this.toast("1 concept removed");
                 } else {
-                    // this.set("list." + index, $.extend(true, this.list[index], item));
+                    this.list[index] = _.clone($.extend(true, this.list[index], item));
+
+                    this.list[index].patent = _.clone(this.list[index].patent);
+                    this.list = _.clone(this.list);
+
                     // this.toast("1 concept changed");
                 }
             } else {
-                this.push("list", item);
+                this.list.unshift(item);
+                this.list = _.clone(this.list);
+
                 this.toast("1 concept added");
 
                 this.async(function() {
@@ -303,7 +310,7 @@
                 this.$.fab.translate3d(0, 0, 0);
 
                 if (this.undo.length) {
-                    this.set("undo", []);
+                    this.undo = [];
                 }
             }
         },
@@ -384,7 +391,7 @@
             for (var A = 0; A < this.list.length; A++) {
                 for (var Z = 0; Z < this.list[A].patent.length; Z++) {
                     if (-1 < this.undo.indexOf(this.list[A].patent[Z]._id)) {
-                        this.set("list." + A + ".patent." + Z + ".hidden", true);
+                        this.list[A].patent[Z].hidden = true;
                     }
                 }
             }
@@ -411,7 +418,8 @@
             });
 
             if (exists) {
-                this.splice("list", index, 1);
+                this.list.splice(index, 1);
+
                 // this.toast("1 concept removed");
             }
         },
@@ -437,7 +445,7 @@
             for (var A = 0; A < this.list.length; A++) {
                 for (var Z = 0; Z < this.list[A].patent.length; Z++) {
                     if (-1 < this.undo.indexOf(this.list[A].patent[Z]._id)) {
-                        this.set("list." + A + ".patent." + Z + ".hidden", false);
+                        this.list[A].patent[Z].hidden = false;
                     }
                 }
             }
