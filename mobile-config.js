@@ -8,13 +8,13 @@ App.accessRule("*://*.googleusercontent.com/*");
 // });
 
 App.info({
-    id: "patentability.vcompile.com",
+    id: "com.vcompile.patentability",
     name: "patentability",
-    description: "patentability semantic search",
-    version: "0.0.1",
-    author: "Linto Cheeran",
-    email: "linto@vcompile.com",
-    website: "http://github.com/HedCET"
+    description: "Patentability Semantic Search",
+    version: "1.0.0",
+    author: "LintoCheeran",
+    email: "linto.cet@gmail.com",
+    website: "http://vcompile.com/patentability"
 });
 
 // App.launchScreens({

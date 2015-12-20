@@ -1,16 +1,7 @@
-# Meteor packages used by this project, one per line.
-# Check this file (and the other files in this directory) into your repository.
-#
-# 'meteor add' and 'meteor remove' will edit this file for you,
-# but you can also edit it by hand.
-
-accounts-base
 accounts-google
 accounts-password
-blaze-html-templates    # Compile .html files into Meteor Blaze views
+# blaze-html-templates    # Compile .html files into Meteor Blaze views
 check
-crosswalk
-email
 http
 jquery                  # Helpful client-side library
 meteor-base             # Packages every Meteor app needs to have
@@ -22,8 +13,10 @@ standard-minifiers      # JS/CSS minifiers run for production mode
 tracker                 # Meteor's client-side reactive programming library
 
 hedcet:cordova-google-plus-native-sign-in
+kadira:flow-router
 meteorhacks:npm
 momentjs:moment
+mwc:compiler
 raix:push
 
 npm-container
