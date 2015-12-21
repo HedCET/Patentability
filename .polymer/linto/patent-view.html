@@ -68,22 +68,27 @@
                     <div class="li white">
                         <div class="vertical layout" style="margin: 16px;">
                             <div style="color: #AAA; font-size: 16px; line-height: 24px;">Title</div>
-                            <div class="lowercase">[[item.title]]</div>
+                            <div class="lowercase" style="font-size: 16px; line-height: 24px;">[[item.title]]</div>
+                        </div>
+
+                        <div class="vertical layout" style="margin: 16px;">
+                            <div style="color: #AAA; font-size: 16px; line-height: 24px;">Abstract</div>
+                            <div class="lowercase" style="font-size: 16px; line-height: 24px;">[[item.abstract]]</div>
+                        </div>
+
+                        <div class="vertical layout" style="margin: 16px;">
+                            <div style="color: #AAA; font-size: 16px; line-height: 24px;">Keyword</div>
+                            <div class="lowercase" style="font-size: 16px; line-height: 24px;">[[return_keyword_text(item.keyword)]]</div>
                         </div>
 
                         <div class="vertical layout" style="margin: 16px;">
                             <div style="color: #AAA; font-size: 16px; line-height: 24px;">Filed</div>
-                            <div>[[item.app_date]]</div>
+                            <div style="font-size: 16px; line-height: 24px;">[[item.app_date]]</div>
                         </div>
 
-                        <div class="vertical layout" style="margin: 16px;">
+                        <div class="vertical layout" style="margin: 16px; margin-bottom: 48px;">
                             <div style="color: #AAA; font-size: 16px; line-height: 24px;">Assignee</div>
-                            <div class="lowercase">[[return_assignee_text(item.assignee)]]</div>
-                        </div>
-
-                        <div class="vertical layout" style="margin: 16px; margin-bottom: 32px;">
-                            <div style="color: #AAA; font-size: 16px; line-height: 24px;">Abstract</div>
-                            <div class="lowercase">[[item.abstract]]</div>
+                            <div class="lowercase" style="font-size: 16px; line-height: 24px;">[[return_assignee_text(item.assignee)]]</div>
                         </div>
                     </div>
                 </div>
@@ -124,8 +129,12 @@
             return (text ? text.replace(/;/g, ", ") : "#");
         },
 
+        return_keyword_text: function(text) {
+            return (text ? text.replace(/;/g, ", ") : "#");
+        },
+
         return_concept_array: function(text) {
-            return (text ? text.trim().replace(/\s+/g, " ").split(/;/) : "#");
+            return (text ? text.split(/;/) : "#");
         }
 
     });
