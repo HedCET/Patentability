@@ -23357,6 +23357,7 @@ paper-calendar {
                 e.stopPropagation();
 
                 document.querySelector("#main-page").selected = 2;
+                document.querySelector("#patent-view paper-scroll-header-panel").fire("iron-resize");
             }
         },
 
@@ -23463,47 +23464,45 @@ paper-calendar {
 
     <template>
         <paper-scroll-header-panel class="fit">
-            <paper-toolbar id="main_toolbar">
+            <paper-toolbar id="main-toolbar">
                 <paper-icon-button class="selection-visible" icon="arrow-back" on-click="clear_torrent_selection"></paper-icon-button>
                 <paper-icon-button class="selection-hidden" icon="menu" on-click="menu_toggle" paper-drawer-toggle=""></paper-icon-button>
 
-                <div class="title" id="main_toolbar_title">Patentability</div>
+                <div class="title" id="main-toolbar-title">Patentability</div>
 
                 <paper-icon-button class="selection-visible" icon="delete" on-click="remove_patent"></paper-icon-button>
                 <paper-icon-button class="selection-visible" icon="social:share" on-click="share"></paper-icon-button>
                 <paper-icon-button class="selection-hidden" icon="search" on-click="search_bar"></paper-icon-button>
             </paper-toolbar>
 
-            <div class="content">
-                <div class="blue-700" style="height: 256px"></div>
+            <div class="blue-700" style="height: 256px"></div>
 
-                <iron-selector activate-event="click" attr-for-selected="item" multi="" selectable="inbox-item" selected-attribute="selected" selected-values="{{patent_selected}}">
-                    <template is="dom-repeat" items="[[project]]">
-                        <template if="[[project_selected(menu_selected, item._id)]]" is="dom-if">
-                            <div class="blue-700 center-justified horizontal layout">
-                                <div class="blue-500 center horizontal layout li">
-                                    <div class="cursor-d flex lowercase" style="line-height: 24px; padding: 16px;">[[item.keyword]]</div>
+            <iron-selector activate-event="click" attr-for-selected="item" multi="" selectable="inbox-item" selected-attribute="selected" selected-values="{{patent_selected}}">
+                <template is="dom-repeat" items="[[project]]">
+                    <template if="[[project_selected(menu_selected, item._id)]]" is="dom-if">
+                        <div class="blue-700 center-justified horizontal layout">
+                            <div class="blue-500 center horizontal layout li">
+                                <div class="cursor-d flex lowercase" style="line-height: 24px; padding: 16px;">[[item.keyword]]</div>
 
-                                    <paper-icon-button data-index$="[[index]]" icon="sort" on-click="sort"></paper-icon-button>
-                                    <paper-icon-button data-id$="[[item._id]]" icon="close" on-click="remove_project" style="margin-right: 8px;"></paper-icon-button>
-                                </div>
+                                <paper-icon-button data-index$="[[index]]" icon="sort" on-click="sort"></paper-icon-button>
+                                <paper-icon-button data-id$="[[item._id]]" icon="close" on-click="remove_project" style="margin-right: 8px;"></paper-icon-button>
                             </div>
+                        </div>
 
-                            <div class="center-justified horizontal layout">
-                                <div class="li">
-                                    <paper-progress class="project_progress" data-id$="[[item._id]]" hidden="" style="width: 100%;"></paper-progress>
-                                </div>
+                        <div class="center-justified horizontal layout">
+                            <div class="li">
+                                <paper-progress class="project_progress" data-id$="[[item._id]]" hidden="" style="width: 100%;"></paper-progress>
                             </div>
+                        </div>
 
-                            <template as="patent" is="dom-repeat" items="[[item.patent]]">
-                                <inbox-item item$="[[patent]]"></inbox-item>
-                            </template>
+                        <template as="patent" is="dom-repeat" items="[[item.patent]]">
+                            <inbox-item item$="[[patent]]"></inbox-item>
                         </template>
                     </template>
-                </iron-selector>
+                </template>
+            </iron-selector>
 
-                <div style="min-height: 80px;"></div>
-            </div>
+            <div style="min-height: 80px;"></div>
         </paper-scroll-header-panel>
 
         <paper-fab class="menu-b" id="fab" icon="add" on-click="add_project"></paper-fab>
@@ -23700,7 +23699,7 @@ paper-calendar {
                 </div>
             </paper-header-panel>
 
-            <neon-animated-pages class="fit" id="main-page" main="" selected="2">
+            <neon-animated-pages class="fit" id="main-page" main="" selected="1">
                 <neon-animatable>
                     
                 </neon-animatable>
@@ -24276,7 +24275,7 @@ paper-calendar {
 
     <template>
         <paper-scroll-header-panel class="fit">
-            <paper-toolbar id="main_toolbar">
+            <paper-toolbar id="main-toolbar">
                 <paper-icon-button icon="arrow-back" on-click="back"></paper-icon-button>
 
                 <div class="title">[[item.p_no]]</div>
@@ -24288,68 +24287,66 @@ paper-calendar {
                     <paper-icon-button class="dropdown-trigger" icon="more-vert"></paper-icon-button>
 
                     <paper-menu class="dropdown-content" style="min-width: 200px;">
-                        <paper-item class="cursor-p">Add Tags</paper-item>
+                        <paper-item class="cursor-p">Manage Taxonomy</paper-item>
                     </paper-menu>
                 </paper-menu-button>
             </paper-toolbar>
 
-            <div class="content">
-                <div class="blue-700">
-                    <div class="center-justified horizontal layout">
-                        <div class="horizontal layout li wrap" style="padding: 4px 12px;">
-                            <template as="concept" is="dom-repeat" items="[[return_concept_array(item.concept)]]">
-                                <div class="cursor-p lowercase" on-click="concept_opt" style="background: rgba(255, 255, 255, .95); border-radius: 24px; color: #1976D2; margin: 4px 8px 4px 0; padding: 4px 12px;">[[concept]]</div>
-                            </template>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="blue-700 center-justified horizontal layout">
-                    <div class="blue-500 center horizontal layout li">
-                        <div class="cursor-d flex" style="line-height: 24px; padding: 16px;"><span>[[item.p_no]]</span> / Details</div>
-
-                        <paper-menu-button horizontal-align="right" style="margin-right: 8px;">
-                            <paper-icon-button class="dropdown-trigger" icon="arrow-drop-down"></paper-icon-button>
-
-                            <paper-menu attr-for-selected="data-id" class="dropdown-content" selected="Details" style="min-width: 200px;">
-                                <paper-item class="cursor-p" data-id="Details">Details</paper-item>
-                                <paper-item class="cursor-p" data-id="Technologies">Technologies</paper-item>
-                            </paper-menu>
-                        </paper-menu-button>
-                    </div>
-                </div>
-
+            <div class="blue-700">
                 <div class="center-justified horizontal layout">
-                    <div class="li white">
-                        <div class="vertical layout" style="margin: 16px;">
-                            <div style="color: #AAA; font-size: 16px; line-height: 24px;">Title</div>
-                            <div class="lowercase" style="font-size: 16px; line-height: 24px;">[[item.title]]</div>
-                        </div>
-
-                        <div class="vertical layout" style="margin: 16px;">
-                            <div style="color: #AAA; font-size: 16px; line-height: 24px;">Abstract</div>
-                            <div class="lowercase" style="font-size: 16px; line-height: 24px;">[[item.abstract]]</div>
-                        </div>
-
-                        <div class="vertical layout" style="margin: 16px;">
-                            <div style="color: #AAA; font-size: 16px; line-height: 24px;">Keyword</div>
-                            <div class="lowercase" style="font-size: 16px; line-height: 24px;">[[return_keyword_text(item.keyword)]]</div>
-                        </div>
-
-                        <div class="vertical layout" style="margin: 16px;">
-                            <div style="color: #AAA; font-size: 16px; line-height: 24px;">Filed</div>
-                            <div style="font-size: 16px; line-height: 24px;">[[item.app_date]]</div>
-                        </div>
-
-                        <div class="vertical layout" style="margin: 16px; margin-bottom: 48px;">
-                            <div style="color: #AAA; font-size: 16px; line-height: 24px;">Assignee</div>
-                            <div class="lowercase" style="font-size: 16px; line-height: 24px;">[[return_assignee_text(item.assignee)]]</div>
-                        </div>
+                    <div class="horizontal layout li wrap" style="padding: 4px 12px;">
+                        <template as="concept" is="dom-repeat" items="[[return_concept_array(item.concept)]]">
+                            <div class="cursor-p lowercase" on-click="concept_opt" style="background: rgba(255, 255, 255, .95); border-radius: 24px; color: #1976D2; margin: 4px 8px 4px 0; padding: 4px 12px;">[[concept]]</div>
+                        </template>
                     </div>
                 </div>
-
-                <div style="min-height: 80px;"></div>
             </div>
+
+            <div class="blue-700 center-justified horizontal layout">
+                <div class="blue-500 center horizontal layout li">
+                    <div class="cursor-d flex" style="line-height: 24px; padding: 16px;"><span>[[item.p_no]]</span> / Details</div>
+
+                    <paper-menu-button horizontal-align="right" style="margin-right: 8px;">
+                        <paper-icon-button class="dropdown-trigger" icon="arrow-drop-down"></paper-icon-button>
+
+                        <paper-menu attr-for-selected="data-id" class="dropdown-content" selected="Details" style="min-width: 200px;">
+                            <paper-item class="cursor-p" data-id="Details">Details</paper-item>
+                            <paper-item class="cursor-p" data-id="Technologies">Technologies</paper-item>
+                        </paper-menu>
+                    </paper-menu-button>
+                </div>
+            </div>
+
+            <div class="center-justified horizontal layout">
+                <div class="li white">
+                    <div class="layout vertical" style="margin: 16px;">
+                        <div style="color: #AAA; font-size: 16px; line-height: 24px;">Title</div>
+                        <div class="lowercase" style="font-size: 16px; line-height: 24px;">[[item.title]]</div>
+                    </div>
+
+                    <div class="layout vertical" style="margin: 16px;">
+                        <div style="color: #AAA; font-size: 16px; line-height: 24px;">Abstract</div>
+                        <div class="lowercase" style="font-size: 16px; line-height: 24px;">[[item.abstract]]</div>
+                    </div>
+
+                    <div class="layout vertical" style="margin: 16px;">
+                        <div style="color: #AAA; font-size: 16px; line-height: 24px;">Keyword</div>
+                        <div class="lowercase" style="font-size: 16px; line-height: 24px;">[[return_keyword_text(item.keyword)]]</div>
+                    </div>
+
+                    <div class="layout vertical" style="margin: 16px;">
+                        <div style="color: #AAA; font-size: 16px; line-height: 24px;">Filed</div>
+                        <div style="font-size: 16px; line-height: 24px;">[[item.app_date]]</div>
+                    </div>
+
+                    <div class="layout vertical" style="margin: 16px; margin-bottom: 48px;">
+                        <div style="color: #AAA; font-size: 16px; line-height: 24px;">Assignee</div>
+                        <div class="lowercase" style="font-size: 16px; line-height: 24px;">[[return_assignee_text(item.assignee)]]</div>
+                    </div>
+                </div>
+            </div>
+
+            <div style="min-height: 80px;"></div>
         </paper-scroll-header-panel>
     </template>
 
@@ -24358,6 +24355,7 @@ paper-calendar {
 
         back: function() {
             document.querySelector("#main-page").selected = 1;
+            document.querySelector("#inbox-view paper-scroll-header-panel").fire("iron-resize");
         },
 
         is: "patent-view",

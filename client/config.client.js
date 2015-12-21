@@ -14,11 +14,11 @@ if (Meteor.isCordova) {
         });
     }
 
-    function pause() {
-        project_save();
-    }
+    // function pause() {
+    //     project_save();
+    // }
 } else {
-    $(window).on("beforeunload", function() {
-        project_save();
-    });
+    // $(window).on("beforeunload", function() {
+    //     project_save();
+    // });
 }

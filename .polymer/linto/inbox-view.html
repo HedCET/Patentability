@@ -67,47 +67,45 @@
 
     <template>
         <paper-scroll-header-panel class="fit">
-            <paper-toolbar id="main_toolbar">
+            <paper-toolbar id="main-toolbar">
                 <paper-icon-button class="selection-visible" icon="arrow-back" on-click="clear_torrent_selection"></paper-icon-button>
                 <paper-icon-button class="selection-hidden" icon="menu" on-click="menu_toggle" paper-drawer-toggle></paper-icon-button>
 
-                <div class="title" id="main_toolbar_title">Patentability</div>
+                <div class="title" id="main-toolbar-title">Patentability</div>
 
                 <paper-icon-button class="selection-visible" icon="delete" on-click="remove_patent"></paper-icon-button>
                 <paper-icon-button class="selection-visible" icon="social:share" on-click="share"></paper-icon-button>
                 <paper-icon-button class="selection-hidden" icon="search" on-click="search_bar"></paper-icon-button>
             </paper-toolbar>
 
-            <div class="content">
-                <div class="blue-700" style="height: 256px"></div>
+            <div class="blue-700" style="height: 256px"></div>
 
-                <iron-selector activate-event="click" attr-for-selected="item" multi selectable="inbox-item" selected-attribute="selected" selected-values="{{patent_selected}}">
-                    <template is="dom-repeat" items="[[project]]">
-                        <template if="[[project_selected(menu_selected, item._id)]]" is="dom-if">
-                            <div class="blue-700 center-justified horizontal layout">
-                                <div class="blue-500 center horizontal layout li">
-                                    <div class="cursor-d flex lowercase" style="line-height: 24px; padding: 16px;">[[item.keyword]]</div>
+            <iron-selector activate-event="click" attr-for-selected="item" multi selectable="inbox-item" selected-attribute="selected" selected-values="{{patent_selected}}">
+                <template is="dom-repeat" items="[[project]]">
+                    <template if="[[project_selected(menu_selected, item._id)]]" is="dom-if">
+                        <div class="blue-700 center-justified horizontal layout">
+                            <div class="blue-500 center horizontal layout li">
+                                <div class="cursor-d flex lowercase" style="line-height: 24px; padding: 16px;">[[item.keyword]]</div>
 
-                                    <paper-icon-button data-index$="[[index]]" icon="sort" on-click="sort"></paper-icon-button>
-                                    <paper-icon-button data-id$="[[item._id]]" icon="close" on-click="remove_project" style="margin-right: 8px;"></paper-icon-button>
-                                </div>
+                                <paper-icon-button data-index$="[[index]]" icon="sort" on-click="sort"></paper-icon-button>
+                                <paper-icon-button data-id$="[[item._id]]" icon="close" on-click="remove_project" style="margin-right: 8px;"></paper-icon-button>
                             </div>
+                        </div>
 
-                            <div class="center-justified horizontal layout">
-                                <div class="li">
-                                    <paper-progress class="project_progress" data-id$="[[item._id]]" hidden style="width: 100%;"></paper-progress>
-                                </div>
+                        <div class="center-justified horizontal layout">
+                            <div class="li">
+                                <paper-progress class="project_progress" data-id$="[[item._id]]" hidden style="width: 100%;"></paper-progress>
                             </div>
+                        </div>
 
-                            <template as="patent" is="dom-repeat" items="[[item.patent]]">
-                                <inbox-item item$="[[patent]]"></inbox-item>
-                            </template>
+                        <template as="patent" is="dom-repeat" items="[[item.patent]]">
+                            <inbox-item item$="[[patent]]"></inbox-item>
                         </template>
                     </template>
-                </iron-selector>
+                </template>
+            </iron-selector>
 
-                <div style="min-height: 80px;"></div>
-            </div>
+            <div style="min-height: 80px;"></div>
         </paper-scroll-header-panel>
 
         <paper-fab class="menu-b" id="fab" icon="add" on-click="add_project"></paper-fab>
