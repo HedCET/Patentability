@@ -1,0 +1,98 @@
+<dom-module id="patent-view">
+
+    <style>
+    paper-toolbar {
+        --paper-toolbar-background: var(--paper-blue-700);
+        --paper-toolbar-color: white;
+    }
+    </style>
+
+    <template>
+        <paper-scroll-header-panel class="fit">
+            <paper-toolbar id="main_toolbar">
+                <paper-icon-button icon="arrow-back" on-click="toggle"></paper-icon-button>
+
+                <div class="title">[[item.p_no]]</div>
+
+                <paper-icon-button data-id$="[[item._id]]" icon="delete" on-click="remove_patent"></paper-icon-button>
+                <paper-icon-button data-id$="[[item._id]]" icon="social:share" on-click="share"></paper-icon-button>
+            </paper-toolbar>
+
+            <div class="content">
+                <div class="blue-700" style="height: 256px"></div>
+
+                <div class="blue-700 center-justified horizontal layout">
+                    <div class="blue-500 center horizontal layout li">
+                        <div class="cursor-d flex" style="line-height: 24px; padding: 16px;"><span>[[item.p_no]]</span> / Details</div>
+
+                        <paper-menu-button horizontal-align="right" style="margin-right: 8px;">
+                            <paper-icon-button class="dropdown-trigger" icon="more-vert"></paper-icon-button>
+
+                            <paper-menu attr-for-selected="data-id" class="dropdown-content" selected="Details" style="min-width: 200px;">
+                                <paper-item class="cursor-p" data-id="Details">Details</paper-item>
+                                <paper-item class="cursor-p" data-id="Documents">Documents</paper-item>
+                            </paper-menu>
+                        </paper-menu-button>
+                    </div>
+                </div>
+
+                <div class="center-justified horizontal layout">
+                    <div class="li white">
+                        <div class="vertical layout" style="margin: 16px;">
+                            <div style="color: #AAA; font-size: 16px; line-height: 24px; margin: 0 4px;">Title</div>
+                            <div class="lowercase" style="font-size: 14px; line-height: 20px; margin: 0 4px;">[[item.title]]</div>
+                        </div>
+
+                        <div class="vertical layout" style="margin: 16px;">
+                            <div style="color: #AAA; font-size: 16px; line-height: 24px; margin: 0 4px;">Filed</div>
+                            <div style="font-size: 14px; line-height: 20px; margin: 0 4px;">[[item.app_date]]</div>
+                        </div>
+
+                        <div class="vertical layout" style="margin: 16px;">
+                            <div style="color: #AAA; font-size: 16px; line-height: 24px; margin: 0 4px;">Assignee</div>
+                            <div class="lowercase" style="font-size: 14px; line-height: 20px; margin: 0 4px;">[[return_assignee_text(item.assignee)]]</div>
+                        </div>
+
+                        <div class="vertical layout" style="margin: 16px; margin-bottom: 32px;">
+                            <div style="color: #AAA; font-size: 16px; line-height: 24px; margin: 0 4px;">Abstract</div>
+                            <div class="lowercase" style="font-size: 14px; line-height: 20px; margin: 0 4px; text-align: justify;">[[item.abstract]]</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div style="min-height: 80px;"></div>
+            </div>
+        </paper-scroll-header-panel>
+    </template>
+
+    <script>
+    Polymer({
+
+        is: "patent-view",
+
+        properties: {
+            item: {
+                type: Object,
+                value: function() {
+                    return {
+                        "title": "DOWNLOAD MANAGEMENT METHOD AND DEVICE BASED ON ANDROID BROWSER",
+                        "abstract": "\nThe present disclosure provides a download management method and device based on Android browser. The download management method includes the following steps: obtaining a physical address of a network card of a television when a download request input from a user through the browser is received; and judging whether the television corresponding to the physical address is granted a download permission corresponding to the download request; if the physical address is granted the download permission, implementing the download according to the download request; otherwise, if the physical address is not granted the download permission, preventing the download. The method and device of the present disclosure can effectively control the download contents of the television and thus prevent random downloads from reducing the safety and stability of the system and further thus improves the user experience.\n",
+                        "app_date": "2013-01-21",
+                        "assignee": "SHENZHEN COOCAA NETWORK TECHNOLOGY CO LTD",
+                        "concept": "Computer network;Network interface controller;Telecommunications network;Telecommunication;Address space;MAC address;Physical address;User interface;Cable television;Server (computing);Mobile device;Internet;Graphical user interface;Data transmission;Java package;Modularity;Module (mathematics);Television network;Airport terminal;Radio",
+                        "keyword": "download request;physical address;download management;permission corresponding;download permission;android browser;television corresponding;network card;judging whether the television;terminal",
+                        "p_no": "EP2768206A4",
+                        "_id": "kN4Eumq5gzGCFA3AA"
+                    };
+                }
+            }
+        },
+
+        return_assignee_text: function(text) {
+            return (text ? text.replace(/;/g, ", ") : "#");
+        }
+
+    });
+    </script>
+
+</dom-module>

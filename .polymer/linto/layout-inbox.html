@@ -6,11 +6,6 @@
         z-index: 1;
     }
     
-    paper-fab {
-        --paper-fab-background: var(--paper-red-500);
-        --paper-fab-keyboard-focus-background: var(--paper-red-700);
-    }
-    
     paper-menu-button {
         padding: 0;
     }
@@ -24,19 +19,6 @@
     .menu-li {
         border-bottom: 2px solid #EEE;
         border-top: 2px solid #EEE;
-    }
-    
-    .menu-b {
-        bottom: 12px;
-        position: fixed;
-        right: 16px;
-        /*-webkit-transition: -webkit-transform 0.2s ease-in-out;*/
-        transition: transform 0.2s ease-in-out;
-        will-change: transform;
-    }
-    
-    .menu-b.move-down {
-        transform: translate3d(0, 80px, 0)!important;
     }
     
     .undo {
@@ -110,7 +92,7 @@
                 </div>
             </paper-header-panel>
 
-            <neon-animated-pages class="fit" id="main_page" main selected="1">
+            <neon-animated-pages class="fit" id="main_page" main selected="2">
                 <neon-animatable>
                     <!-- <paper-header-panel>
                             <div class="center-justified horizontal layout">
@@ -133,10 +115,9 @@
                 </neon-animatable>
 
                 <inbox-view id="inbox-view"></inbox-view>
+                <patent-view id="patent-view"></patent-view>
             </neon-animated-pages>
         </paper-drawer-panel>
-
-        <paper-fab class="menu-b" id="fab" icon="add" on-click="add_project"></paper-fab>
 
         <!-- <paper-dialog id="user_prompt" style="width: 320px;" with-backdrop>
             <div class="layout vertical">

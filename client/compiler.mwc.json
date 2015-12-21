@@ -37,6 +37,8 @@
         "bower_components/paper-scroll-header-panel/paper-scroll-header-panel.html",
         "bower_components/paper-slider/paper-slider.html",
         "bower_components/paper-styles/paper-styles.html",
+        "bower_components/paper-tabs/paper-tabs.html",
+        "bower_components/paper-tabs/paper-tab.html",
         "bower_components/paper-toast/paper-toast.html",
         "bower_components/paper-toggle-button/paper-toggle-button.html",
         "bower_components/paper-toolbar/paper-toolbar.html",
@@ -47,6 +49,7 @@
         "linto/inbox-view.html",
         "linto/layout-inbox.html",
         "linto/load-awesome.html",
+        "linto/patent-view.html",
         "linto/polymer-toast.html",
         "linto/search-bar.html",
         "linto/selectable-icon.html"

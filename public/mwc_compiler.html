@@ -14900,6 +14900,64 @@ The `aria-labelledby` attribute will be set to the header element, if one exists
 
 
 
+<script>
+
+  /**
+   * `Polymer.IronMenubarBehavior` implements accessible menubar behavior.
+   *
+   * @polymerBehavior Polymer.IronMenubarBehavior
+   */
+  Polymer.IronMenubarBehaviorImpl = {
+
+    hostAttributes: {
+      'role': 'menubar'
+    },
+
+    keyBindings: {
+      'left': '_onLeftKey',
+      'right': '_onRightKey'
+    },
+
+    _onUpKey: function(event) {
+      this.focusedItem.click();
+      event.detail.keyboardEvent.preventDefault();
+    },
+
+    _onDownKey: function(event) {
+      this.focusedItem.click();
+      event.detail.keyboardEvent.preventDefault();
+    },
+
+    _onLeftKey: function() {
+      this._focusPrevious();
+    },
+
+    _onRightKey: function() {
+      this._focusNext();
+    },
+
+    _onKeydown: function(event) {
+      if (this.keyboardEventMatchesKeys(event, 'up down left right esc')) {
+        return;
+      }
+
+      // all other keys focus the menu item starting with that character
+      this._focusWithKeyboardEvent(event);
+    }
+
+  };
+
+  /** @polymerBehavior Polymer.IronMenubarBehavior */
+  Polymer.IronMenubarBehavior = [
+    Polymer.IronMenuBehavior,
+    Polymer.IronMenubarBehaviorImpl
+  ];
+
+</script>
+
+
+
+
 
 
 
@@ -21983,6 +22041,557 @@ paper-calendar {
    */
 
 </script>
+<iron-iconset-svg name="paper-tabs" size="24">
+<svg><defs>
+<g id="chevron-left"><path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"></path></g>
+<g id="chevron-right"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></g>
+</defs></svg>
+</iron-iconset-svg>
+<dom-module id="paper-tab" assetpath="/bower_components/paper-tabs/">
+  <template>
+    <style>
+      :host {
+        @apply(--layout-inline);
+        @apply(--layout-center);
+        @apply(--layout-center-justified);
+        @apply(--layout-flex);
+
+        position: relative;
+        padding: 0 12px;
+        overflow: hidden;
+        cursor: pointer;
+
+        @apply(--paper-tab);
+      }
+
+      :host(:focus) {
+        outline: none;
+      }
+
+      :host([link]) {
+        padding: 0;
+      }
+
+      .tab-content {
+        height: 100%;
+        transform: translateZ(0);
+          -webkit-transform: translateZ(0);
+        transition: opacity 0.1s cubic-bezier(0.4, 0.0, 1, 1);
+        @apply(--layout-horizontal);
+        @apply(--layout-center-center);
+        @apply(--layout-flex-auto);
+        @apply(--paper-tab-content);
+      }
+
+      :host(:not(.iron-selected)) > .tab-content {
+        opacity: 0.8;
+
+        @apply(--paper-tab-content-unselected);
+      }
+
+      :host(:focus) .tab-content {
+        opacity: 1;
+        font-weight: 700;
+      }
+
+      paper-ripple {
+        color: var(--paper-tab-ink, --paper-yellow-a100);
+      }
+
+      .tab-content > ::content > a {
+        @apply(--layout-flex)
+
+        height: 100%;
+      }
+    </style>
+
+    <div class="tab-content">
+      <content></content>
+    </div>
+  </template>
+
+  <script>
+    Polymer({
+      is: 'paper-tab',
+
+      behaviors: [
+        Polymer.IronControlState,
+        Polymer.IronButtonState,
+        Polymer.PaperRippleBehavior
+      ],
+
+      hostAttributes: {
+        role: 'tab'
+      },
+
+      listeners: {
+        down: '_updateNoink'
+      },
+
+      ready: function() {
+        var ripple = this.getRipple();
+        ripple.initialOpacity = 0.95;
+        ripple.opacityDecayVelocity = 0.98;
+      },
+
+      attached: function() {
+        this._updateNoink();
+      },
+
+      get _parentNoink () {
+        var parent = Polymer.dom(this).parentNode;
+        return !!parent && !!parent.noink;
+      },
+
+      _updateNoink: function() {
+        this.noink = !!this.noink || !!this._parentNoink;
+      }
+    });
+  </script>
+</dom-module>
+<dom-module id="paper-tabs" assetpath="/bower_components/paper-tabs/">
+  <template>
+    <style>
+      :host {
+        @apply(--layout);
+        @apply(--layout-center);
+
+        height: 48px;
+        font-size: 14px;
+        font-weight: 500;
+        overflow: hidden;
+          -moz-user-select: none;
+          -ms-user-select: none;
+          -webkit-user-select: none;
+        user-select: none;
+        -webkit-tap-highlight-color: rgba(0,0,0,0);
+
+        @apply(--paper-tabs);
+      }
+
+      :host-context([dir=rtl]) {
+        @apply(--layout-horizontal-reverse);
+      }
+
+      #tabsContainer {
+        position: relative;
+        height: 100%;
+        white-space: nowrap;
+        overflow: hidden;
+        @apply(--layout-flex);
+      }
+
+      #tabsContent {
+        height: 100%;
+      }
+
+      #tabsContent.scrollable {
+        position: absolute;
+        white-space: nowrap;
+      }
+
+      #tabsContent.horizontal {
+        @apply(--layout-horizontal);
+      }
+
+      .hidden {
+        display: none;
+      }
+
+      .not-visible {
+        opacity: 0;
+        cursor: default;
+      }
+
+      paper-icon-button {
+        width: 48px;
+        height: 48px;
+        padding: 12px;
+        margin: 0 4px;
+      }
+
+      #selectionBar {
+        position: absolute;
+        height: 2px;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background-color: var(--paper-tabs-selection-bar-color, --paper-yellow-a100);
+          -webkit-transform: scale(0);
+        transform: scale(0);
+          -webkit-transform-origin: left center;
+        transform-origin: left center;
+          transition: -webkit-transform;
+        transition: transform;
+
+        @apply(--paper-tabs-selection-bar);
+      }
+
+      #selectionBar.align-bottom {
+        top: 0;
+        bottom: auto;
+      }
+
+      #selectionBar.expand {
+        transition-duration: 0.15s;
+        transition-timing-function: cubic-bezier(0.4, 0.0, 1, 1);
+      }
+
+      #selectionBar.contract {
+        transition-duration: 0.18s;
+        transition-timing-function: cubic-bezier(0.0, 0.0, 0.2, 1);
+      }
+
+      #tabsContent > ::content > *:not(#selectionBar) {
+        height: 100%;
+      }
+    </style>
+
+    <paper-icon-button icon="paper-tabs:chevron-left" class$="[[_computeScrollButtonClass(_leftHidden, scrollable, hideScrollButtons)]]" on-up="_onScrollButtonUp" on-down="_onLeftScrollButtonDown" tabindex="-1"></paper-icon-button>
+
+    <div id="tabsContainer" on-track="_scroll" on-down="_down">
+      <div id="tabsContent" class$="[[_computeTabsContentClass(scrollable)]]">
+        <content select="*"></content>
+        <div id="selectionBar" class$="[[_computeSelectionBarClass(noBar, alignBottom)]]" on-transitionend="_onBarTransitionEnd"></div>
+      </div>
+    </div>
+
+    <paper-icon-button icon="paper-tabs:chevron-right" class$="[[_computeScrollButtonClass(_rightHidden, scrollable, hideScrollButtons)]]" on-up="_onScrollButtonUp" on-down="_onRightScrollButtonDown" tabindex="-1"></paper-icon-button>
+
+  </template>
+
+  <script>
+    Polymer({
+      is: 'paper-tabs',
+
+      behaviors: [
+        Polymer.IronResizableBehavior,
+        Polymer.IronMenubarBehavior
+      ],
+
+      properties: {
+        /**
+         * If true, ink ripple effect is disabled. When this property is changed,
+         * all descendant `<paper-tab>` elements have their `noink` property
+         * changed to the new value as well.
+         */
+        noink: {
+          type: Boolean,
+          value: false,
+          observer: '_noinkChanged'
+        },
+
+        /**
+         * If true, the bottom bar to indicate the selected tab will not be shown.
+         */
+        noBar: {
+          type: Boolean,
+          value: false
+        },
+
+        /**
+         * If true, the slide effect for the bottom bar is disabled.
+         */
+        noSlide: {
+          type: Boolean,
+          value: false
+        },
+
+        /**
+         * If true, tabs are scrollable and the tab width is based on the label width.
+         */
+        scrollable: {
+          type: Boolean,
+          value: false
+        },
+
+        /**
+         * If true, dragging on the tabs to scroll is disabled.
+         */
+        disableDrag: {
+          type: Boolean,
+          value: false
+        },
+
+        /**
+         * If true, scroll buttons (left/right arrow) will be hidden for scrollable tabs.
+         */
+        hideScrollButtons: {
+          type: Boolean,
+          value: false
+        },
+
+        /**
+         * If true, the tabs are aligned to bottom (the selection bar appears at the top).
+         */
+        alignBottom: {
+          type: Boolean,
+          value: false
+        },
+
+        /**
+         * Gets or sets the selected element. The default is to use the index of the item.
+         */
+        selected: {
+          type: String,
+          notify: true
+        },
+
+        selectable: {
+          type: String,
+          value: 'paper-tab'
+        },
+
+        _step: {
+          type: Number,
+          value: 10
+        },
+
+        _holdDelay: {
+          type: Number,
+          value: 1
+        },
+
+        _leftHidden: {
+          type: Boolean,
+          value: false
+        },
+
+        _rightHidden: {
+          type: Boolean,
+          value: false
+        },
+
+        _previousTab: {
+          type: Object
+        }
+      },
+
+      hostAttributes: {
+        role: 'tablist'
+      },
+
+      listeners: {
+        'iron-resize': '_onResize',
+        'iron-select': '_onIronSelect',
+        'iron-deselect': '_onIronDeselect'
+      },
+
+      created: function() {
+        this._holdJob = null;
+      },
+
+      ready: function() {
+        this.setScrollDirection('y', this.$.tabsContainer);
+      },
+
+      _noinkChanged: function(noink) {
+        var childTabs = Polymer.dom(this).querySelectorAll('paper-tab');
+        childTabs.forEach(noink ? this._setNoinkAttribute : this._removeNoinkAttribute);
+      },
+
+      _setNoinkAttribute: function(element) {
+        element.setAttribute('noink', '');
+      },
+
+      _removeNoinkAttribute: function(element) {
+        element.removeAttribute('noink');
+      },
+
+      _computeScrollButtonClass: function(hideThisButton, scrollable, hideScrollButtons) {
+        if (!scrollable || hideScrollButtons) {
+          return 'hidden';
+        }
+
+        if (hideThisButton) {
+          return 'not-visible';
+        }
+
+        return '';
+      },
+
+      _computeTabsContentClass: function(scrollable) {
+        return scrollable ? 'scrollable' : 'horizontal';
+      },
+
+      _computeSelectionBarClass: function(noBar, alignBottom) {
+        if (noBar) {
+          return 'hidden';
+        } else if (alignBottom) {
+          return 'align-bottom';
+        }
+
+        return '';
+      },
+
+      // TODO(cdata): Add `track` response back in when gesture lands.
+
+      _onResize: function() {
+        this.debounce('_onResize', function() {
+          this._scroll();
+          this._tabChanged(this.selectedItem);
+        }, 10);
+      },
+
+      _onIronSelect: function(event) {
+        this._tabChanged(event.detail.item, this._previousTab);
+        this._previousTab = event.detail.item;
+        this.cancelDebouncer('tab-changed');
+      },
+
+      _onIronDeselect: function(event) {
+        this.debounce('tab-changed', function() {
+          this._tabChanged(null, this._previousTab);
+        // See polymer/polymer#1305
+        }, 1);
+      },
+
+      get _tabContainerScrollSize () {
+        return Math.max(
+          0,
+          this.$.tabsContainer.scrollWidth -
+            this.$.tabsContainer.offsetWidth
+        );
+      },
+
+
+      _scroll: function(e, detail) {
+        if (!this.scrollable) {
+          return;
+        }
+
+        var ddx = (detail && -detail.ddx) || 0;
+        this._affectScroll(ddx);
+      },
+
+      _down: function(e) {
+        // go one beat async to defeat IronMenuBehavior
+        // autorefocus-on-no-selection timeout
+        this.async(function() {
+          if (this._defaultFocusAsync) {
+            this.cancelAsync(this._defaultFocusAsync);
+            this._defaultFocusAsync = null;
+          }
+        }, 1);
+      },
+
+      _affectScroll: function(dx) {
+        this.$.tabsContainer.scrollLeft += dx;
+
+        var scrollLeft = this.$.tabsContainer.scrollLeft;
+
+        this._leftHidden = scrollLeft === 0;
+        this._rightHidden = scrollLeft === this._tabContainerScrollSize;
+      },
+
+      _onLeftScrollButtonDown: function() {
+        this._scrollToLeft();
+        this._holdJob = setInterval(this._scrollToLeft.bind(this), this._holdDelay);
+      },
+
+      _onRightScrollButtonDown: function() {
+        this._scrollToRight();
+        this._holdJob = setInterval(this._scrollToRight.bind(this), this._holdDelay);
+      },
+
+      _onScrollButtonUp: function() {
+        clearInterval(this._holdJob);
+        this._holdJob = null;
+      },
+
+      _scrollToLeft: function() {
+        this._affectScroll(-this._step);
+      },
+
+      _scrollToRight: function() {
+        this._affectScroll(this._step);
+      },
+
+      _tabChanged: function(tab, old) {
+        if (!tab) {
+          this._positionBar(0, 0);
+          return;
+        }
+
+        var r = this.$.tabsContent.getBoundingClientRect();
+        var w = r.width;
+        var tabRect = tab.getBoundingClientRect();
+        var tabOffsetLeft = tabRect.left - r.left;
+
+        this._pos = {
+          width: this._calcPercent(tabRect.width, w),
+          left: this._calcPercent(tabOffsetLeft, w)
+        };
+
+        if (this.noSlide || old == null) {
+          // position bar directly without animation
+          this._positionBar(this._pos.width, this._pos.left);
+          return;
+        }
+
+        var oldRect = old.getBoundingClientRect();
+        var oldIndex = this.items.indexOf(old);
+        var index = this.items.indexOf(tab);
+        var m = 5;
+
+        // bar animation: expand
+        this.$.selectionBar.classList.add('expand');
+
+        if (oldIndex < index) {
+          this._positionBar(this._calcPercent(tabRect.left + tabRect.width - oldRect.left, w) - m,
+              this._left);
+        } else {
+          this._positionBar(this._calcPercent(oldRect.left + oldRect.width - tabRect.left, w) - m,
+              this._calcPercent(tabOffsetLeft, w) + m);
+        }
+
+        if (this.scrollable) {
+          this._scrollToSelectedIfNeeded(tabRect.width, tabOffsetLeft);
+        }
+      },
+
+      _scrollToSelectedIfNeeded: function(tabWidth, tabOffsetLeft) {
+        var l = tabOffsetLeft - this.$.tabsContainer.scrollLeft;
+        if (l < 0) {
+          this.$.tabsContainer.scrollLeft += l;
+        } else {
+          l += (tabWidth - this.$.tabsContainer.offsetWidth);
+          if (l > 0) {
+            this.$.tabsContainer.scrollLeft += l;
+          }
+        }
+      },
+
+      _calcPercent: function(w, w0) {
+        return 100 * w / w0;
+      },
+
+      _positionBar: function(width, left) {
+        width = width || 0;
+        left = left || 0;
+
+        this._width = width;
+        this._left = left;
+        this.transform(
+            'translate3d(' + left + '%, 0, 0) scaleX(' + (width / 100) + ')',
+            this.$.selectionBar);
+      },
+
+      _onBarTransitionEnd: function(e) {
+        var cl = this.$.selectionBar.classList;
+        // bar animation: expand -> contract
+        if (cl.contains('expand')) {
+          cl.remove('expand');
+          cl.add('contract');
+          this._positionBar(this._pos.width, this._pos.left);
+        // bar animation done
+        } else if (cl.contains('contract')) {
+          cl.remove('contract');
+        }
+      }
+    });
+  </script>
+</dom-module>
 <dom-module id="iron-a11y-announcer" assetpath="/bower_components/iron-a11y-announcer/">
   <style>
     :host {
@@ -22796,6 +23405,11 @@ paper-calendar {
 <dom-module id="inbox-view" assetpath="/linto/">
 
     <style>
+    paper-fab {
+        --paper-fab-background: var(--paper-red-500);
+        --paper-fab-keyboard-focus-background: var(--paper-red-700);
+    }
+    
     paper-progress {
         --paper-progress-active-color: var(--paper-red-500);
         --paper-progress-secondary-color: var(--paper-red-100);
@@ -22841,6 +23455,18 @@ paper-calendar {
     paper-toolbar .title {
         padding: 0 12px;
     }
+    
+    .menu-b {
+        bottom: 12px;
+        position: fixed;
+        right: 16px;
+        transition: transform 0.2s ease-in-out;
+        will-change: transform;
+    }
+    
+    .menu-b.move-down {
+        transform: translate3d(0, 80px, 0)!important;
+    }
     </style>
 
     <template>
@@ -22851,7 +23477,7 @@ paper-calendar {
 
                 <div class="title" id="main_toolbar_title">Patentability</div>
 
-                <paper-icon-button class="selection-visible" icon="delete" on-click="remove_torrent"></paper-icon-button>
+                <paper-icon-button class="selection-visible" icon="delete" on-click="remove_patent"></paper-icon-button>
                 <paper-icon-button class="selection-visible" icon="social:share" on-click="share"></paper-icon-button>
                 <paper-icon-button class="selection-hidden" icon="search" on-click="search_bar"></paper-icon-button>
             </paper-toolbar>
@@ -22887,6 +23513,8 @@ paper-calendar {
                 <div style="min-height: 80px;"></div>
             </div>
         </paper-scroll-header-panel>
+
+        <paper-fab class="menu-b" id="fab" icon="add" on-click="add_project"></paper-fab>
     </template>
 
     <script>
@@ -23048,11 +23676,6 @@ paper-calendar {
         z-index: 1;
     }
     
-    paper-fab {
-        --paper-fab-background: var(--paper-red-500);
-        --paper-fab-keyboard-focus-background: var(--paper-red-700);
-    }
-    
     paper-menu-button {
         padding: 0;
     }
@@ -23066,19 +23689,6 @@ paper-calendar {
     .menu-li {
         border-bottom: 2px solid #EEE;
         border-top: 2px solid #EEE;
-    }
-    
-    .menu-b {
-        bottom: 12px;
-        position: fixed;
-        right: 16px;
-        /*-webkit-transition: -webkit-transform 0.2s ease-in-out;*/
-        transition: transform 0.2s ease-in-out;
-        will-change: transform;
-    }
-    
-    .menu-b.move-down {
-        transform: translate3d(0, 80px, 0)!important;
     }
     
     .undo {
@@ -23102,16 +23712,15 @@ paper-calendar {
                 </div>
             </paper-header-panel>
 
-            <neon-animated-pages class="fit" id="main_page" main="" selected="1">
+            <neon-animated-pages class="fit" id="main_page" main="" selected="2">
                 <neon-animatable>
                     
                 </neon-animatable>
 
                 <inbox-view id="inbox-view"></inbox-view>
+                <patent-view id="patent-view"></patent-view>
             </neon-animated-pages>
         </paper-drawer-panel>
-
-        <paper-fab class="menu-b" id="fab" icon="add" on-click="add_project"></paper-fab>
 
         
 
@@ -23656,6 +24265,104 @@ paper-calendar {
     </script>
 
 </dom-module>
+<dom-module id="patent-view" assetpath="/linto/">
+
+    <style>
+    paper-toolbar {
+        --paper-toolbar-background: var(--paper-blue-700);
+        --paper-toolbar-color: white;
+    }
+    </style>
+
+    <template>
+        <paper-scroll-header-panel class="fit">
+            <paper-toolbar id="main_toolbar">
+                <paper-icon-button icon="arrow-back" on-click="toggle"></paper-icon-button>
+
+                <div class="title">[[item.p_no]]</div>
+
+                <paper-icon-button data-id$="[[item._id]]" icon="delete" on-click="remove_patent"></paper-icon-button>
+                <paper-icon-button data-id$="[[item._id]]" icon="social:share" on-click="share"></paper-icon-button>
+            </paper-toolbar>
+
+            <div class="content">
+                <div class="blue-700" style="height: 256px"></div>
+
+                <div class="blue-700 center-justified horizontal layout">
+                    <div class="blue-500 center horizontal layout li">
+                        <div class="cursor-d flex" style="line-height: 24px; padding: 16px;"><span>[[item.p_no]]</span> / Details</div>
+
+                        <paper-menu-button horizontal-align="right" style="margin-right: 8px;">
+                            <paper-icon-button class="dropdown-trigger" icon="more-vert"></paper-icon-button>
+
+                            <paper-menu attr-for-selected="data-id" class="dropdown-content" selected="Details" style="min-width: 200px;">
+                                <paper-item class="cursor-p" data-id="Details">Details</paper-item>
+                                <paper-item class="cursor-p" data-id="Documents">Documents</paper-item>
+                            </paper-menu>
+                        </paper-menu-button>
+                    </div>
+                </div>
+
+                <div class="center-justified horizontal layout">
+                    <div class="li white">
+                        <div class="vertical layout" style="margin: 16px;">
+                            <div style="color: #AAA; font-size: 16px; line-height: 24px; margin: 0 4px;">Title</div>
+                            <div class="lowercase" style="font-size: 14px; line-height: 20px; margin: 0 4px;">[[item.title]]</div>
+                        </div>
+
+                        <div class="vertical layout" style="margin: 16px;">
+                            <div style="color: #AAA; font-size: 16px; line-height: 24px; margin: 0 4px;">Filed</div>
+                            <div style="font-size: 14px; line-height: 20px; margin: 0 4px;">[[item.app_date]]</div>
+                        </div>
+
+                        <div class="vertical layout" style="margin: 16px;">
+                            <div style="color: #AAA; font-size: 16px; line-height: 24px; margin: 0 4px;">Assignee</div>
+                            <div class="lowercase" style="font-size: 14px; line-height: 20px; margin: 0 4px;">[[return_assignee_text(item.assignee)]]</div>
+                        </div>
+
+                        <div class="vertical layout" style="margin: 16px; margin-bottom: 32px;">
+                            <div style="color: #AAA; font-size: 16px; line-height: 24px; margin: 0 4px;">Abstract</div>
+                            <div class="lowercase" style="font-size: 14px; line-height: 20px; margin: 0 4px; text-align: justify;">[[item.abstract]]</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div style="min-height: 80px;"></div>
+            </div>
+        </paper-scroll-header-panel>
+    </template>
+
+    <script>
+    Polymer({
+
+        is: "patent-view",
+
+        properties: {
+            item: {
+                type: Object,
+                value: function() {
+                    return {
+                        "title": "DOWNLOAD MANAGEMENT METHOD AND DEVICE BASED ON ANDROID BROWSER",
+                        "abstract": "\nThe present disclosure provides a download management method and device based on Android browser. The download management method includes the following steps: obtaining a physical address of a network card of a television when a download request input from a user through the browser is received; and judging whether the television corresponding to the physical address is granted a download permission corresponding to the download request; if the physical address is granted the download permission, implementing the download according to the download request; otherwise, if the physical address is not granted the download permission, preventing the download. The method and device of the present disclosure can effectively control the download contents of the television and thus prevent random downloads from reducing the safety and stability of the system and further thus improves the user experience.\n",
+                        "app_date": "2013-01-21",
+                        "assignee": "SHENZHEN COOCAA NETWORK TECHNOLOGY CO LTD",
+                        "concept": "Computer network;Network interface controller;Telecommunications network;Telecommunication;Address space;MAC address;Physical address;User interface;Cable television;Server (computing);Mobile device;Internet;Graphical user interface;Data transmission;Java package;Modularity;Module (mathematics);Television network;Airport terminal;Radio",
+                        "keyword": "download request;physical address;download management;permission corresponding;download permission;android browser;television corresponding;network card;judging whether the television;terminal",
+                        "p_no": "EP2768206A4",
+                        "_id": "kN4Eumq5gzGCFA3AA"
+                    };
+                }
+            }
+        },
+
+        return_assignee_text: function(text) {
+            return (text ? text.replace(/;/g, ", ") : "#");
+        }
+
+    });
+    </script>
+
+</dom-module>
 <dom-module id="polymer-toast" assetpath="/linto/">
 
     <template>
@@ -23979,4 +24686,4 @@ paper-calendar {
     </script>
 
 </dom-module>
-</div></body></html> 
+</div></body></html>
