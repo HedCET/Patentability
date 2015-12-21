@@ -1,6 +1,10 @@
 <dom-module id="patent-view">
 
     <style>
+    paper-menu-button {
+        padding: 0;
+    }
+    
     paper-toolbar {
         --paper-toolbar-background: var(--paper-blue-700);
         --paper-toolbar-color: white;
@@ -18,12 +22,20 @@
     <template>
         <paper-scroll-header-panel class="fit">
             <paper-toolbar id="main_toolbar">
-                <paper-icon-button icon="arrow-back" on-click="toggle"></paper-icon-button>
+                <paper-icon-button icon="arrow-back" on-click="back"></paper-icon-button>
 
                 <div class="title">[[item.p_no]]</div>
 
                 <paper-icon-button data-id$="[[item._id]]" icon="delete" on-click="remove_patent"></paper-icon-button>
                 <paper-icon-button data-id$="[[item._id]]" icon="social:share" on-click="share"></paper-icon-button>
+
+                <paper-menu-button horizontal-align="right">
+                    <paper-icon-button class="dropdown-trigger" icon="more-vert"></paper-icon-button>
+
+                    <paper-menu class="dropdown-content" style="min-width: 200px;">
+                        <paper-item class="cursor-p">Add Tags</paper-item>
+                    </paper-menu>
+                </paper-menu-button>
             </paper-toolbar>
 
             <div class="content">
@@ -42,7 +54,7 @@
                         <div class="cursor-d flex" style="line-height: 24px; padding: 16px;"><span>[[item.p_no]]</span> / Details</div>
 
                         <paper-menu-button horizontal-align="right" style="margin-right: 8px;">
-                            <paper-icon-button class="dropdown-trigger" icon="more-vert"></paper-icon-button>
+                            <paper-icon-button class="dropdown-trigger" icon="arrow-drop-down"></paper-icon-button>
 
                             <paper-menu attr-for-selected="data-id" class="dropdown-content" selected="Details" style="min-width: 200px;">
                                 <paper-item class="cursor-p" data-id="Details">Details</paper-item>
@@ -56,22 +68,22 @@
                     <div class="li white">
                         <div class="vertical layout" style="margin: 16px;">
                             <div style="color: #AAA; font-size: 16px; line-height: 24px;">Title</div>
-                            <div class="lowercase" style="font-size: 14px; line-height: 20px;">[[item.title]]</div>
+                            <div class="lowercase">[[item.title]]</div>
                         </div>
 
                         <div class="vertical layout" style="margin: 16px;">
                             <div style="color: #AAA; font-size: 16px; line-height: 24px;">Filed</div>
-                            <div style="font-size: 14px; line-height: 20px;">[[item.app_date]]</div>
+                            <div>[[item.app_date]]</div>
                         </div>
 
                         <div class="vertical layout" style="margin: 16px;">
                             <div style="color: #AAA; font-size: 16px; line-height: 24px;">Assignee</div>
-                            <div class="lowercase" style="font-size: 14px; line-height: 20px;">[[return_assignee_text(item.assignee)]]</div>
+                            <div class="lowercase">[[return_assignee_text(item.assignee)]]</div>
                         </div>
 
                         <div class="vertical layout" style="margin: 16px; margin-bottom: 32px;">
                             <div style="color: #AAA; font-size: 16px; line-height: 24px;">Abstract</div>
-                            <div class="lowercase" style="font-size: 14px; line-height: 20px; text-align: justify;">[[item.abstract]]</div>
+                            <div class="lowercase">[[item.abstract]]</div>
                         </div>
                     </div>
                 </div>
@@ -83,6 +95,10 @@
 
     <script>
     Polymer({
+
+        back: function() {
+            document.querySelector("#main-page").selected = 1;
+        },
 
         is: "patent-view",
 
