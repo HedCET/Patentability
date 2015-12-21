@@ -24272,6 +24272,14 @@ paper-calendar {
         --paper-toolbar-background: var(--paper-blue-700);
         --paper-toolbar-color: white;
     }
+    
+    paper-toolbar paper-icon-button {
+        margin: 0!important;
+    }
+    
+    paper-toolbar .title {
+        padding: 0 12px;
+    }
     </style>
 
     <template>
@@ -24286,7 +24294,15 @@ paper-calendar {
             </paper-toolbar>
 
             <div class="content">
-                <div class="blue-700" style="height: 256px"></div>
+                <div class="blue-700">
+                    <div class="center-justified horizontal layout">
+                        <div class="horizontal layout li wrap" style="padding: 4px 12px;">
+                            <template as="concept" is="dom-repeat" items="[[return_concept_array(item.concept)]]">
+                                <div class="cursor-p lowercase" on-click="concept_opt" style="background: rgba(255, 255, 255, .95); border-radius: 24px; color: #1976D2; margin: 4px 8px 4px 0; padding: 4px 12px;">[[concept]]</div>
+                            </template>
+                        </div>
+                    </div>
+                </div>
 
                 <div class="blue-700 center-justified horizontal layout">
                     <div class="blue-500 center horizontal layout li">
@@ -24297,7 +24313,7 @@ paper-calendar {
 
                             <paper-menu attr-for-selected="data-id" class="dropdown-content" selected="Details" style="min-width: 200px;">
                                 <paper-item class="cursor-p" data-id="Details">Details</paper-item>
-                                <paper-item class="cursor-p" data-id="Documents">Documents</paper-item>
+                                <paper-item class="cursor-p" data-id="Technologies">Technologies</paper-item>
                             </paper-menu>
                         </paper-menu-button>
                     </div>
@@ -24306,23 +24322,23 @@ paper-calendar {
                 <div class="center-justified horizontal layout">
                     <div class="li white">
                         <div class="vertical layout" style="margin: 16px;">
-                            <div style="color: #AAA; font-size: 16px; line-height: 24px; margin: 0 4px;">Title</div>
-                            <div class="lowercase" style="font-size: 14px; line-height: 20px; margin: 0 4px;">[[item.title]]</div>
+                            <div style="color: #AAA; font-size: 16px; line-height: 24px;">Title</div>
+                            <div class="lowercase" style="font-size: 14px; line-height: 20px;">[[item.title]]</div>
                         </div>
 
                         <div class="vertical layout" style="margin: 16px;">
-                            <div style="color: #AAA; font-size: 16px; line-height: 24px; margin: 0 4px;">Filed</div>
-                            <div style="font-size: 14px; line-height: 20px; margin: 0 4px;">[[item.app_date]]</div>
+                            <div style="color: #AAA; font-size: 16px; line-height: 24px;">Filed</div>
+                            <div style="font-size: 14px; line-height: 20px;">[[item.app_date]]</div>
                         </div>
 
                         <div class="vertical layout" style="margin: 16px;">
-                            <div style="color: #AAA; font-size: 16px; line-height: 24px; margin: 0 4px;">Assignee</div>
-                            <div class="lowercase" style="font-size: 14px; line-height: 20px; margin: 0 4px;">[[return_assignee_text(item.assignee)]]</div>
+                            <div style="color: #AAA; font-size: 16px; line-height: 24px;">Assignee</div>
+                            <div class="lowercase" style="font-size: 14px; line-height: 20px;">[[return_assignee_text(item.assignee)]]</div>
                         </div>
 
                         <div class="vertical layout" style="margin: 16px; margin-bottom: 32px;">
-                            <div style="color: #AAA; font-size: 16px; line-height: 24px; margin: 0 4px;">Abstract</div>
-                            <div class="lowercase" style="font-size: 14px; line-height: 20px; margin: 0 4px; text-align: justify;">[[item.abstract]]</div>
+                            <div style="color: #AAA; font-size: 16px; line-height: 24px;">Abstract</div>
+                            <div class="lowercase" style="font-size: 14px; line-height: 20px; text-align: justify;">[[item.abstract]]</div>
                         </div>
                     </div>
                 </div>
@@ -24357,6 +24373,10 @@ paper-calendar {
 
         return_assignee_text: function(text) {
             return (text ? text.replace(/;/g, ", ") : "#");
+        },
+
+        return_concept_array: function(text) {
+            return (text ? text.trim().replace(/\s+/g, " ").split(/;/) : "#");
         }
 
     });
