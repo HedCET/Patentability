@@ -21,47 +21,6 @@
         --paper-toggle-button-checked-ink-color: var(--paper-green-500);
     }
     
-    paper-toolbar {
-        --paper-toolbar-background: var(--paper-blue-700);
-        --paper-toolbar-color: white;
-    }
-    
-    paper-toolbar paper-icon-button {
-        margin: 0!important;
-    }
-    
-    paper-toolbar paper-icon-button[icon="arrow-back"] {
-        transform: translateX(-42px);
-    }
-    
-    paper-toolbar.selection paper-icon-button[icon="arrow-back"] {
-        transform: translateX(0);
-    }
-    
-    paper-toolbar.selection .selection-hidden {
-        display: none;
-    }
-    
-    paper-toolbar.selection .selection-visible {
-        padding: 8px;
-        transform: rotateX(0);
-        visibility: visible;
-        width: 40px;
-    }
-    
-    paper-toolbar .selection-visible {
-        padding: 0;
-        transform: rotateX(90deg);
-        transition: transform 400ms ease-in-out;
-        visibility: hidden;
-        width: 0;
-        will-change: transform;
-    }
-    
-    paper-toolbar .title {
-        padding: 0 12px;
-    }
-    
     .menu-li {
         border-bottom: 2px solid #EEE;
         border-top: 2px solid #EEE;
@@ -145,7 +104,7 @@
                         </iron-selector> -->
                     </div>
 
-                    <div class="cursor-p menu-li relative white" onclick="window.open('http://vcompile.com/patentability', '_system')" style="padding: 16px; z-index: 1;">About patentability
+                    <div class="cursor-p menu-li relative white" onclick="window.open('http://vcompile.com/Patentability', '_system')" style="padding: 16px; z-index: 1;">About Patentability
                         <paper-ripple></paper-ripple>
                     </div>
                 </div>
@@ -173,58 +132,7 @@
                         </paper-header-panel> -->
                 </neon-animatable>
 
-                <neon-animatable>
-                    <paper-scroll-header-panel class="fit" condenses>
-                        <paper-toolbar id="main_toolbar">
-                            <paper-icon-button class="selection-visible" icon="arrow-back" on-click="clear_torrent_selection"></paper-icon-button>
-                            <paper-icon-button class="selection-hidden" icon="menu" paper-drawer-toggle></paper-icon-button>
-
-                            <div class="title" id="main_toolbar_title">patentability</div>
-
-                            <paper-icon-button class="selection-visible" icon="delete" on-click="remove_torrent"></paper-icon-button>
-                            <paper-icon-button class="selection-visible" icon="social:share" on-click="share"></paper-icon-button>
-                            <paper-icon-button class="selection-hidden" icon="search" on-click="search_bar"></paper-icon-button>
-                        </paper-toolbar>
-
-                        <div class="content"></div>
-
-                        <!-- <iron-selector activate-event="click" attr-for-selected="item" multi selectable="inbox-item" selected-attribute="selected" selected-values="{{torrent_selected}}">
-                            <template is="dom-repeat" items="[[project]]">
-                                <template if="[[project_selected(menu_selected, item._id)]]" is="dom-if">
-                                    <div class="center-justified horizontal layout">
-                                        <div class="bordered center horizontal layout li">
-                                            <div class="flex" style="line-height: 24px; padding: 16px;">[[item.keyword]]</div>
-
-                                            <paper-icon-button data-index$="[[index]]" icon="sort" on-click="sort"></paper-icon-button>
-
-                                            <paper-icon-button data-id$="[[item._id]]" icon="schedule" hidden="[[!is_search(item.worker)]]" on-click="schedule"></paper-icon-button>
-
-                                            <paper-icon-button data-id$="[[item._id]]" icon="refresh" on-click="refresh"></paper-icon-button>
-
-                                            <paper-icon-button data-id$="[[item._id]]" icon="close" on-click="remove_project" style="margin-right: 8px;"></paper-icon-button>
-                                        </div>
-                                    </div>
-
-                                    <div class="center-justified horizontal layout">
-                                        <div class="li">
-                                            <div style="padding: 0 4px;">
-                                                <paper-progress class="project_progress" data-id$="[[item._id]]" hidden style="width: 100%;"></paper-progress>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <template as="torrent" is="dom-repeat" items="[[item.torrent]]">
-                                        <template if="[[torrent.url]]" is="dom-if">
-                                            <inbox-item item$="[[torrent]]"></inbox-item>
-                                        </template>
-                                    </template>
-                                </template>
-                            </template>
-                        </iron-selector> -->
-
-                        <!-- <div style="min-height: 80px;"></div> -->
-                    </paper-scroll-header-panel>
-                </neon-animatable>
+                <inbox-view id="inbox-view"></inbox-view>
             </neon-animated-pages>
         </paper-drawer-panel>
 
@@ -293,188 +201,196 @@
     <script>
     Polymer({
 
-        add_project: function() {
-            FlowRouter.setQueryParams({
-                "route": "add-project"
-            });
-        },
+        // add_project: function() {
+        //     FlowRouter.setQueryParams({
+        //         "route": "add-project"
+        //     });
+        // },
 
-        attached: function() {
-            this.user = (Meteor.user() ? Meteor.user() : {});
+        // attached: function() {
+        //     this.user = (Meteor.user() ? Meteor.user() : {});
 
-            if ((document.querySelector("#torrent_db").value || []).length) {
-                this.project = document.querySelector("#torrent_db").value;
-            }
+        //     if ((document.querySelector("#torrent_db").value || []).length) {
+        //         this.project = document.querySelector("#torrent_db").value;
+        //     }
 
-            var _this = this;
+        //     var _this = this;
 
-            Meteor.setTimeout(function() {
-                if (6 < moment.duration(moment().diff(moment(_this.trend.time))).asHours() || !_this.trend.keyword.length) {
-                    Meteor.call("trend", function(error, response) {
-                        if (error) {
-                            document.querySelector("#polymer_toast").toast(error.reason);
-                        } else {
-                            if (response.length) {
-                                _this.trend = {
-                                    keyword: response,
-                                    time: moment().format()
-                                };
-                            }
-                        }
-                    });
-                }
-            }, 1000);
+        //     Meteor.setTimeout(function() {
+        //         if (6 < moment.duration(moment().diff(moment(_this.trend.time))).asHours() || !_this.trend.keyword.length) {
+        //             Meteor.call("trend", function(error, response) {
+        //                 if (error) {
+        //                     document.querySelector("#polymer_toast").toast(error.reason);
+        //                 } else {
+        //                     if (response.length) {
+        //                         _this.trend = {
+        //                             keyword: response,
+        //                             time: moment().format()
+        //                         };
+        //                     }
+        //                 }
+        //             });
+        //         }
+        //     }, 1000);
 
-            Meteor.setTimeout(function() {
-                _project.find().observe({
-                    added: function(row) {
-                        for (var A = 0; A < row.torrent.length; A++) {
-                            var item = _torrent.findOne({
-                                _id: row.torrent[A]
-                            });
+        //     Meteor.setTimeout(function() {
+        //         _project.find().observe({
+        //             added: function(row) {
+        //                 for (var A = 0; A < row.torrent.length; A++) {
+        //                     var item = _torrent.findOne({
+        //                         _id: row.torrent[A]
+        //                     });
 
-                            row.torrent[A] = (item ? item : {
-                                _id: row.torrent[A]
-                            });
+        //                     row.torrent[A] = (item ? item : {
+        //                         _id: row.torrent[A]
+        //                     });
 
-                            row.torrent[A].project = {
-                                _id: row._id
-                            };
-                        }
+        //                     row.torrent[A].project = {
+        //                         _id: row._id
+        //                     };
+        //                 }
 
-                        var index = _.map(_this.project, function(A) {
-                            return A._id;
-                        }).indexOf(row._id);
+        //                 var index = _.map(_this.project, function(A) {
+        //                     return A._id;
+        //                 }).indexOf(row._id);
 
-                        if (index == -1) {
-                            _this.project.unshift(row);
-                        } else {
-                            // _this.project[index] = row;
-                            // _this.project[index] = _.clone(_this.project[index]);
-                        }
+        //                 if (index == -1) {
+        //                     _this.project.unshift(row);
+        //                 } else {
+        //                     // _this.project[index] = row;
+        //                     // _this.project[index] = _.clone(_this.project[index]);
+        //                 }
 
-                        _this.project = _.clone(_this.project);
-                    },
+        //                 _this.project = _.clone(_this.project);
+        //             },
 
-                    changed: function(row, old) {
-                        for (var A = 0; A < row.torrent.length; A++) {
-                            var item = _torrent.findOne({
-                                _id: row.torrent[A]
-                            });
+        //             changed: function(row, old) {
+        //                 for (var A = 0; A < row.torrent.length; A++) {
+        //                     var item = _torrent.findOne({
+        //                         _id: row.torrent[A]
+        //                     });
 
-                            row.torrent[A] = (item ? item : {
-                                _id: row.torrent[A]
-                            });
+        //                     row.torrent[A] = (item ? item : {
+        //                         _id: row.torrent[A]
+        //                     });
 
-                            row.torrent[A].project = {
-                                _id: row._id
-                            };
-                        }
+        //                     row.torrent[A].project = {
+        //                         _id: row._id
+        //                     };
+        //                 }
 
-                        var index = _.map(_this.project, function(A) {
-                            return A._id;
-                        }).indexOf(row._id);
+        //                 var index = _.map(_this.project, function(A) {
+        //                     return A._id;
+        //                 }).indexOf(row._id);
 
-                        if (-1 < index) {
-                            _this.project[index] = row;
-                            _this.project = _.clone(_this.project);
-                        }
-                    },
+        //                 if (-1 < index) {
+        //                     _this.project[index] = row;
+        //                     _this.project = _.clone(_this.project);
+        //                 }
+        //             },
 
-                    removed: function(old) {
-                        var index = _.map(_this.project, function(A) {
-                            return A._id;
-                        }).indexOf(old._id);
+        //             removed: function(old) {
+        //                 var index = _.map(_this.project, function(A) {
+        //                     return A._id;
+        //                 }).indexOf(old._id);
 
-                        if (-1 < index) {
-                            _this.project.splice(index, 1);
-                            _this.project = _.clone(_this.project);
-                        }
-                    }
-                });
-            }, 1000);
+        //                 if (-1 < index) {
+        //                     _this.project.splice(index, 1);
+        //                     _this.project = _.clone(_this.project);
+        //                 }
+        //             }
+        //         });
+        //     }, 1000);
 
-            Meteor.setTimeout(function() {
-                _torrent.find().observe({
-                    added: function(row) {
-                        for (var A = 0; A < _this.project.length; A++) {
-                            var index = _.map(_this.project[A].torrent, function(item) {
-                                return item._id;
-                            }).indexOf(row._id);
+        //     Meteor.setTimeout(function() {
+        //         _torrent.find().observe({
+        //             added: function(row) {
+        //                 for (var A = 0; A < _this.project.length; A++) {
+        //                     var index = _.map(_this.project[A].torrent, function(item) {
+        //                         return item._id;
+        //                     }).indexOf(row._id);
 
-                            if (-1 < index) {
-                                _this.project[A].torrent[index] = _.clone($.extend(true, _this.project[A].torrent[index], row));
-                                _this.project[A].torrent = _.clone(_this.project[A].torrent);
-                                _this.project[A] = _.clone(_this.project[A]);
-                                _this.project = _.clone(_this.project);
-                            }
-                        }
-                    },
+        //                     if (-1 < index) {
+        //                         _this.project[A].torrent[index] = _.clone($.extend(true, _this.project[A].torrent[index], row));
+        //                         _this.project[A].torrent = _.clone(_this.project[A].torrent);
+        //                         _this.project[A] = _.clone(_this.project[A]);
+        //                         _this.project = _.clone(_this.project);
+        //                     }
+        //                 }
+        //             },
 
-                    changed: function(row, old) {
-                        for (var A = 0; A < _this.project.length; A++) {
-                            var index = _.map(_this.project[A].torrent, function(item) {
-                                return item._id;
-                            }).indexOf(row._id);
+        //             changed: function(row, old) {
+        //                 for (var A = 0; A < _this.project.length; A++) {
+        //                     var index = _.map(_this.project[A].torrent, function(item) {
+        //                         return item._id;
+        //                     }).indexOf(row._id);
 
-                            if (-1 < index) {
-                                _this.project[A].torrent[index] = _.clone($.extend(true, _this.project[A].torrent[index], row));
-                                _this.project[A].torrent = _.clone(_this.project[A].torrent);
-                                _this.project[A] = _.clone(_this.project[A]);
-                                _this.project = _.clone(_this.project);
-                            }
-                        }
-                    },
+        //                     if (-1 < index) {
+        //                         _this.project[A].torrent[index] = _.clone($.extend(true, _this.project[A].torrent[index], row));
+        //                         _this.project[A].torrent = _.clone(_this.project[A].torrent);
+        //                         _this.project[A] = _.clone(_this.project[A]);
+        //                         _this.project = _.clone(_this.project);
+        //                     }
+        //                 }
+        //             },
 
-                    removed: function(old) {
-                        for (var A = 0; A < _this.project.length; A++) {
-                            var index = _.map(_this.project[A].torrent, function(item) {
-                                return item._id;
-                            }).indexOf(old._id);
+        //             removed: function(old) {
+        //                 for (var A = 0; A < _this.project.length; A++) {
+        //                     var index = _.map(_this.project[A].torrent, function(item) {
+        //                         return item._id;
+        //                     }).indexOf(old._id);
 
-                            if (-1 < index) {
-                                _this.project[A].torrent.splice(index, 1);
-                                _this.project[A].torrent = _.clone(_this.project[A].torrent);
-                                _this.project[A] = _.clone(_this.project[A]);
-                                _this.project = _.clone(_this.project);
-                            }
-                        }
-                    }
-                });
-            }, 1000 * 4);
-        },
+        //                     if (-1 < index) {
+        //                         _this.project[A].torrent.splice(index, 1);
+        //                         _this.project[A].torrent = _.clone(_this.project[A].torrent);
+        //                         _this.project[A] = _.clone(_this.project[A]);
+        //                         _this.project = _.clone(_this.project);
+        //                     }
+        //                 }
+        //             }
+        //         });
+        //     }, 1000 * 4);
+        // },
 
-        clear_torrent_selection: function() {
-            this.torrent_selected = [];
-        },
+        // clear_torrent_selection: function() {
+        //     this.torrent_selected = [];
+        // },
 
-        initialize_trend: function() {
-            this.trend = {
-                keyword: [],
-                time: moment().format()
-            };
-        },
+        // initialize_trend: function() {
+        //     this.trend = {
+        //         keyword: [],
+        //         time: moment().format()
+        //     };
+        // },
 
         is: "layout-inbox",
 
-        is_search: function(worker) {
-            return (worker == "search")
+        // is_search: function(worker) {
+        //     return (worker == "search")
+        // },
+
+        // menu_opt: function(e, d) {
+        //     this.$.drawer.closeDrawer();
+
+        //     this.$.main_toolbar.className = this.$.main_toolbar.className.replace(/ ?[a-z\-]+\-500/g, "") + (d.item.dataset.id == "trend" ? "" : " " + document.querySelector("#menu_opt .iron-selected selectable-icon").icon_class);
+
+        //     this.$.main_page.selected = (d.item.dataset.id == "trend" ? 0 : 1);
+
+        //     this.menu_selected = d.item.dataset.id;
+        // },
+
+        menu_toggle: function() {
+            if (this.$.drawer.narrow && this.$.drawer.getBoundingClientRect().width < parseInt(this.$.drawer.responsiveWidth)) {
+                this.$.drawer.togglePanel();
+            } else {
+                this.$.drawer.forceNarrow = !this.$.drawer.forceNarrow;
+            }
         },
 
-        menu_opt: function(e, d) {
-            this.$.drawer.closeDrawer();
-
-            this.$.main_toolbar.className = this.$.main_toolbar.className.replace(/ ?[a-z\-]+\-500/g, "") + (d.item.dataset.id == "trend" ? "" : " " + document.querySelector("#menu_opt .iron-selected selectable-icon").icon_class);
-
-            this.$.main_page.selected = (d.item.dataset.id == "trend" ? 0 : 1);
-
-            this.menu_selected = d.item.dataset.id;
-        },
-
-        observers: [
-            // "project_change(project.splices)",
-            "torrent_selected_change(torrent_selected.splices)"
-        ],
+        // observers: [
+        //     // "project_change(project.splices)",
+        //     "torrent_selected_change(torrent_selected.splices)"
+        // ],
 
         // project_change: function(change) {
         //     this.debounce("project_change", function() {
@@ -484,289 +400,289 @@
         //     }, 1000 * 4);
         // },
 
-        project_selected: function(menu_opt, project_opt) {
-            return (menu_opt == "" ? true : menu_opt == project_opt);
-        },
+        // project_selected: function(menu_opt, project_opt) {
+        //     return (menu_opt == "" ? true : menu_opt == project_opt);
+        // },
 
-        properties: {
-            menu_selected: {
-                type: String,
-                value: ""
-            },
-            project: {
-                type: Array,
-                value: function() {
-                    return [];
-                }
-            },
-            torrent_selected: {
-                type: Array,
-                value: function() {
-                    return [];
-                }
-            },
-            trend: {
-                type: Object,
-                value: function() {
-                    return {
-                        keyword: [],
-                        time: moment().format()
-                    };
-                }
-            },
-            user: {
-                type: Object,
-                value: function() {
-                    return {};
-                }
-            }
-        },
+        // properties: {
+        //     menu_selected: {
+        //         type: String,
+        //         value: ""
+        //     },
+        //     project: {
+        //         type: Array,
+        //         value: function() {
+        //             return [];
+        //         }
+        //     },
+        //     torrent_selected: {
+        //         type: Array,
+        //         value: function() {
+        //             return [];
+        //         }
+        //     },
+        //     trend: {
+        //         type: Object,
+        //         value: function() {
+        //             return {
+        //                 keyword: [],
+        //                 time: moment().format()
+        //             };
+        //         }
+        //     },
+        //     user: {
+        //         type: Object,
+        //         value: function() {
+        //             return {};
+        //         }
+        //     }
+        // },
 
-        refresh: function(e) {
-            if (Meteor.status().connected) {
-                var _this = this;
+        // refresh: function(e) {
+        //     if (Meteor.status().connected) {
+        //         var _this = this;
 
-                Meteor.call("refresh", Polymer.dom(e).localTarget.dataset.id, function(error, response) {
-                    if (error) {
-                        document.querySelector("#polymer_toast").toast(error.reason);
-                    } else {
-                        var index = _.map(_this.project, function(A) {
-                            return A._id;
-                        }).indexOf(response._id);
+        //         Meteor.call("refresh", Polymer.dom(e).localTarget.dataset.id, function(error, response) {
+        //             if (error) {
+        //                 document.querySelector("#polymer_toast").toast(error.reason);
+        //             } else {
+        //                 var index = _.map(_this.project, function(A) {
+        //                     return A._id;
+        //                 }).indexOf(response._id);
 
-                        if (-1 < index) {
-                            for (var A = 0; A < response.torrent.length; A++) {
-                                var item = _torrent.findOne({
-                                    _id: response.torrent[A]
-                                });
+        //                 if (-1 < index) {
+        //                     for (var A = 0; A < response.torrent.length; A++) {
+        //                         var item = _torrent.findOne({
+        //                             _id: response.torrent[A]
+        //                         });
 
-                                response.torrent[A] = (item ? item : {
-                                    _id: response.torrent[A]
-                                });
+        //                         response.torrent[A] = (item ? item : {
+        //                             _id: response.torrent[A]
+        //                         });
 
-                                response.torrent[A].project = {
-                                    _id: response._id
-                                };
-                            }
+        //                         response.torrent[A].project = {
+        //                             _id: response._id
+        //                         };
+        //                     }
 
-                            _this.project[index] = response;
-                            _this.project = _.clone(_this.project);
-                        }
-                    }
-                });
-            } else {
-                document.querySelector("#polymer_toast").toast("server connection required");
-            }
-        },
+        //                     _this.project[index] = response;
+        //                     _this.project = _.clone(_this.project);
+        //                 }
+        //             }
+        //         });
+        //     } else {
+        //         document.querySelector("#polymer_toast").toast("server connection required");
+        //     }
+        // },
 
-        remove_ok: function(e) {
-            if (Meteor.status().connected) {
-                var _this = this;
+        // remove_ok: function(e) {
+        //     if (Meteor.status().connected) {
+        //         var _this = this;
 
-                Meteor.call("remove_project", _this.$.remove_prompt.dataset.id, function(error, response) {
-                    if (error) {
-                        document.querySelector("#polymer_toast").toast(error.reason);
-                    } else {
-                        document.querySelector("#polymer_toast").toast(response);
+        //         Meteor.call("remove_project", _this.$.remove_prompt.dataset.id, function(error, response) {
+        //             if (error) {
+        //                 document.querySelector("#polymer_toast").toast(error.reason);
+        //             } else {
+        //                 document.querySelector("#polymer_toast").toast(response);
 
-                        _this.$.main_toolbar.className = _this.$.main_toolbar.className.replace(/ ?[a-z\-]+\-500/g, "");
+        //                 _this.$.main_toolbar.className = _this.$.main_toolbar.className.replace(/ ?[a-z\-]+\-500/g, "");
 
-                        _this.menu_selected = "";
-                    }
-                });
-            } else {
-                document.querySelector("#polymer_toast").toast("server connection required");
-            }
+        //                 _this.menu_selected = "";
+        //             }
+        //         });
+        //     } else {
+        //         document.querySelector("#polymer_toast").toast("server connection required");
+        //     }
 
-            this.$.remove_prompt.close();
-        },
+        //     this.$.remove_prompt.close();
+        // },
 
-        remove_project: function(e) {
-            this.$.remove_prompt.dataset.id = Polymer.dom(e).localTarget.dataset.id;
-            this.$.remove_prompt.open();
-        },
+        // remove_project: function(e) {
+        //     this.$.remove_prompt.dataset.id = Polymer.dom(e).localTarget.dataset.id;
+        //     this.$.remove_prompt.open();
+        // },
 
-        remove_torrent: function() {
-            $("inbox-item.iron-selected").addClass("undo");
+        // remove_torrent: function() {
+        //     $("inbox-item.iron-selected").addClass("undo");
 
-            document.querySelector("#polymer_toast").undo = {
-                torrent: _.map(this.torrent_selected, function(A) {
-                    return A._id;
-                })
-            };
+        //     document.querySelector("#polymer_toast").undo = {
+        //         torrent: _.map(this.torrent_selected, function(A) {
+        //             return A._id;
+        //         })
+        //     };
 
-            document.querySelector("#polymer_toast").toast(this.torrent_selected.length + " torrent removed");
+        //     document.querySelector("#polymer_toast").toast(this.torrent_selected.length + " torrent removed");
 
-            this.clear_torrent_selection();
-        },
+        //     this.clear_torrent_selection();
+        // },
 
-        return_class: function(text) {
-            return polymer_color(text ? text : "#");
-        },
+        // return_class: function(text) {
+        //     return polymer_color(text ? text : "#");
+        // },
 
-        return_icon_text: function(text) {
-            return (isNaN(text.charAt(0)) ? text.charAt(0) : "#");
-        },
+        // return_icon_text: function(text) {
+        //     return (isNaN(text.charAt(0)) ? text.charAt(0) : "#");
+        // },
 
-        return_project_description: function(item) {
-            return (item.worker == "schedule" ? item.within + "M | " + item.leech + "L / " + item.seed + "S" : moment(item.time).format("MMM DD ddd hh:mm A"));
-        },
+        // return_project_description: function(item) {
+        //     return (item.worker == "schedule" ? item.within + "M | " + item.leech + "L / " + item.seed + "S" : moment(item.time).format("MMM DD ddd hh:mm A"));
+        // },
 
-        return_text: function(text) {
-            return (text ? text : "#");
-        },
+        // return_text: function(text) {
+        //     return (text ? text : "#");
+        // },
 
-        return_time: function(time) {
-            return (moment(time).isValid() ? moment(time).fromNow() : "#");
-        },
+        // return_time: function(time) {
+        //     return (moment(time).isValid() ? moment(time).fromNow() : "#");
+        // },
 
-        return_time_s: function(time) {
-            return (moment(time).isValid() ? moment(time).format("MMM DD ddd hh:mm A") : "#");
-        },
+        // return_time_s: function(time) {
+        //     return (moment(time).isValid() ? moment(time).format("MMM DD ddd hh:mm A") : "#");
+        // },
 
-        return_torrent_count: function(torrent) {
-            var A = _.countBy(torrent, function(item) {
-                return item.url ? "YES" : "NO";
-            });
+        // return_torrent_count: function(torrent) {
+        //     var A = _.countBy(torrent, function(item) {
+        //         return item.url ? "YES" : "NO";
+        //     });
 
-            return (A.YES && A.NO ? A.YES + " / " : "") + (torrent.length ? torrent.length : "#");
-        },
+        //     return (A.YES && A.NO ? A.YES + " / " : "") + (torrent.length ? torrent.length : "#");
+        // },
 
-        return_torrent_description: function(item) {
-            return (item.size ? item.size : "#") + " | " + (item.leech ? item.leech + "L" : "#") + " / " + (item.seed ? item.seed + "S" : "#");
-        },
+        // return_torrent_description: function(item) {
+        //     return (item.size ? item.size : "#") + " | " + (item.leech ? item.leech + "L" : "#") + " / " + (item.seed ? item.seed + "S" : "#");
+        // },
 
-        schedule: function(e) {
-            this.$.schedule_prompt.dataset.id = Polymer.dom(e).localTarget.dataset.id;
-            this.$.schedule_prompt.open();
-        },
+        // schedule: function(e) {
+        //     this.$.schedule_prompt.dataset.id = Polymer.dom(e).localTarget.dataset.id;
+        //     this.$.schedule_prompt.open();
+        // },
 
-        schedule_ok: function(e) {
-            if (Meteor.status().connected) {
-                var _this = this;
+        // schedule_ok: function(e) {
+        //     if (Meteor.status().connected) {
+        //         var _this = this;
 
-                Meteor.call("schedule_project", _this.$.schedule_prompt.dataset.id, function(error, response) {
-                    if (error) {
-                        document.querySelector("#polymer_toast").toast(error.reason);
-                    } else {
-                        document.querySelector("#polymer_toast").toast(response);
+        //         Meteor.call("schedule_project", _this.$.schedule_prompt.dataset.id, function(error, response) {
+        //             if (error) {
+        //                 document.querySelector("#polymer_toast").toast(error.reason);
+        //             } else {
+        //                 document.querySelector("#polymer_toast").toast(response);
 
-                        _this.$.main_toolbar.className = _this.$.main_toolbar.className.replace(/ ?[a-z\-]+\-500/g, "");
+        //                 _this.$.main_toolbar.className = _this.$.main_toolbar.className.replace(/ ?[a-z\-]+\-500/g, "");
 
-                        _this.menu_selected = "";
-                    }
-                });
-            } else {
-                document.querySelector("#polymer_toast").toast("server connection required");
-            }
+        //                 _this.menu_selected = "";
+        //             }
+        //         });
+        //     } else {
+        //         document.querySelector("#polymer_toast").toast("server connection required");
+        //     }
 
-            this.$.schedule_prompt.close();
-        },
+        //     this.$.schedule_prompt.close();
+        // },
 
-        search_bar: function() {
-            FlowRouter.setQueryParams({
-                "route": "search-bar"
-            });
-        },
+        // search_bar: function() {
+        //     FlowRouter.setQueryParams({
+        //         "route": "search-bar"
+        //     });
+        // },
 
-        share: function() {
-            var body = "";
+        // share: function() {
+        //     var body = "";
 
-            for (var A = 0; A < this.torrent_selected.length; A++) {
-                if (this.torrent_selected[A].link.length) {
-                    body += "\n\n" + (A + 1) + "\t\t" + this.torrent_selected[A].title + "\n\n";
+        //     for (var A = 0; A < this.torrent_selected.length; A++) {
+        //         if (this.torrent_selected[A].link.length) {
+        //             body += "\n\n" + (A + 1) + "\t\t" + this.torrent_selected[A].title + "\n\n";
 
-                    this.torrent_selected[A].link = _.sortBy(this.torrent_selected[A].link, "time");
+        //             this.torrent_selected[A].link = _.sortBy(this.torrent_selected[A].link, "time");
 
-                    for (var Z = 0; Z < this.torrent_selected[A].link.length; Z++) {
-                        body += "\t\t" + (Z + 1) + "\t\t" + this.torrent_selected[A].link[Z].url + "\n\n";
-                    }
-                }
-            }
+        //             for (var Z = 0; Z < this.torrent_selected[A].link.length; Z++) {
+        //                 body += "\t\t" + (Z + 1) + "\t\t" + this.torrent_selected[A].link[Z].url + "\n\n";
+        //             }
+        //         }
+        //     }
 
-            if (body != "") {
-                if (Meteor.isCordova) {
-                    window.plugins.socialsharing.share("Hi\n\npatentability - " + this.user.profile.name + " shared " + this.torrent_selected.length + " torrent" + body);
-                } else {
-                    window.open("mailto:" + this.user.profile.email + "?subject=" + encodeURIComponent("patentability") + "&body=" + encodeURIComponent("Hi\n\n" + this.user.profile.name + " shared " + this.torrent_selected.length + " torrent" + body), "_system");
-                }
-            } else {
-                document.querySelector("#polymer_toast").toast("empty email body");
-            }
-        },
+        //     if (body != "") {
+        //         if (Meteor.isCordova) {
+        //             window.plugins.socialsharing.share("Hi\n\nPatentability - " + this.user.profile.name + " shared " + this.torrent_selected.length + " torrent" + body);
+        //         } else {
+        //             window.open("mailto:" + this.user.profile.email + "?subject=" + encodeURIComponent("Patentability") + "&body=" + encodeURIComponent("Hi\n\n" + this.user.profile.name + " shared " + this.torrent_selected.length + " torrent" + body), "_system");
+        //         }
+        //     } else {
+        //         document.querySelector("#polymer_toast").toast("empty email body");
+        //     }
+        // },
 
-        sign_out: function() {
-            if (Meteor.status().connected) {
-                this.project = [];
+        // sign_out: function() {
+        //     if (Meteor.status().connected) {
+        //         this.project = [];
 
-                FlowRouter.go("/inbox/sign-out");
-            } else {
-                document.querySelector("#polymer_toast").toast("server connection required");
-            }
-        },
+        //         FlowRouter.go("/inbox/sign-out");
+        //     } else {
+        //         document.querySelector("#polymer_toast").toast("server connection required");
+        //     }
+        // },
 
-        sort: function(e) {
-            var A = Polymer.dom(e).localTarget.dataset.index;
+        // sort: function(e) {
+        //     var A = Polymer.dom(e).localTarget.dataset.index;
 
-            this.project[A].torrent = _.sortBy(this.project[A].torrent, "time").reverse();
-            this.project[A] = _.clone(this.project[A]);
-            this.project = _.clone(this.project);
+        //     this.project[A].torrent = _.sortBy(this.project[A].torrent, "time").reverse();
+        //     this.project[A] = _.clone(this.project[A]);
+        //     this.project = _.clone(this.project);
 
-            document.querySelector("#polymer_toast").toast("sorted by time");
-        },
+        //     document.querySelector("#polymer_toast").toast("sorted by time");
+        // },
 
-        torrent_selected_change: function(change) {
-            this.$.main_toolbar_title.textContent = (this.torrent_selected.length ? this.torrent_selected.length : "patentability");
+        // torrent_selected_change: function(change) {
+        //     this.$.main_toolbar_title.textContent = (this.torrent_selected.length ? this.torrent_selected.length : "Patentability");
 
-            this.$.main_toolbar.toggleClass("grey-500", this.torrent_selected.length);
-            this.$.main_toolbar.toggleClass("selection", this.torrent_selected.length);
+        //     this.$.main_toolbar.toggleClass("grey-500", this.torrent_selected.length);
+        //     this.$.main_toolbar.toggleClass("selection", this.torrent_selected.length);
 
-            this.$.fab.toggleClass("move-down", this.torrent_selected.length);
-        },
+        //     this.$.fab.toggleClass("move-down", this.torrent_selected.length);
+        // },
 
-        trend_opt: function(e) {
-            if (Meteor.status().connected) {
-                var keyword = Polymer.dom(e).localTarget.textContent.trim();
+        // trend_opt: function(e) {
+        //     if (Meteor.status().connected) {
+        //         var keyword = Polymer.dom(e).localTarget.textContent.trim();
 
-                if (keyword.length) {
-                    var _this = this,
-                        row = {
-                            keyword: keyword,
-                            leech: 1,
-                            seed: 1,
-                            url: "search",
-                            within: 6,
-                            worker: "search"
-                        };
+        //         if (keyword.length) {
+        //             var _this = this,
+        //                 row = {
+        //                     keyword: keyword,
+        //                     leech: 1,
+        //                     seed: 1,
+        //                     url: "search",
+        //                     within: 6,
+        //                     worker: "search"
+        //                 };
 
-                    Meteor.call("insert_project", row, function(error, response) {
-                        if (error) {
-                            document.querySelector("#polymer_toast").toast((error.reason == "userNotFound") ? "internet/user required" : error.reason);
-                        } else {
-                            if (response == "") {
-                                document.querySelector("#polymer_toast").toast("unknown issue");
-                            } else {
-                                document.querySelector("#polymer_toast").toast("i keyword added");
+        //             Meteor.call("insert_project", row, function(error, response) {
+        //                 if (error) {
+        //                     document.querySelector("#polymer_toast").toast((error.reason == "userNotFound") ? "internet/user required" : error.reason);
+        //                 } else {
+        //                     if (response == "") {
+        //                         document.querySelector("#polymer_toast").toast("unknown issue");
+        //                     } else {
+        //                         document.querySelector("#polymer_toast").toast("i keyword added");
 
-                                _this.$.main_toolbar.className = _this.$.main_toolbar.className.replace(/ ?[a-z\-]+\-500/g, "") + " " + polymer_color(keyword);
+        //                         _this.$.main_toolbar.className = _this.$.main_toolbar.className.replace(/ ?[a-z\-]+\-500/g, "") + " " + polymer_color(keyword);
 
-                                _this.menu_selected = response;
-                            }
-                        }
-                    });
+        //                         _this.menu_selected = response;
+        //                     }
+        //                 }
+        //             });
 
-                    _this.$.main_page.selected = 1;
-                } else {
-                    document.querySelector("#polymer_toast").toast("empty keyword");
-                }
-            } else {
-                document.querySelector("#polymer_toast").toast("server connection required");
-            }
-        },
+        //             _this.$.main_page.selected = 1;
+        //         } else {
+        //             document.querySelector("#polymer_toast").toast("empty keyword");
+        //         }
+        //     } else {
+        //         document.querySelector("#polymer_toast").toast("server connection required");
+        //     }
+        // },
 
-        user_prompt: function() {
-            this.$.user_prompt.open();
-        }
+        // user_prompt: function() {
+        //     this.$.user_prompt.open();
+        // }
 
     });
     </script>

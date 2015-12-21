@@ -1,5 +1,5 @@
-Template.signIn.helpers({
-    loading: function() {
-        return (!Meteor.loggingIn() && Session.get("polymer-ready")) ? false : true;
-    }
-});
+// Template.signIn.helpers({
+//     loading: function() {
+//         return (!Meteor.loggingIn() && Session.get("polymer-ready")) ? false : true;
+//     }
+// });

@@ -22720,331 +22720,21 @@ paper-calendar {
     });
   </script>
 </dom-module>
-<dom-module id="add-project" assetpath="/linto/">
-
-    <style>
-    :host {
-        display: none;
-    }
-    
-    :host([active]) {
-        display: block;
-    }
-    
-    paper-button {
-        margin: 0;
-        min-width: 50%;
-        padding: 16px;
-    }
-    
-    paper-toolbar {
-        --paper-toolbar-background: white;
-        --paper-toolbar-color: black;
-    }
-    
-    paper-toolbar paper-icon-button {
-        margin: 0!important;
-    }
-    
-    paper-toolbar .title {
-        padding: 0 12px;
-    }
-    </style>
-
-    <template>
-        <paper-header-panel class="fit" style="background: white; z-index: 10;">
-            <paper-toolbar>
-                <paper-icon-button icon="arrow-back" on-click="back"></paper-icon-button>
-                <div class="title">scheduler</div>
-            </paper-toolbar>
-
-            <div class="center-justified horizontal layout">
-                <div class="li" style="padding: 24px;">
-                    <paper-input auto-validate="" label="keyword" required="" value="{{keyword}}"></paper-input>
-
-                    <br>
-
-                    <div class="center horizontal layout">
-                        <div class="cursor-d flex" style="text-align: right;">min leech count</div>
-                        <paper-slider class="flex" editable="" max="1000" min="1" value="{{leech}}"></paper-slider>
-                    </div>
-                    <div class="center horizontal layout">
-                        <div class="cursor-d flex" style="text-align: right;">min seed count</div>
-                        <paper-slider class="flex" editable="" max="1000" min="1" value="{{seed}}"></paper-slider>
-                    </div>
-
-                    <br>
-
-                    <div class="end-justified horizontal layout">
-                        <div class="cursor-d" on-click="date_picker_open">within <span style="border-bottom: 2px solid #AAA;">[[within]]</span> month</div>
-                    </div>
-                    <br>
-
-                    <div class="end-justified horizontal layout">
-                        <paper-button class="blue-500" on-click="add_project">submit</paper-button>
-                    </div>
-                </div>
-            </div>
-        </paper-header-panel>
-
-        <paper-dialog class="paper-date-picker-dialog" id="date_picker" modal="" on-iron-overlay-closed="date_picker_close">
-            <paper-date-picker id="date"></paper-date-picker>
-
-            <div class="buttons">
-                <paper-button dialog-dismiss="">cancel</paper-button>
-                <paper-button dialog-confirm="">ok</paper-button>
-            </div>
-        </paper-dialog>
-    </template>
-
-    <script>
-    Polymer({
-
-        add_project: function() {
-            if (Meteor.status().connected) {
-                this.keyword = decodeURIComponent(this.keyword).trim();
-                var keywordArray = (this.keyword.split("/").filter(Boolean).reverse()[0] || "").trim().split(/\?[fq]=/g);
-
-                if (this.keyword.length) {
-                    var row = {
-                        keyword: (1 < keywordArray.length ? keywordArray[1] : keywordArray[0]),
-                        leech: parseInt(this.leech),
-                        seed: parseInt(this.seed),
-                        url: (1 < keywordArray.length ? keywordArray[0] : "search"),
-                        within: parseInt(this.within),
-                        worker: "schedule"
-                    };
-
-                    Meteor.call("insert_project", row, function(error, response) {
-                        if (error) {
-                            document.querySelector("#polymer_toast").toast((error.reason == "userNotFound") ? "internet/user required" : error.reason);
-                        } else {
-                            if (response == "") {
-                                document.querySelector("#polymer_toast").toast("quota limit reached");
-                            } else {
-                                document.querySelector("#polymer_toast").toast("i keyword added");
-
-                                document.querySelector("#main_toolbar").className = document.querySelector("#main_toolbar").className.replace(/ ?[a-z\-]+\-500/g, "") + " " + polymer_color(1 < keywordArray.length ? keywordArray[1] : keywordArray[0]);
-
-                                document.querySelector("layout-inbox").menu_selected = response;
-                            }
-                        }
-                    });
-
-                    this.back();
-                } else {
-                    document.querySelector("#polymer_toast").toast("empty keyword");
-                }
-
-                this.keyword = "";
-                this.leech = 1;
-                this.seed = 1;
-                this.within = 6;
-            } else {
-                document.querySelector("#polymer_toast").toast("server connection required");
-            }
-        },
-
-        back: function() {
-            FlowRouter.setQueryParams({
-                "route": null
-            });
-        },
-
-        date_picker_close: function() {
-            if (this.$.date.date) {
-                var A = Math.ceil(moment.duration(moment().diff(moment(this.$.date.date))).asMonths());
-
-                if (0 < A && A < 48) {
-                    this.within = A;
-                }
-            }
-        },
-
-        date_picker_open: function() {
-            this.$.date_picker.open();
-        },
-
-        is: "add-project",
-
-        properties: {
-            active: {
-                notify: true,
-                reflectToAttribute: true,
-                type: Boolean,
-                value: false
-            },
-            input: {
-                type: String,
-                value: ""
-            },
-            leech: {
-                type: Number,
-                value: 1
-            },
-            seed: {
-                type: Number,
-                value: 1
-            },
-            within: {
-                type: Number,
-                value: 6
-            }
-        }
-
-    });
-    </script>
-
-</dom-module>
-<dom-module id="card-route" assetpath="/linto/">
-
-    <style>
-    :host {
-        background: transparent!important;
-    }
-    </style>
-
-    <template>
-
-        <div class$="[[get_ripple_class(ripple_class)]]" id="animator" style="opacity: 0;"></div>
-
-        <div id="container">
-            <content select="div"></content>
-        </div>
-
-    </template>
-
-    <script>
-    Polymer({
-
-        behaviors: [
-            Polymer.NeonSharedElementAnimatableBehavior
-        ],
-
-        get_ripple_class: function(ripple_class) {
-            return "fit " + ripple_class;
-        },
-
-        is: "card-route",
-
-        properties: {
-            animationConfig: {
-                type: Object,
-                value: function() {
-                    return {
-                        'entry': [{
-                            name: 'ripple-animation',
-                            id: 'ripple',
-                            toPage: this
-                        }, {
-                            name: 'fade-out-animation',
-                            node: this.$.animator,
-                            timing: {
-                                delay: 200
-                            }
-                        }, {
-                            name: 'fade-in-animation',
-                            node: this.$.container,
-                            timing: {
-                                delay: 100
-                            }
-                        }],
-
-                        'exit': [{
-                            name: 'opaque-animation',
-                            node: this.$.animator
-                        }, {
-                            name: 'fade-out-animation',
-                            node: this.$.container,
-                            timing: {
-                                duration: 200
-                            }
-                        }, {
-                            name: 'reverse-ripple-animation',
-                            id: 'reverse-ripple',
-                            fromPage: this
-                        }]
-                    };
-                }
-            },
-
-            ripple_class: {
-                type: String,
-                value: "white"
-            },
-
-            sharedElements: {
-                type: Object,
-                value: function() {
-                    return {
-                        "ripple": this.$.animator,
-                        "reverse-ripple": this.$.animator
-                    };
-                }
-            }
-        }
-
-    });
-    </script>
-
-</dom-module>
-<dom-module id="exit-controller" assetpath="/linto/">
-
-    <template>
-        <paper-dialog id="exit_prompt" style="width: 320px;" with-backdrop="">
-            <div>Are you sure you want to exit ?</div>
-
-            <div class="buttons">
-                <paper-button onclick="document.querySelector('#exit_prompt').close();">
-                    <iron-icon icon="close"></iron-icon>
-                    cancel
-                </paper-button>
-                <paper-button dialog-confirm="" on-tap="exit">
-                    <iron-icon icon="check"></iron-icon>
-                    ok
-                </paper-button>
-            </div>
-        </paper-dialog>
-    </template>
-
-    <script>
-    Polymer({
-
-        exit: function() {
-            if (Meteor.isCordova) {
-                navigator.app.exitApp();
-            }
-        },
-
-        is: "exit-controller",
-
-        time: function(time) {
-            if ((parseInt(time) - parseInt(this._time)) < 1000) {
-                this.$.exit_prompt.open();
-            }
-
-            this._time = moment().format("x");
-        },
-
-        _time: moment().format("x")
-
-    });
-    </script>
-
-</dom-module>
 <dom-module id="inbox-item" assetpath="/linto/">
 
     <template>
         <div class="center-justified horizontal layout">
-            <div class="bordered cursor-p horizontal hover layout li white" on-click="click">
+            <div class="cursor-p horizontal hover layout li white" on-click="click" style="border-bottom: 1px solid #EEE;">
                 <div style="padding: 16px; padding-right: 8px;">
-                    <selectable-icon icon_class$="[[return_class(item.category)]]" icon_text$="[[return_text(item.link.length)]]" id="selectable_icon" selected$="[[selected]]"></selectable-icon>
+                    <selectable-icon icon_class$="[[return_p_no_class(item.p_no)]]" icon_text$="[[return_p_no_text(item.p_no)]]" id="selectable-icon" selected$="[[selected]]"></selectable-icon>
                 </div>
 
                 <div class="flex layout vertical" style="padding: 16px; padding-left: 8px;">
-                    <div style="color: #757575; font-size: 14px; line-height: 20px;">[[return_description(item)]]</div>
-                    <div style="font-size: 16px; line-height: 24px;">[[item.title]]</div>
-                    <div style="color: #757575; font-size: 14px; line-height: 20px; text-align: right;">[[return_time(item.time)]]</div>
+                    <div class="lowercase" style="font-size: 16px; line-height: 24px;">[[item.title]]</div>
+                    <div class="center horizontal justified layout" style="color: #757575; font-size: 14px; line-height: 20px; width: 100%;">
+                        <div class="etc flex lowercase">[[return_assignee_text(item.assignee)]]</div>
+                        <div>[[return_time(item.app_date)]]</div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -23054,18 +22744,18 @@ paper-calendar {
     Polymer({
 
         click: function(e) {
-            if (Polymer.dom(e).localTarget.id != "selectable_icon") {
+            if (Polymer.dom(e).localTarget.id != "selectable-icon") {
                 e.stopPropagation();
 
-                if (_.has(this.item, "link") && this.item.link.length) {
-                    document.querySelector("torrent-view").torrent = this.item;
+                // if (_.has(this.item, "link") && this.item.link.length) {
+                //     document.querySelector("torrent-view").torrent = this.item;
 
-                    FlowRouter.setQueryParams({
-                        "route": "torrent-view"
-                    });
-                } else {
-                    document.querySelector("#polymer_toast").toast("under processing");
-                }
+                //     FlowRouter.setQueryParams({
+                //         "route": "torrent-view"
+                //     });
+                // } else {
+                //     document.querySelector("#polymer_toast").toast("under processing");
+                // }
             }
         },
 
@@ -23083,16 +22773,16 @@ paper-calendar {
             }
         },
 
-        return_class: function(text) {
-            return polymer_color(text ? text : "#");
+        return_assignee_text: function(text) {
+            return (text ? text.replace(/;/g, ", ") : "#");
         },
 
-        return_description: function(item) {
-            return (item.size ? item.size : "#") + " | " + (item.leech ? item.leech + "L" : "#") + " / " + (item.seed ? item.seed + "S" : "#");
+        return_p_no_class: function(text) {
+            return polymer_color(text.match(/^[A-Z]{2}/) ? text.substr(0, 2) : "#");
         },
 
-        return_text: function(text) {
-            return (text ? text : "#");
+        return_p_no_text: function(text) {
+            return (text.match(/^[A-Z]{2}/) ? text.substr(0, 2) : "#");
         },
 
         return_time: function(time) {
@@ -23103,27 +22793,12 @@ paper-calendar {
     </script>
 
 </dom-module>
-<dom-module id="layout-inbox" assetpath="/linto/">
+<dom-module id="inbox-view" assetpath="/linto/">
 
     <style>
-    paper-drawer-panel /deep/ #drawer,
-    paper-drawer-panel /deep/ #main #scrim {
-        z-index: 1;
-    }
-    
-    paper-fab {
-        --paper-fab-background: var(--paper-red-500);
-        --paper-fab-keyboard-focus-background: var(--paper-red-700);
-    }
-    
-    paper-menu-button {
-        padding: 0;
-    }
-    
-    paper-toggle-button {
-        --paper-toggle-button-checked-bar-color: var(--paper-green-500);
-        --paper-toggle-button-checked-button-color: var(--paper-green-500);
-        --paper-toggle-button-checked-ink-color: var(--paper-green-500);
+    paper-progress {
+        --paper-progress-active-color: var(--paper-red-500);
+        --paper-progress-secondary-color: var(--paper-red-100);
     }
     
     paper-toolbar {
@@ -23166,6 +22841,227 @@ paper-calendar {
     paper-toolbar .title {
         padding: 0 12px;
     }
+    </style>
+
+    <template>
+        <paper-scroll-header-panel class="fit">
+            <paper-toolbar id="main_toolbar">
+                <paper-icon-button class="selection-visible" icon="arrow-back" on-click="clear_torrent_selection"></paper-icon-button>
+                <paper-icon-button class="selection-hidden" icon="menu" on-click="menu_toggle" paper-drawer-toggle=""></paper-icon-button>
+
+                <div class="title" id="main_toolbar_title">Patentability</div>
+
+                <paper-icon-button class="selection-visible" icon="delete" on-click="remove_torrent"></paper-icon-button>
+                <paper-icon-button class="selection-visible" icon="social:share" on-click="share"></paper-icon-button>
+                <paper-icon-button class="selection-hidden" icon="search" on-click="search_bar"></paper-icon-button>
+            </paper-toolbar>
+
+            <div class="content">
+                <div class="blue-700" style="height: 256px"></div>
+
+                <iron-selector activate-event="click" attr-for-selected="item" multi="" selectable="inbox-item" selected-attribute="selected" selected-values="{{patent_selected}}">
+                    <template is="dom-repeat" items="[[project]]">
+                        <template if="[[project_selected(menu_selected, item._id)]]" is="dom-if">
+                            <div class="blue-700 center-justified horizontal layout">
+                                <div class="blue-500 center horizontal layout li">
+                                    <div class="cursor-d flex lowercase" style="line-height: 24px; padding: 16px;">[[item.keyword]]</div>
+
+                                    <paper-icon-button data-index$="[[index]]" icon="sort" on-click="sort"></paper-icon-button>
+                                    <paper-icon-button data-id$="[[item._id]]" icon="close" on-click="remove_project" style="margin-right: 8px;"></paper-icon-button>
+                                </div>
+                            </div>
+
+                            <div class="center-justified horizontal layout">
+                                <div class="li">
+                                    <paper-progress class="project_progress" data-id$="[[item._id]]" hidden="" style="width: 100%;"></paper-progress>
+                                </div>
+                            </div>
+
+                            <template as="patent" is="dom-repeat" items="[[item.patent]]">
+                                <inbox-item item$="[[patent]]"></inbox-item>
+                            </template>
+                        </template>
+                    </template>
+                </iron-selector>
+
+                <div style="min-height: 80px;"></div>
+            </div>
+        </paper-scroll-header-panel>
+    </template>
+
+    <script>
+    Polymer({
+
+        is: "inbox-view",
+
+        menu_toggle: function() {
+            document.querySelector("layout-inbox").menu_toggle();
+        },
+
+        properties: {
+            menu_selected: {
+                type: String,
+                value: ""
+            },
+
+            project: {
+                type: Array,
+                value: function() {
+                    return [{
+                        "_id": "Msi8WeRdnwqSdgrNi",
+                        "cluster_keyword": "Management Method",
+                        "keyword": "android",
+                        "temporary_id": "FLq4D6jwzDaQARGyE",
+                        "patent": [{
+                            "title": "DOWNLOAD MANAGEMENT METHOD AND DEVICE BASED ON ANDROID BROWSER",
+                            "abstract": "\nThe present disclosure provides a download management method and device based on Android browser. The download management method includes the following steps: obtaining a physical address of a network card of a television when a download request input from a user through the browser is received; and judging whether the television corresponding to the physical address is granted a download permission corresponding to the download request; if the physical address is granted the download permission, implementing the download according to the download request; otherwise, if the physical address is not granted the download permission, preventing the download. The method and device of the present disclosure can effectively control the download contents of the television and thus prevent random downloads from reducing the safety and stability of the system and further thus improves the user experience.\n",
+                            "app_date": "2013-01-21",
+                            "assignee": "SHENZHEN COOCAA NETWORK TECHNOLOGY CO LTD",
+                            "concept": "Computer network;Network interface controller;Telecommunications network;Telecommunication;Address space;MAC address;Physical address;User interface;Cable television;Server (computing);Mobile device;Internet;Graphical user interface;Data transmission;Java package;Modularity;Module (mathematics);Television network;Airport terminal;Radio",
+                            "keyword": "download request;physical address;download management;permission corresponding;download permission;android browser;television corresponding;network card;judging whether the television;terminal",
+                            "p_no": "EP2768206A4",
+                            "_id": "kN4Eumq5gzGCFA3AA"
+                        }, {
+                            "title": "METHOD AND DEVICE FOR RUNNING LINUX APPLICATION IN ANDROID SYSTEM",
+                            "abstract": "A method and a device for running a Linux application in an Android system are provided. First, an Android application proxy processing module creates a shared display region, and the display configuration is set by a Linux application processing module (i.e. a Linux application) according to the created shared display region to share the display region; then, the Android application proxy processing module transfers the user events received to the Linux application processing module for processing, the user interface information created after being processed is sent by the Linux application processing module to a display module for display. The Android application proxy processing module creates the shared display region as the shared display region of the processed results of the Linux user events, and the user events of the Linux system and the user events of the Android system are managed together by the Android application proxy processing module to enable the Linux application to run normally in the Android system.",
+                            "app_date": "2010-10-01",
+                            "assignee": "BEIJING BORQS SOFTWARE TECH CO",
+                            "concept": "Proxy server;Graphical user interface;User interface;Android (board game)",
+                            "keyword": "running a linux application;android application proxy processing module;running linux;module creates;created shared;device for running a linux;linux user events;region as the shared;android system are managed;linux system and the user",
+                            "p_no": "WO2011120288A1",
+                            "_id": "XL4M8s3yYiF258DHQ"
+                        }, {
+                            "title": "Method for operating invisible system services on android platform",
+                            "abstract": "A method for operating an invisible system service on Android platform is disclosed. The method for operating system services on Android platform includes selectively registering a created system service in a context manager according to a type of the created system service, where the type of the system service comprises a first type for permitting access from an outside and a second type for not permitting access from the outside, and the selectively registering comprises registering in the context manager the created system service belonging to the first type and not registering in the context manager the created system service belonging to the second type.",
+                            "app_date": "2013-01-28",
+                            "assignee": "FOUNDATION SOONGSIL UNIV INDUSTRY COOPERATION",
+                            "concept": "Smartphone;CPU cache;Remote procedure call;Graphical user interface;User interface;Warez;Web cache;Waste;Android (robot);Flowchart",
+                            "keyword": "services on android platform;operating system services on android;context manager;invisible system services;created system service;service belonging;type of the system service;android operating;permitting access;illegally",
+                            "p_no": "US9043871B2",
+                            "_id": "cfXE5SLAFW53MPJg7"
+                        }, {
+                            "title": "METHOD AND DEVICE FOR LOADING ANDROID VIRTUAL MACHINE APPLICATION",
+                            "abstract": "A method and a device for loading a virtual machine application are provided herein. An exemplary method comprises: loading a management object of the virtual machine by the layer-booting object; reading the virtual machine configuration by the management object of the virtual machine; and invoking a creation function of the management object of the virtual machine by the virtual machine configuration and creating an operational instance of the virtual machine. The Android loading method and device for a virtual machine can be used to improve switching speed between instances.",
+                            "app_date": "2013-12-04",
+                            "assignee": "TENCENT TECH SHENZHEN CO LTD",
+                            "concept": "Mobile device;Streaming media;Virtual machine;Booting;Graphical user interface;User interface;Electromagnetism;Application programming interface;Telecommunication;Telecommunications network;Memory management;Smartphone;Printed circuit board;Internet;OLED;Application layer;Personal digital assistant;Electrical connector;Interrupt;Memory address",
+                            "keyword": "management object of the virtual;android virtual machine;operational instance of the virtual;device for loading;instance of the virtual machine;booting object;virtual machine configuration;object of the virtual machine;invoking;loading a virtual machine application",
+                            "p_no": "WO2014194619A1",
+                            "_id": "REEBj3evTpMy7y2AQ"
+                        }, {
+                            "title": "METHOD AND SYSTEM FOR ANDROID-BASED MULTI-TASK MANAGEMENT",
+                            "abstract": "Disclosed are a method and system for Android-based multi-task management. When a task scheduling module is used to switchover into the multi-task management system, multiple co-existing tasks operate simultaneously. A state tracking module is used to maintain states in the multi-task management system. Display view management for a program running in the background is implemented by a window management module. A multi-task window display area for task thumbnails is displayed, where the last frame of the application execution interface image corresponding to a task is used as the task thumbnail.",
+                            "app_date": "2012-09-27",
+                            "assignee": "TCL MOBILE COMM CO LTD HUIZHOU",
+                            "concept": "Graphical user interface;User interface;Task management;Android (board game);Thumbnail;Scheduling (computing)",
+                            "keyword": "android based multi task management;task thumbnail;window display area for task;module is used;used as the task;displayed",
+                            "p_no": "WO2013097505A1",
+                            "_id": "BAiGYyGhx79h5MzZK"
+                        }, {
+                            "title": "INSTALLER AND METHOD FOR ADDING AN ANDROID PLATFORM DYNAMIC LIBRARY",
+                            "abstract": "An installer for adding an Android platform dynamic library comprises a unit for generating an external directory which generates an external directory for storing a library, a unit for generating library information which generates library information including at least one of library name information and library location information, and a control unit which stores the library in the external directory and stores the generated library information in an external library management directory.",
+                            "app_date": "2011-11-18",
+                            "assignee": "UNIV NAT CHONNAM IND FOUND",
+                            "concept": "Dynamic linker;Android (board game)",
+                            "keyword": "installer and method for adding;library location information;android platform dynamic;platform dynamic library;adding an android;generates an external;unit for generating;external directory for storing;library information in an external;name information and library",
+                            "p_no": "WO2012086930A3",
+                            "_id": "DMcdALBwjhuEL5oBg"
+                        }, {
+                            "title": "Provider Management Methods and Systems for a Portable Device Running Android Platform",
+                            "abstract": "A provider management method conforming to an Android platform is provided. An authentication procedure is performed between a consumer and a provider, wherein the authentication procedure is performed via a binding unit, and the binding unit is an interface enabling inter-process communication conforming to the Android platform.",
+                            "app_date": "2010-10-07",
+                            "assignee": "MEDIATEK INC",
+                            "concept": "Telecommunication;Encryption;Mobile device;Digital signature;Digital electronics;Information retrieval;Managed code;Authentication;Graphical user interface;Client (computing);User interface;Optical fiber;Netbook;Computer program;Mobile phone;Database;Kernel (algebra);Kernel (computing);Machine-readable data;Execution (computing)",
+                            "keyword": "provider management methods;android platform;authentication procedure is performed;performed via a binding unit;consumer;portable device running an android;devices such as mobile;provider management method conforming;requesting a service;enabling inter",
+                            "p_no": "US20110154436A1",
+                            "_id": "96rfrEwmBgypufprc"
+                        }, {
+                            "title": "METHOD OF PROVIDING ASSOCIATED APPLICATION IN ANDROID PLATFORM-BASED RECEIVER",
+                            "abstract": "Provided is a method of providing an associated application in an Android platform-based receiver, including (a) obtaining identification information including at least one of current channel information and current program information of a digital broadcast; (b) obtaining and executing an associated Android application associated with the digital broadcast selected from a plurality of Android applications based on an attribute information included in each of the plurality of Android applications and the identification information; and (c) changing a state of the associated Android application based on an event when the event is received. Accordingly, an associated Android application, the life cycle of which is managed while associated with a digital broadcast and which is personalized for a user based on attributes or a pre-designed associated condition, is provided.",
+                            "app_date": "2013-06-12",
+                            "assignee": "ANYPOINT MEDIA GROUP KOREA OFFICE",
+                            "concept": "Social network;Receiver (radio);Digital television;Video on demand;Telecommunications network;Telecommunication;Android (operating system);Application programming interface;Digital terrestrial television;Graphical user interface;Smartphone;GSM frequency bands;Application server;Korean Intellectual Property Office;Set-top box;IPTV;Computer network;Java (programming language);Signal processing;Analog television",
+                            "keyword": "digital broadcast;associated android application;platform based receiver;associated application;android platform;providing an associated;program information;identification information;channel information;broadcast receiver",
+                            "p_no": "US20150113579A1",
+                            "_id": "9mNKxQ9hMmN77sjMc"
+                        }, {
+                            "title": "CLOUD MANAGEMENT SYSTEMS AND METHODS FOR EXECUTING APPLICATIONS OF ANDROID SYSTEMS",
+                            "abstract": "A cloud management system for executing applications of Android system includes at least one user device and a cloud simulator. The cloud simulator couples to the user device via a network and is arranged for receiving a request from the user device, providing a first virtual phone interface corresponding to the user device to the user device in response to the request, wherein the first virtual phone interface includes respective applications of Android system, receiving an application selection from the user device and performing a first application corresponding to the application selection and returning the execution result for the first application to the user device for displaying via the first virtual phone interface.",
+                            "app_date": "2015-02-03",
+                            "assignee": "NAT UNIV TSINGHUA",
+                            "concept": "User interface;Mobile device;Graphical user interface;Online game;Telecommunication;Signal processing;Smartphone;Application programming interface;Analog-to-digital converter;Video game;Component-based software engineering;Wireless network;Multi-core processor;Authentication;Telecommunications network;Software component;Digital electronics;Web browser;Internet;Virtual private server",
+                            "keyword": "cloud simulator couples;user device;executing applications;virtual phone interface;applications of android;applications apps;receiving an application;application selection;cloud management;execution result corresponding",
+                            "p_no": "US20150341416A1",
+                            "_id": "aTP4mzzKRACQ83gRt"
+                        }, {
+                            "title": "ANDROID SYSTEM-BASED MULTIUSER MANAGEMENT METHOD, DEVICE, AND COMPUTER STORAGE MEDIUM",
+                            "abstract": "An Android system-based multiuser management method, device, and computer storage medium. The method is applicable in an Android system terminal. A first application associated with a first user can be run in a first child window of the Android system terminal; a second application associated with a second user can be run in a second child window of the Android system terminal. The method comprises: receiving an operation instruction of a user with respect to the second application (101); determining, on the basis of the operation instruction, a data area corresponding to preconfigured second callout information as a to-be-accessed data area (102), where the second callout information is used for expressing that a second child window and a second user correspond to each other; and, accessing the to-be-accessed data area (103).",
+                            "app_date": "2014-06-30",
+                            "assignee": "ZTE CORP",
+                            "concept": "Computer data storage;Android (board game)",
+                            "keyword": "android system based multiuser management;computer storage medium;accessed data area;device;application associated;run in a first child;child window of the android;operation instruction;callout information;android system terminal",
+                            "p_no": "WO2015176359A1",
+                            "_id": "BM3sQSbineeLPSdgh"
+                        }, {
+                            "title": "METHOD FOR MANAGING AND DISPLAYING FOLDERS BASED ON ANDROID SYSTEM AND MOBILE TERMINAL THEREOF",
+                            "abstract": "Disclosed are a method for managing and displaying folders based on android system and a mobile terminal thereof. The method for managing folders comprises: obtaining a selection instruction for selecting a folder to be processed among folders displayed on a display interface; generating a display property file for hiding the folder to be processed based on the selection instruction; storing the display property file in the folder to be processed, and when reading and recording the folder to be processed and then judging whether there is a corresponding display property file stored in the folder to be processed, hiding the folder to be processed where the display property file is stored from the display interface. The application can effectively solve the technical problem that folders can not be hided simply, quickly and effectively in the prior art.",
+                            "app_date": "2014-01-27",
+                            "assignee": "HUAWEI DEVICE CO LTD",
+                            "concept": "Mobile device;User interface;Android (robot);Android (board game)",
+                            "keyword": "managing and displaying folders;mobile terminal;displaying folders based on android;stored from the display;display property file is stored;display interface;selection instruction;hiding the folder;folder to be processed;file stored",
+                            "p_no": "WO2014117707A1",
+                            "_id": "TukmfbTBrrPhBC8wh"
+                        }]
+                    }];
+                }
+            },
+
+            patent_selected: {
+                type: Array,
+                value: function() {
+                    return [];
+                }
+            }
+        },
+
+        project_selected: function(menu_opt, project_opt) {
+            return (menu_opt == "" ? true : menu_opt == project_opt);
+        },
+
+        sort: function(e) {
+            var index = Polymer.dom(e).localTarget.dataset.index;
+
+            this.set("project." + index + ".patent", _.sortBy(this.project[index].patent, "app_date"));
+
+            document.querySelector("#polymer-toast").toast("sorted by app_date");
+        }
+
+    });
+    </script>
+
+</dom-module>
+<dom-module id="layout-inbox" assetpath="/linto/">
+
+    <style>
+    paper-drawer-panel /deep/ #drawer,
+    paper-drawer-panel /deep/ #main #scrim {
+        z-index: 1;
+    }
+    
+    paper-fab {
+        --paper-fab-background: var(--paper-red-500);
+        --paper-fab-keyboard-focus-background: var(--paper-red-700);
+    }
+    
+    paper-menu-button {
+        padding: 0;
+    }
+    
+    paper-toggle-button {
+        --paper-toggle-button-checked-bar-color: var(--paper-green-500);
+        --paper-toggle-button-checked-button-color: var(--paper-green-500);
+        --paper-toggle-button-checked-ink-color: var(--paper-green-500);
+    }
     
     .menu-li {
         border-bottom: 2px solid #EEE;
@@ -23200,7 +23096,7 @@ paper-calendar {
                         
                     </div>
 
-                    <div class="cursor-p menu-li relative white" onclick="window.open('http://vcompile.com/patentability', '_system')" style="padding: 16px; z-index: 1;">About patentability
+                    <div class="cursor-p menu-li relative white" onclick="window.open('http://vcompile.com/Patentability', '_system')" style="padding: 16px; z-index: 1;">About Patentability
                         <paper-ripple></paper-ripple>
                     </div>
                 </div>
@@ -23211,26 +23107,7 @@ paper-calendar {
                     
                 </neon-animatable>
 
-                <neon-animatable>
-                    <paper-scroll-header-panel class="fit" condenses="">
-                        <paper-toolbar id="main_toolbar">
-                            <paper-icon-button class="selection-visible" icon="arrow-back" on-click="clear_torrent_selection"></paper-icon-button>
-                            <paper-icon-button class="selection-hidden" icon="menu" paper-drawer-toggle=""></paper-icon-button>
-
-                            <div class="title" id="main_toolbar_title">patentability</div>
-
-                            <paper-icon-button class="selection-visible" icon="delete" on-click="remove_torrent"></paper-icon-button>
-                            <paper-icon-button class="selection-visible" icon="social:share" on-click="share"></paper-icon-button>
-                            <paper-icon-button class="selection-hidden" icon="search" on-click="search_bar"></paper-icon-button>
-                        </paper-toolbar>
-
-                        <div class="content"></div>
-
-                        
-
-                        
-                    </paper-scroll-header-panel>
-                </neon-animatable>
+                <inbox-view id="inbox-view"></inbox-view>
             </neon-animated-pages>
         </paper-drawer-panel>
 
@@ -23246,188 +23123,196 @@ paper-calendar {
     <script>
     Polymer({
 
-        add_project: function() {
-            FlowRouter.setQueryParams({
-                "route": "add-project"
-            });
-        },
+        // add_project: function() {
+        //     FlowRouter.setQueryParams({
+        //         "route": "add-project"
+        //     });
+        // },
 
-        attached: function() {
-            this.user = (Meteor.user() ? Meteor.user() : {});
+        // attached: function() {
+        //     this.user = (Meteor.user() ? Meteor.user() : {});
 
-            if ((document.querySelector("#torrent_db").value || []).length) {
-                this.project = document.querySelector("#torrent_db").value;
-            }
+        //     if ((document.querySelector("#torrent_db").value || []).length) {
+        //         this.project = document.querySelector("#torrent_db").value;
+        //     }
 
-            var _this = this;
+        //     var _this = this;
 
-            Meteor.setTimeout(function() {
-                if (6 < moment.duration(moment().diff(moment(_this.trend.time))).asHours() || !_this.trend.keyword.length) {
-                    Meteor.call("trend", function(error, response) {
-                        if (error) {
-                            document.querySelector("#polymer_toast").toast(error.reason);
-                        } else {
-                            if (response.length) {
-                                _this.trend = {
-                                    keyword: response,
-                                    time: moment().format()
-                                };
-                            }
-                        }
-                    });
-                }
-            }, 1000);
+        //     Meteor.setTimeout(function() {
+        //         if (6 < moment.duration(moment().diff(moment(_this.trend.time))).asHours() || !_this.trend.keyword.length) {
+        //             Meteor.call("trend", function(error, response) {
+        //                 if (error) {
+        //                     document.querySelector("#polymer_toast").toast(error.reason);
+        //                 } else {
+        //                     if (response.length) {
+        //                         _this.trend = {
+        //                             keyword: response,
+        //                             time: moment().format()
+        //                         };
+        //                     }
+        //                 }
+        //             });
+        //         }
+        //     }, 1000);
 
-            Meteor.setTimeout(function() {
-                _project.find().observe({
-                    added: function(row) {
-                        for (var A = 0; A < row.torrent.length; A++) {
-                            var item = _torrent.findOne({
-                                _id: row.torrent[A]
-                            });
+        //     Meteor.setTimeout(function() {
+        //         _project.find().observe({
+        //             added: function(row) {
+        //                 for (var A = 0; A < row.torrent.length; A++) {
+        //                     var item = _torrent.findOne({
+        //                         _id: row.torrent[A]
+        //                     });
 
-                            row.torrent[A] = (item ? item : {
-                                _id: row.torrent[A]
-                            });
+        //                     row.torrent[A] = (item ? item : {
+        //                         _id: row.torrent[A]
+        //                     });
 
-                            row.torrent[A].project = {
-                                _id: row._id
-                            };
-                        }
+        //                     row.torrent[A].project = {
+        //                         _id: row._id
+        //                     };
+        //                 }
 
-                        var index = _.map(_this.project, function(A) {
-                            return A._id;
-                        }).indexOf(row._id);
+        //                 var index = _.map(_this.project, function(A) {
+        //                     return A._id;
+        //                 }).indexOf(row._id);
 
-                        if (index == -1) {
-                            _this.project.unshift(row);
-                        } else {
-                            // _this.project[index] = row;
-                            // _this.project[index] = _.clone(_this.project[index]);
-                        }
+        //                 if (index == -1) {
+        //                     _this.project.unshift(row);
+        //                 } else {
+        //                     // _this.project[index] = row;
+        //                     // _this.project[index] = _.clone(_this.project[index]);
+        //                 }
 
-                        _this.project = _.clone(_this.project);
-                    },
+        //                 _this.project = _.clone(_this.project);
+        //             },
 
-                    changed: function(row, old) {
-                        for (var A = 0; A < row.torrent.length; A++) {
-                            var item = _torrent.findOne({
-                                _id: row.torrent[A]
-                            });
+        //             changed: function(row, old) {
+        //                 for (var A = 0; A < row.torrent.length; A++) {
+        //                     var item = _torrent.findOne({
+        //                         _id: row.torrent[A]
+        //                     });
 
-                            row.torrent[A] = (item ? item : {
-                                _id: row.torrent[A]
-                            });
+        //                     row.torrent[A] = (item ? item : {
+        //                         _id: row.torrent[A]
+        //                     });
 
-                            row.torrent[A].project = {
-                                _id: row._id
-                            };
-                        }
+        //                     row.torrent[A].project = {
+        //                         _id: row._id
+        //                     };
+        //                 }
 
-                        var index = _.map(_this.project, function(A) {
-                            return A._id;
-                        }).indexOf(row._id);
+        //                 var index = _.map(_this.project, function(A) {
+        //                     return A._id;
+        //                 }).indexOf(row._id);
 
-                        if (-1 < index) {
-                            _this.project[index] = row;
-                            _this.project = _.clone(_this.project);
-                        }
-                    },
+        //                 if (-1 < index) {
+        //                     _this.project[index] = row;
+        //                     _this.project = _.clone(_this.project);
+        //                 }
+        //             },
 
-                    removed: function(old) {
-                        var index = _.map(_this.project, function(A) {
-                            return A._id;
-                        }).indexOf(old._id);
+        //             removed: function(old) {
+        //                 var index = _.map(_this.project, function(A) {
+        //                     return A._id;
+        //                 }).indexOf(old._id);
 
-                        if (-1 < index) {
-                            _this.project.splice(index, 1);
-                            _this.project = _.clone(_this.project);
-                        }
-                    }
-                });
-            }, 1000);
+        //                 if (-1 < index) {
+        //                     _this.project.splice(index, 1);
+        //                     _this.project = _.clone(_this.project);
+        //                 }
+        //             }
+        //         });
+        //     }, 1000);
 
-            Meteor.setTimeout(function() {
-                _torrent.find().observe({
-                    added: function(row) {
-                        for (var A = 0; A < _this.project.length; A++) {
-                            var index = _.map(_this.project[A].torrent, function(item) {
-                                return item._id;
-                            }).indexOf(row._id);
+        //     Meteor.setTimeout(function() {
+        //         _torrent.find().observe({
+        //             added: function(row) {
+        //                 for (var A = 0; A < _this.project.length; A++) {
+        //                     var index = _.map(_this.project[A].torrent, function(item) {
+        //                         return item._id;
+        //                     }).indexOf(row._id);
 
-                            if (-1 < index) {
-                                _this.project[A].torrent[index] = _.clone($.extend(true, _this.project[A].torrent[index], row));
-                                _this.project[A].torrent = _.clone(_this.project[A].torrent);
-                                _this.project[A] = _.clone(_this.project[A]);
-                                _this.project = _.clone(_this.project);
-                            }
-                        }
-                    },
+        //                     if (-1 < index) {
+        //                         _this.project[A].torrent[index] = _.clone($.extend(true, _this.project[A].torrent[index], row));
+        //                         _this.project[A].torrent = _.clone(_this.project[A].torrent);
+        //                         _this.project[A] = _.clone(_this.project[A]);
+        //                         _this.project = _.clone(_this.project);
+        //                     }
+        //                 }
+        //             },
 
-                    changed: function(row, old) {
-                        for (var A = 0; A < _this.project.length; A++) {
-                            var index = _.map(_this.project[A].torrent, function(item) {
-                                return item._id;
-                            }).indexOf(row._id);
+        //             changed: function(row, old) {
+        //                 for (var A = 0; A < _this.project.length; A++) {
+        //                     var index = _.map(_this.project[A].torrent, function(item) {
+        //                         return item._id;
+        //                     }).indexOf(row._id);
 
-                            if (-1 < index) {
-                                _this.project[A].torrent[index] = _.clone($.extend(true, _this.project[A].torrent[index], row));
-                                _this.project[A].torrent = _.clone(_this.project[A].torrent);
-                                _this.project[A] = _.clone(_this.project[A]);
-                                _this.project = _.clone(_this.project);
-                            }
-                        }
-                    },
+        //                     if (-1 < index) {
+        //                         _this.project[A].torrent[index] = _.clone($.extend(true, _this.project[A].torrent[index], row));
+        //                         _this.project[A].torrent = _.clone(_this.project[A].torrent);
+        //                         _this.project[A] = _.clone(_this.project[A]);
+        //                         _this.project = _.clone(_this.project);
+        //                     }
+        //                 }
+        //             },
 
-                    removed: function(old) {
-                        for (var A = 0; A < _this.project.length; A++) {
-                            var index = _.map(_this.project[A].torrent, function(item) {
-                                return item._id;
-                            }).indexOf(old._id);
+        //             removed: function(old) {
+        //                 for (var A = 0; A < _this.project.length; A++) {
+        //                     var index = _.map(_this.project[A].torrent, function(item) {
+        //                         return item._id;
+        //                     }).indexOf(old._id);
 
-                            if (-1 < index) {
-                                _this.project[A].torrent.splice(index, 1);
-                                _this.project[A].torrent = _.clone(_this.project[A].torrent);
-                                _this.project[A] = _.clone(_this.project[A]);
-                                _this.project = _.clone(_this.project);
-                            }
-                        }
-                    }
-                });
-            }, 1000 * 4);
-        },
+        //                     if (-1 < index) {
+        //                         _this.project[A].torrent.splice(index, 1);
+        //                         _this.project[A].torrent = _.clone(_this.project[A].torrent);
+        //                         _this.project[A] = _.clone(_this.project[A]);
+        //                         _this.project = _.clone(_this.project);
+        //                     }
+        //                 }
+        //             }
+        //         });
+        //     }, 1000 * 4);
+        // },
 
-        clear_torrent_selection: function() {
-            this.torrent_selected = [];
-        },
+        // clear_torrent_selection: function() {
+        //     this.torrent_selected = [];
+        // },
 
-        initialize_trend: function() {
-            this.trend = {
-                keyword: [],
-                time: moment().format()
-            };
-        },
+        // initialize_trend: function() {
+        //     this.trend = {
+        //         keyword: [],
+        //         time: moment().format()
+        //     };
+        // },
 
         is: "layout-inbox",
 
-        is_search: function(worker) {
-            return (worker == "search")
+        // is_search: function(worker) {
+        //     return (worker == "search")
+        // },
+
+        // menu_opt: function(e, d) {
+        //     this.$.drawer.closeDrawer();
+
+        //     this.$.main_toolbar.className = this.$.main_toolbar.className.replace(/ ?[a-z\-]+\-500/g, "") + (d.item.dataset.id == "trend" ? "" : " " + document.querySelector("#menu_opt .iron-selected selectable-icon").icon_class);
+
+        //     this.$.main_page.selected = (d.item.dataset.id == "trend" ? 0 : 1);
+
+        //     this.menu_selected = d.item.dataset.id;
+        // },
+
+        menu_toggle: function() {
+            if (this.$.drawer.narrow && this.$.drawer.getBoundingClientRect().width < parseInt(this.$.drawer.responsiveWidth)) {
+                this.$.drawer.togglePanel();
+            } else {
+                this.$.drawer.forceNarrow = !this.$.drawer.forceNarrow;
+            }
         },
 
-        menu_opt: function(e, d) {
-            this.$.drawer.closeDrawer();
-
-            this.$.main_toolbar.className = this.$.main_toolbar.className.replace(/ ?[a-z\-]+\-500/g, "") + (d.item.dataset.id == "trend" ? "" : " " + document.querySelector("#menu_opt .iron-selected selectable-icon").icon_class);
-
-            this.$.main_page.selected = (d.item.dataset.id == "trend" ? 0 : 1);
-
-            this.menu_selected = d.item.dataset.id;
-        },
-
-        observers: [
-            // "project_change(project.splices)",
-            "torrent_selected_change(torrent_selected.splices)"
-        ],
+        // observers: [
+        //     // "project_change(project.splices)",
+        //     "torrent_selected_change(torrent_selected.splices)"
+        // ],
 
         // project_change: function(change) {
         //     this.debounce("project_change", function() {
@@ -23437,289 +23322,289 @@ paper-calendar {
         //     }, 1000 * 4);
         // },
 
-        project_selected: function(menu_opt, project_opt) {
-            return (menu_opt == "" ? true : menu_opt == project_opt);
-        },
+        // project_selected: function(menu_opt, project_opt) {
+        //     return (menu_opt == "" ? true : menu_opt == project_opt);
+        // },
 
-        properties: {
-            menu_selected: {
-                type: String,
-                value: ""
-            },
-            project: {
-                type: Array,
-                value: function() {
-                    return [];
-                }
-            },
-            torrent_selected: {
-                type: Array,
-                value: function() {
-                    return [];
-                }
-            },
-            trend: {
-                type: Object,
-                value: function() {
-                    return {
-                        keyword: [],
-                        time: moment().format()
-                    };
-                }
-            },
-            user: {
-                type: Object,
-                value: function() {
-                    return {};
-                }
-            }
-        },
+        // properties: {
+        //     menu_selected: {
+        //         type: String,
+        //         value: ""
+        //     },
+        //     project: {
+        //         type: Array,
+        //         value: function() {
+        //             return [];
+        //         }
+        //     },
+        //     torrent_selected: {
+        //         type: Array,
+        //         value: function() {
+        //             return [];
+        //         }
+        //     },
+        //     trend: {
+        //         type: Object,
+        //         value: function() {
+        //             return {
+        //                 keyword: [],
+        //                 time: moment().format()
+        //             };
+        //         }
+        //     },
+        //     user: {
+        //         type: Object,
+        //         value: function() {
+        //             return {};
+        //         }
+        //     }
+        // },
 
-        refresh: function(e) {
-            if (Meteor.status().connected) {
-                var _this = this;
+        // refresh: function(e) {
+        //     if (Meteor.status().connected) {
+        //         var _this = this;
 
-                Meteor.call("refresh", Polymer.dom(e).localTarget.dataset.id, function(error, response) {
-                    if (error) {
-                        document.querySelector("#polymer_toast").toast(error.reason);
-                    } else {
-                        var index = _.map(_this.project, function(A) {
-                            return A._id;
-                        }).indexOf(response._id);
+        //         Meteor.call("refresh", Polymer.dom(e).localTarget.dataset.id, function(error, response) {
+        //             if (error) {
+        //                 document.querySelector("#polymer_toast").toast(error.reason);
+        //             } else {
+        //                 var index = _.map(_this.project, function(A) {
+        //                     return A._id;
+        //                 }).indexOf(response._id);
 
-                        if (-1 < index) {
-                            for (var A = 0; A < response.torrent.length; A++) {
-                                var item = _torrent.findOne({
-                                    _id: response.torrent[A]
-                                });
+        //                 if (-1 < index) {
+        //                     for (var A = 0; A < response.torrent.length; A++) {
+        //                         var item = _torrent.findOne({
+        //                             _id: response.torrent[A]
+        //                         });
 
-                                response.torrent[A] = (item ? item : {
-                                    _id: response.torrent[A]
-                                });
+        //                         response.torrent[A] = (item ? item : {
+        //                             _id: response.torrent[A]
+        //                         });
 
-                                response.torrent[A].project = {
-                                    _id: response._id
-                                };
-                            }
+        //                         response.torrent[A].project = {
+        //                             _id: response._id
+        //                         };
+        //                     }
 
-                            _this.project[index] = response;
-                            _this.project = _.clone(_this.project);
-                        }
-                    }
-                });
-            } else {
-                document.querySelector("#polymer_toast").toast("server connection required");
-            }
-        },
+        //                     _this.project[index] = response;
+        //                     _this.project = _.clone(_this.project);
+        //                 }
+        //             }
+        //         });
+        //     } else {
+        //         document.querySelector("#polymer_toast").toast("server connection required");
+        //     }
+        // },
 
-        remove_ok: function(e) {
-            if (Meteor.status().connected) {
-                var _this = this;
+        // remove_ok: function(e) {
+        //     if (Meteor.status().connected) {
+        //         var _this = this;
 
-                Meteor.call("remove_project", _this.$.remove_prompt.dataset.id, function(error, response) {
-                    if (error) {
-                        document.querySelector("#polymer_toast").toast(error.reason);
-                    } else {
-                        document.querySelector("#polymer_toast").toast(response);
+        //         Meteor.call("remove_project", _this.$.remove_prompt.dataset.id, function(error, response) {
+        //             if (error) {
+        //                 document.querySelector("#polymer_toast").toast(error.reason);
+        //             } else {
+        //                 document.querySelector("#polymer_toast").toast(response);
 
-                        _this.$.main_toolbar.className = _this.$.main_toolbar.className.replace(/ ?[a-z\-]+\-500/g, "");
+        //                 _this.$.main_toolbar.className = _this.$.main_toolbar.className.replace(/ ?[a-z\-]+\-500/g, "");
 
-                        _this.menu_selected = "";
-                    }
-                });
-            } else {
-                document.querySelector("#polymer_toast").toast("server connection required");
-            }
+        //                 _this.menu_selected = "";
+        //             }
+        //         });
+        //     } else {
+        //         document.querySelector("#polymer_toast").toast("server connection required");
+        //     }
 
-            this.$.remove_prompt.close();
-        },
+        //     this.$.remove_prompt.close();
+        // },
 
-        remove_project: function(e) {
-            this.$.remove_prompt.dataset.id = Polymer.dom(e).localTarget.dataset.id;
-            this.$.remove_prompt.open();
-        },
+        // remove_project: function(e) {
+        //     this.$.remove_prompt.dataset.id = Polymer.dom(e).localTarget.dataset.id;
+        //     this.$.remove_prompt.open();
+        // },
 
-        remove_torrent: function() {
-            $("inbox-item.iron-selected").addClass("undo");
+        // remove_torrent: function() {
+        //     $("inbox-item.iron-selected").addClass("undo");
 
-            document.querySelector("#polymer_toast").undo = {
-                torrent: _.map(this.torrent_selected, function(A) {
-                    return A._id;
-                })
-            };
+        //     document.querySelector("#polymer_toast").undo = {
+        //         torrent: _.map(this.torrent_selected, function(A) {
+        //             return A._id;
+        //         })
+        //     };
 
-            document.querySelector("#polymer_toast").toast(this.torrent_selected.length + " torrent removed");
+        //     document.querySelector("#polymer_toast").toast(this.torrent_selected.length + " torrent removed");
 
-            this.clear_torrent_selection();
-        },
+        //     this.clear_torrent_selection();
+        // },
 
-        return_class: function(text) {
-            return polymer_color(text ? text : "#");
-        },
+        // return_class: function(text) {
+        //     return polymer_color(text ? text : "#");
+        // },
 
-        return_icon_text: function(text) {
-            return (isNaN(text.charAt(0)) ? text.charAt(0) : "#");
-        },
+        // return_icon_text: function(text) {
+        //     return (isNaN(text.charAt(0)) ? text.charAt(0) : "#");
+        // },
 
-        return_project_description: function(item) {
-            return (item.worker == "schedule" ? item.within + "M | " + item.leech + "L / " + item.seed + "S" : moment(item.time).format("MMM DD ddd hh:mm A"));
-        },
+        // return_project_description: function(item) {
+        //     return (item.worker == "schedule" ? item.within + "M | " + item.leech + "L / " + item.seed + "S" : moment(item.time).format("MMM DD ddd hh:mm A"));
+        // },
 
-        return_text: function(text) {
-            return (text ? text : "#");
-        },
+        // return_text: function(text) {
+        //     return (text ? text : "#");
+        // },
 
-        return_time: function(time) {
-            return (moment(time).isValid() ? moment(time).fromNow() : "#");
-        },
+        // return_time: function(time) {
+        //     return (moment(time).isValid() ? moment(time).fromNow() : "#");
+        // },
 
-        return_time_s: function(time) {
-            return (moment(time).isValid() ? moment(time).format("MMM DD ddd hh:mm A") : "#");
-        },
+        // return_time_s: function(time) {
+        //     return (moment(time).isValid() ? moment(time).format("MMM DD ddd hh:mm A") : "#");
+        // },
 
-        return_torrent_count: function(torrent) {
-            var A = _.countBy(torrent, function(item) {
-                return item.url ? "YES" : "NO";
-            });
+        // return_torrent_count: function(torrent) {
+        //     var A = _.countBy(torrent, function(item) {
+        //         return item.url ? "YES" : "NO";
+        //     });
 
-            return (A.YES && A.NO ? A.YES + " / " : "") + (torrent.length ? torrent.length : "#");
-        },
+        //     return (A.YES && A.NO ? A.YES + " / " : "") + (torrent.length ? torrent.length : "#");
+        // },
 
-        return_torrent_description: function(item) {
-            return (item.size ? item.size : "#") + " | " + (item.leech ? item.leech + "L" : "#") + " / " + (item.seed ? item.seed + "S" : "#");
-        },
+        // return_torrent_description: function(item) {
+        //     return (item.size ? item.size : "#") + " | " + (item.leech ? item.leech + "L" : "#") + " / " + (item.seed ? item.seed + "S" : "#");
+        // },
 
-        schedule: function(e) {
-            this.$.schedule_prompt.dataset.id = Polymer.dom(e).localTarget.dataset.id;
-            this.$.schedule_prompt.open();
-        },
+        // schedule: function(e) {
+        //     this.$.schedule_prompt.dataset.id = Polymer.dom(e).localTarget.dataset.id;
+        //     this.$.schedule_prompt.open();
+        // },
 
-        schedule_ok: function(e) {
-            if (Meteor.status().connected) {
-                var _this = this;
+        // schedule_ok: function(e) {
+        //     if (Meteor.status().connected) {
+        //         var _this = this;
 
-                Meteor.call("schedule_project", _this.$.schedule_prompt.dataset.id, function(error, response) {
-                    if (error) {
-                        document.querySelector("#polymer_toast").toast(error.reason);
-                    } else {
-                        document.querySelector("#polymer_toast").toast(response);
+        //         Meteor.call("schedule_project", _this.$.schedule_prompt.dataset.id, function(error, response) {
+        //             if (error) {
+        //                 document.querySelector("#polymer_toast").toast(error.reason);
+        //             } else {
+        //                 document.querySelector("#polymer_toast").toast(response);
 
-                        _this.$.main_toolbar.className = _this.$.main_toolbar.className.replace(/ ?[a-z\-]+\-500/g, "");
+        //                 _this.$.main_toolbar.className = _this.$.main_toolbar.className.replace(/ ?[a-z\-]+\-500/g, "");
 
-                        _this.menu_selected = "";
-                    }
-                });
-            } else {
-                document.querySelector("#polymer_toast").toast("server connection required");
-            }
+        //                 _this.menu_selected = "";
+        //             }
+        //         });
+        //     } else {
+        //         document.querySelector("#polymer_toast").toast("server connection required");
+        //     }
 
-            this.$.schedule_prompt.close();
-        },
+        //     this.$.schedule_prompt.close();
+        // },
 
-        search_bar: function() {
-            FlowRouter.setQueryParams({
-                "route": "search-bar"
-            });
-        },
+        // search_bar: function() {
+        //     FlowRouter.setQueryParams({
+        //         "route": "search-bar"
+        //     });
+        // },
 
-        share: function() {
-            var body = "";
+        // share: function() {
+        //     var body = "";
 
-            for (var A = 0; A < this.torrent_selected.length; A++) {
-                if (this.torrent_selected[A].link.length) {
-                    body += "\n\n" + (A + 1) + "\t\t" + this.torrent_selected[A].title + "\n\n";
+        //     for (var A = 0; A < this.torrent_selected.length; A++) {
+        //         if (this.torrent_selected[A].link.length) {
+        //             body += "\n\n" + (A + 1) + "\t\t" + this.torrent_selected[A].title + "\n\n";
 
-                    this.torrent_selected[A].link = _.sortBy(this.torrent_selected[A].link, "time");
+        //             this.torrent_selected[A].link = _.sortBy(this.torrent_selected[A].link, "time");
 
-                    for (var Z = 0; Z < this.torrent_selected[A].link.length; Z++) {
-                        body += "\t\t" + (Z + 1) + "\t\t" + this.torrent_selected[A].link[Z].url + "\n\n";
-                    }
-                }
-            }
+        //             for (var Z = 0; Z < this.torrent_selected[A].link.length; Z++) {
+        //                 body += "\t\t" + (Z + 1) + "\t\t" + this.torrent_selected[A].link[Z].url + "\n\n";
+        //             }
+        //         }
+        //     }
 
-            if (body != "") {
-                if (Meteor.isCordova) {
-                    window.plugins.socialsharing.share("Hi\n\npatentability - " + this.user.profile.name + " shared " + this.torrent_selected.length + " torrent" + body);
-                } else {
-                    window.open("mailto:" + this.user.profile.email + "?subject=" + encodeURIComponent("patentability") + "&body=" + encodeURIComponent("Hi\n\n" + this.user.profile.name + " shared " + this.torrent_selected.length + " torrent" + body), "_system");
-                }
-            } else {
-                document.querySelector("#polymer_toast").toast("empty email body");
-            }
-        },
+        //     if (body != "") {
+        //         if (Meteor.isCordova) {
+        //             window.plugins.socialsharing.share("Hi\n\nPatentability - " + this.user.profile.name + " shared " + this.torrent_selected.length + " torrent" + body);
+        //         } else {
+        //             window.open("mailto:" + this.user.profile.email + "?subject=" + encodeURIComponent("Patentability") + "&body=" + encodeURIComponent("Hi\n\n" + this.user.profile.name + " shared " + this.torrent_selected.length + " torrent" + body), "_system");
+        //         }
+        //     } else {
+        //         document.querySelector("#polymer_toast").toast("empty email body");
+        //     }
+        // },
 
-        sign_out: function() {
-            if (Meteor.status().connected) {
-                this.project = [];
+        // sign_out: function() {
+        //     if (Meteor.status().connected) {
+        //         this.project = [];
 
-                FlowRouter.go("/inbox/sign-out");
-            } else {
-                document.querySelector("#polymer_toast").toast("server connection required");
-            }
-        },
+        //         FlowRouter.go("/inbox/sign-out");
+        //     } else {
+        //         document.querySelector("#polymer_toast").toast("server connection required");
+        //     }
+        // },
 
-        sort: function(e) {
-            var A = Polymer.dom(e).localTarget.dataset.index;
+        // sort: function(e) {
+        //     var A = Polymer.dom(e).localTarget.dataset.index;
 
-            this.project[A].torrent = _.sortBy(this.project[A].torrent, "time").reverse();
-            this.project[A] = _.clone(this.project[A]);
-            this.project = _.clone(this.project);
+        //     this.project[A].torrent = _.sortBy(this.project[A].torrent, "time").reverse();
+        //     this.project[A] = _.clone(this.project[A]);
+        //     this.project = _.clone(this.project);
 
-            document.querySelector("#polymer_toast").toast("sorted by time");
-        },
+        //     document.querySelector("#polymer_toast").toast("sorted by time");
+        // },
 
-        torrent_selected_change: function(change) {
-            this.$.main_toolbar_title.textContent = (this.torrent_selected.length ? this.torrent_selected.length : "patentability");
+        // torrent_selected_change: function(change) {
+        //     this.$.main_toolbar_title.textContent = (this.torrent_selected.length ? this.torrent_selected.length : "Patentability");
 
-            this.$.main_toolbar.toggleClass("grey-500", this.torrent_selected.length);
-            this.$.main_toolbar.toggleClass("selection", this.torrent_selected.length);
+        //     this.$.main_toolbar.toggleClass("grey-500", this.torrent_selected.length);
+        //     this.$.main_toolbar.toggleClass("selection", this.torrent_selected.length);
 
-            this.$.fab.toggleClass("move-down", this.torrent_selected.length);
-        },
+        //     this.$.fab.toggleClass("move-down", this.torrent_selected.length);
+        // },
 
-        trend_opt: function(e) {
-            if (Meteor.status().connected) {
-                var keyword = Polymer.dom(e).localTarget.textContent.trim();
+        // trend_opt: function(e) {
+        //     if (Meteor.status().connected) {
+        //         var keyword = Polymer.dom(e).localTarget.textContent.trim();
 
-                if (keyword.length) {
-                    var _this = this,
-                        row = {
-                            keyword: keyword,
-                            leech: 1,
-                            seed: 1,
-                            url: "search",
-                            within: 6,
-                            worker: "search"
-                        };
+        //         if (keyword.length) {
+        //             var _this = this,
+        //                 row = {
+        //                     keyword: keyword,
+        //                     leech: 1,
+        //                     seed: 1,
+        //                     url: "search",
+        //                     within: 6,
+        //                     worker: "search"
+        //                 };
 
-                    Meteor.call("insert_project", row, function(error, response) {
-                        if (error) {
-                            document.querySelector("#polymer_toast").toast((error.reason == "userNotFound") ? "internet/user required" : error.reason);
-                        } else {
-                            if (response == "") {
-                                document.querySelector("#polymer_toast").toast("unknown issue");
-                            } else {
-                                document.querySelector("#polymer_toast").toast("i keyword added");
+        //             Meteor.call("insert_project", row, function(error, response) {
+        //                 if (error) {
+        //                     document.querySelector("#polymer_toast").toast((error.reason == "userNotFound") ? "internet/user required" : error.reason);
+        //                 } else {
+        //                     if (response == "") {
+        //                         document.querySelector("#polymer_toast").toast("unknown issue");
+        //                     } else {
+        //                         document.querySelector("#polymer_toast").toast("i keyword added");
 
-                                _this.$.main_toolbar.className = _this.$.main_toolbar.className.replace(/ ?[a-z\-]+\-500/g, "") + " " + polymer_color(keyword);
+        //                         _this.$.main_toolbar.className = _this.$.main_toolbar.className.replace(/ ?[a-z\-]+\-500/g, "") + " " + polymer_color(keyword);
 
-                                _this.menu_selected = response;
-                            }
-                        }
-                    });
+        //                         _this.menu_selected = response;
+        //                     }
+        //                 }
+        //             });
 
-                    _this.$.main_page.selected = 1;
-                } else {
-                    document.querySelector("#polymer_toast").toast("empty keyword");
-                }
-            } else {
-                document.querySelector("#polymer_toast").toast("server connection required");
-            }
-        },
+        //             _this.$.main_page.selected = 1;
+        //         } else {
+        //             document.querySelector("#polymer_toast").toast("empty keyword");
+        //         }
+        //     } else {
+        //         document.querySelector("#polymer_toast").toast("server connection required");
+        //     }
+        // },
 
-        user_prompt: function() {
-            this.$.user_prompt.open();
-        }
+        // user_prompt: function() {
+        //     this.$.user_prompt.open();
+        // }
 
     });
     </script>
@@ -24094,650 +23979,4 @@ paper-calendar {
     </script>
 
 </dom-module>
-<dom-module id="set-password" assetpath="/linto/">
-
-    <style>
-    paper-button {
-        margin: 0;
-        min-width: 50%;
-        padding: 16px;
-    }
-    
-    .page-body {
-        overflow: auto;
-        padding: 24px;
-    }
-    
-    .page-title {
-        border-bottom: 2px solid #EEE;
-    }
-    
-    .page-title paper-icon-button {
-        margin-right: 16px;
-    }
-    
-    .page-title > div {
-        padding: 16px;
-    }
-    </style>
-
-    <template>
-        <div class="fit center-justified horizontal layout white">
-            <div class="layout li vertical">
-                <div class="center horizontal justified layout page-title">
-                    <div class="cursor-d etc flex">set password</div>
-                    <paper-icon-button on-click="back" icon="close"></paper-icon-button>
-                </div>
-
-                <div class="flex layout page-body vertical">
-                    <paper-input auto-validate="" label="password" required="" type="password" value="{{password}}"></paper-input>
-                    <paper-input auto-validate="" label="retype password" required="" type="password" value="{{retype_password}}"></paper-input>
-
-                    <br>
-
-                    <div class="end-justified horizontal layout">
-                        <paper-button class="blue-500" on-click="set_password_submit">submit</paper-button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </template>
-
-    <script>
-    Polymer({
-
-        back: function(route) {
-            FlowRouter.go("/");
-        },
-
-        is: "set-password",
-
-        properties: {
-            password: {
-                type: String,
-                value: "password"
-            },
-            retype_password: {
-                type: String,
-                value: "retype_password"
-            }
-        },
-
-        set_password_submit: function(e) {
-            if (6 <= this.password.length) {
-                if (this.password == this.retype_password) {
-                    document.querySelector("#load_awesome").active = true;
-
-                    Accounts.resetPassword(FlowRouter.getQueryParam("password-token"), this.password, function(error) {
-                        document.querySelector("#load_awesome").active = false;
-
-                        if (error) {
-                            document.querySelector("#polymer_toast").toast(error.reason);
-                        } else {
-                            if (typeof(_done) == "function") {
-                                _done();
-                            }
-
-                            FlowRouter.go("/inbox");
-                        }
-                    });
-                } else {
-                    document.querySelector("#polymer_toast").toast("retype password mismatch");
-                }
-            } else {
-                document.querySelector("#polymer_toast").toast("min password length is 6");
-            }
-        }
-
-    });
-    </script>
-
-</dom-module>
-<dom-module id="torrent-view" assetpath="/linto/">
-
-    <style>
-    :host {
-        display: none;
-    }
-    
-    :host([active]) {
-        display: block;
-    }
-    
-    paper-toggle-button {
-        --paper-toggle-button-checked-bar-color: var(--paper-green-500);
-        --paper-toggle-button-checked-button-color: var(--paper-green-500);
-        --paper-toggle-button-checked-ink-color: var(--paper-green-500);
-    }
-    </style>
-
-    <template>
-        <iron-localstorage name="proxy" on-iron-localstorage-load-empty="initialize_proxy" value="{{proxy}}"></iron-localstorage>
-
-        <div class="fit layout vertical" style="background: #EEE; overflow: auto; z-index: 10;">
-            <div class="center-justified horizontal layout">
-                <div class="li">
-                    <div class="cursor-p horizontal layout">
-                        <div style="padding: 16px; padding-right: 8px;">
-                            <paper-icon-button icon="arrow-back" on-click="back"></paper-icon-button>
-                        </div>
-
-                        <div class="flex layout vertical" style="padding: 16px; padding-left: 8px;">
-                            <div style="color: #757575; font-size: 14px; line-height: 20px;">[[return_description(torrent)]]</div>
-
-                            <div><span style="font-size: 16px; line-height: 24px;">[[torrent.title]]</span>&nbsp;&nbsp;<span class$="[[return_class(torrent.category)]]" style="font-size: 14px; line-height: 20px; padding-left: 4px; padding-right: 4px;">[[torrent.category]]</span>&nbsp;&nbsp;</div>
-                        </div>
-                    </div>
-
-                    <iron-selector activate-event="click" id="link" on-click="click" selected-attribute="selected">
-                        <template is="dom-repeat" items="[[torrent.link]]">
-                            <div class="bordered cursor-p horizontal hover layout white" data-link$="[[item.url]]">
-                                <div style="padding: 16px; padding-right: 8px;">
-                                    <selectable-icon icon_class$="[[return_class(item.text)]]" icon_text$="[[return_icon_text(item.text)]]"></selectable-icon>
-                                </div>
-
-                                <div class="flex layout vertical" style="padding: 16px; padding-left: 8px;">
-                                    <div class="etc" style="font-size: 16px; line-height: 24px;">[[item.text]]</div>
-                                    <div class="etc" style="color: #757575; font-size: 14px; line-height: 20px;">[[return_time(item.time)]]</div>
-                                </div>
-                            </div>
-                        </template>
-                    </iron-selector>
-
-                    <div class="center horizontal layout" style="min-height: 80px;">
-                        <paper-toggle-button checked="{{proxy}}" style="padding: 16px;">enable proxy</paper-toggle-button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </template>
-
-    <script>
-    Polymer({
-
-        back: function() {
-            FlowRouter.setQueryParams({
-                "route": null
-            });
-        },
-
-        click: function(e) {
-            e.stopPropagation();
-
-            this.async(function() {
-                window.open((this.proxy ? "http://do.vcompile.com/proxy/redirect.php?url=" + encodeURIComponent(document.querySelector("#link").selectedItem.dataset.link) : document.querySelector("#link").selectedItem.dataset.link), "_system");
-            }, 200);
-        },
-
-        initialize_proxy: function() {
-            this.proxy = false;
-        },
-
-        is: "torrent-view",
-
-        properties: {
-            active: {
-                notify: true,
-                reflectToAttribute: true,
-                type: Boolean,
-                value: false
-            },
-            proxy: {
-                type: Boolean,
-                value: false
-            },
-            torrent: {
-                type: Object
-            }
-        },
-
-        return_class: function(text) {
-            return polymer_color(text ? text : "#");
-        },
-
-        return_description: function(item) {
-            return (item.size ? item.size : "#") + " | " + (item.leech ? item.leech + "L" : "#") + " / " + (item.seed ? item.seed + "S" : "#");
-        },
-
-        return_icon_text: function(text) {
-            return (isNaN(text.charAt(0)) ? text.charAt(0) : "#");
-        },
-
-        return_time: function(time) {
-            return (moment(time).isValid() ? moment(time).fromNow() : "#");
-        }
-
-    });
-    </script>
-
-</dom-module>
-<dom-module id="user-check" assetpath="/linto/">
-
-    <style>
-    gold-email-input.color-white {
-        --paper-input-container-color: white;
-        --paper-input-container-focus-color: #FFEB3B;
-        --paper-input-container-invalid-color: #F44336;
-        --paper-input-container-input-color: white;
-    }
-    
-    paper-button {
-        margin: 0;
-        min-width: 50%;
-        padding: 16px;
-    }
-    
-    .page-body {
-        overflow: auto;
-        padding: 24px;
-    }
-    
-    .page-title {
-        border-bottom: 2px solid #EEE;
-    }
-    
-    .page-title paper-icon-button {
-        margin-right: 8px;
-    }
-    
-    .page-title > div {
-        padding: 16px;
-    }
-    </style>
-
-    <template>
-        <neon-animated-pages class="fit" selected="[[selected]]">
-            <user-check-layout></user-check-layout>
-
-            <card-route ripple_class="white">
-                <div class="center-justified fit horizontal layout white">
-                    <div class="layout li vertical">
-                        <div class="center horizontal layout page-title">
-                            <div class="cursor-d etc flex">SIGN IN</div>
-                            <paper-icon-button icon="close" on-click="back"></paper-icon-button>
-                        </div>
-
-                        <div class="flex layout page-body vertical">
-                            <gold-email-input auto-validate="" label="email" required="" value="{{email}}"></gold-email-input>
-                            <paper-input auto-validate="" label="password" required="" type="password" value="{{password}}"></paper-input>
-
-                            <br>
-
-                            <div class="end-justified horizontal layout">
-                                <paper-button class="blue-500" on-click="sign_in_submit">submit</paper-button>
-                            </div>
-
-                            <br>
-
-                            <div class="horizontal layout">
-                                <img class="cursor-p" disabled="" src="/img/fb.png" style="margin: 4px; opacity: 0.1;">
-                                <img class="cursor-p" on-click="google" src="/img/google-plus.png" style="margin: 4px;">
-                                <img class="cursor-p" disabled="" src="/img/twitter.png" style="margin: 4px; opacity: 0.1;">
-                            </div>
-                        </div>
-
-                        <div class="cursor-p" on-click="reset_password" style="padding: 16px;">reset password</div>
-                    </div>
-                </div>
-            </card-route>
-
-            <card-route ripple_class="cyan-700">
-                <div class="center-justified cyan-700 fit horizontal layout">
-                    <div class="layout li vertical">
-                        <div class="center horizontal layout page-title" style="border-bottom: 2px solid #006064;">
-                            <div class="cursor-d etc flex">SIGN UP</div>
-                            <paper-icon-button icon="close" on-click="back"></paper-icon-button>
-                        </div>
-
-                        <div class="flex layout page-body vertical">
-                            <gold-email-input auto-validate="" class="color-white" label="email" required="" value="{{email}}"></gold-email-input>
-
-                            <br>
-
-                            <div class="end-justified horizontal layout">
-                                <paper-button class="cyan-900" on-click="sign_up_submit">submit</paper-button>
-                            </div>
-                        </div>
-
-                        <div class="cursor-p" on-click="resend_enrollment_email" style="padding: 16px;">resend enrollment-email</div>
-                    </div>
-                </div>
-            </card-route>
-        </neon-animated-pages>
-
-        <paper-dialog id="request_prompt" style="width: 320px;" with-backdrop="">
-            <div class="layout vertical">
-                <gold-email-input auto-validate="" label="email" required="" value="{{email}}"></gold-email-input>
-
-                <div class="end-justified horizontal layout">
-                    <paper-button class="blue-500" on-click="request_submit" style="margin: 8px 0; width: 50%;">submit</paper-button>
-                </div>
-            </div>
-        </paper-dialog>
-    </template>
-
-    <script>
-    Polymer({
-
-        back: function() {
-            this.selected = 0;
-
-            Meteor.setTimeout(function() {
-                FlowRouter.setQueryParams({
-                    "route": null
-                });
-            }, 400);
-        },
-
-        google: function() {
-            if (Meteor.status().connected) {
-                if (Meteor.isCordova) {
-                    document.querySelector("#load_awesome").active = true;
-
-                    Meteor.cordova_g_plus({
-                        cordova_g_plus: true,
-                        profile: ["email", "email_verified", "gender", "locale", "name", "picture", "sub"]
-                    }, function(error) {
-                        Meteor.setTimeout(function() {
-                            document.querySelector("#load_awesome").active = false;
-                        }, 1000 * 4);
-
-                        if (error) {
-                            document.querySelector("#polymer_toast").toast(error);
-                        }
-                    });
-                } else {
-                    if (Accounts.loginServicesConfigured()) {
-                        Meteor.loginWithGoogle({
-                            requestOfflineToken: true,
-                            requestPermissions: ["email", "profile"]
-                        }, function(error) {
-                            if (error) {
-                                document.querySelector("#polymer_toast").toast("errorNo - " + Accounts.LoginCancelledError.numericError);
-                            }
-                        });
-                    }
-                }
-            } else {
-                document.querySelector("#polymer_toast").toast("server connection required");
-            }
-        },
-
-        is: "user-check",
-
-        properties: {
-            email: {
-                type: String,
-                value: "user@vcompile.com"
-            },
-            password: {
-                type: String,
-                value: "password"
-            },
-            selected: {
-                type: Number,
-                value: 0
-            }
-        },
-
-        request_submit: function() {
-            if (Meteor.status().connected) {
-                var valid_email = /^([\w-]+(?:\.[\w-]+)*)@((?:[\w-]+\.)*\w[\w-]{0,66})\.([a-z]{2,6}(?:\.[a-z]{2})?)$/i;
-
-                if (valid_email.test(this.email)) {
-                    switch (this.selected) {
-                        case 1:
-                            document.querySelector("#load_awesome").active = true;
-
-                            Accounts.forgotPassword({
-                                email: this.email
-                            }, function(error) {
-                                document.querySelector("#load_awesome").active = false;
-
-                                if (error) {
-                                    document.querySelector("#polymer_toast").toast(error.reason);
-                                } else {
-                                    document.querySelector("#polymer_toast").toast("reset password url sent @ email");
-                                }
-                            });
-                            break;
-
-                        case 2:
-                            document.querySelector("#load_awesome").active = true;
-
-                            Meteor.call("sendEnrollmentEmail", this.email, function(error, res) {
-                                document.querySelector("#load_awesome").active = false;
-
-                                if (error) {
-                                    document.querySelector("#polymer_toast").toast(error.reason);
-                                } else {
-                                    document.querySelector("#polymer_toast").toast(res);
-                                }
-                            });
-                            break;
-                    }
-                } else {
-                    document.querySelector("#polymer_toast").toast("invalid email");
-                }
-            } else {
-                document.querySelector("#polymer_toast").toast("server connection required");
-            }
-
-            this.$.request_prompt.close();
-        },
-
-        resend_enrollment_email: function() {
-            this.$.request_prompt.open();
-        },
-
-        reset_password: function() {
-            this.$.request_prompt.open();
-        },
-
-        "sign_in_submit": function() {
-            if (Meteor.status().connected) {
-                var valid_email = /^([\w-]+(?:\.[\w-]+)*)@((?:[\w-]+\.)*\w[\w-]{0,66})\.([a-z]{2,6}(?:\.[a-z]{2})?)$/i;
-
-                if (valid_email.test(this.email)) {
-                    if (6 <= this.password.length) {
-                        document.querySelector("#load_awesome").active = true;
-
-                        Meteor.loginWithPassword(this.email, this.password, function(error) {
-                            document.querySelector("#load_awesome").active = false;
-
-                            if (error) {
-                                document.querySelector("#polymer_toast").toast(error.reason);
-                            }
-                        });
-                    } else {
-                        document.querySelector("#polymer_toast").toast("min password length is 6");
-                    }
-                } else {
-                    document.querySelector("#polymer_toast").toast("invalid email");
-                }
-            } else {
-                document.querySelector("#polymer_toast").toast("server connection required");
-            }
-        },
-
-        sign_up_submit: function() {
-            if (Meteor.status().connected) {
-                var valid_email = /^([\w-]+(?:\.[\w-]+)*)@((?:[\w-]+\.)*\w[\w-]{0,66})\.([a-z]{2,6}(?:\.[a-z]{2})?)$/i;
-
-                if (valid_email.test(this.email)) {
-                    document.querySelector("#load_awesome").active = true;
-
-                    Meteor.call("signUp", this.email, function(error, res) {
-                        document.querySelector("#load_awesome").active = false;
-
-                        if (error) {
-                            document.querySelector("#polymer_toast").toast(error.reason);
-                        } else {
-                            document.querySelector("#polymer_toast").toast(res);
-                        }
-                    });
-                } else {
-                    document.querySelector("#polymer_toast").toast("invalid email");
-                }
-            } else {
-                document.querySelector("#polymer_toast").toast("server connection required");
-            }
-        }
-
-    });
-    </script>
-
-</dom-module>
-<dom-module id="user-check-layout" assetpath="/linto/">
-
-    <style>
-    :host {
-        background: transparent!important;
-    }
-    
-    .swiper-circle {
-        border: 2px solid #0097A7;
-        border-radius: 50%;
-        margin-left: 4px;
-        margin-right: 4px;
-        padding: 4px;
-    }
-    
-    .swiper-img {
-        background-position: top;
-        background-size: cover;
-    }
-    </style>
-
-    <template>
-        <div class="center-justified cyan-500 fit horizontal layout" id="container">
-            <div class="layout li vertical">
-                <neon-animated-pages class="flex" on-up="swiper_up" selected="{{selected}}">
-                    <neon-animatable class="cyan-500 layout vertical">
-                        <div class="center-justified horizontal layout" style="padding: 32px 16px;">
-                            <div>Sharing, offline support, etc</div>
-                        </div>
-
-                        <div class="flex layout swiper-img vertical" style="background-image:url(&quot;/img/0.png&quot;);">
-                            <div class="flex"></div>
-                            <div class="center-justified horizontal layout" style="padding: 32px 16px;">
-                                <div class="swiper-circle"></div>
-                                <div class="swiper-circle cyan-500"></div>
-                                <div class="swiper-circle cyan-500"></div>
-                            </div>
-                        </div>
-                    </neon-animatable>
-
-                    <neon-animatable class="cyan-500 layout vertical">
-                        <div class="center-justified horizontal layout" style="padding: 32px 16px;">
-                            <div>100+ site indexing &amp; inbuilt proxy</div>
-                        </div>
-
-                        <div class="flex layout swiper-img vertical" style="background-image:url(&quot;/img/1.png&quot;);">
-                            <div class="flex"></div>
-                            <div class="center-justified horizontal layout" style="padding: 32px 16px;">
-                                <div class="swiper-circle cyan-500"></div>
-                                <div class="swiper-circle"></div>
-                                <div class="swiper-circle cyan-500"></div>
-                            </div>
-                        </div>
-                    </neon-animatable>
-
-                    <neon-animatable class="cyan-500 layout vertical">
-                        <div class="center-justified horizontal layout" style="padding: 32px 16px;">
-                            <div>SemanticSearch in V2</div>
-                        </div>
-                        <div class="flex layout swiper-img vertical" style="background-image:url(&quot;/img/2.png&quot;);">
-                            <div class="flex"></div>
-                            <div class="center-justified horizontal layout" style="padding: 32px 16px;">
-                                <div class="swiper-circle cyan-500"></div>
-                                <div class="swiper-circle cyan-500"></div>
-                                <div class="swiper-circle"></div>
-                            </div>
-                        </div>
-                    </neon-animatable>
-                </neon-animated-pages>
-
-                <div class="horizontal layout">
-                    <div class="cursor-p flex white" id="sign-in" on-click="sign_in" style="padding: 16px; text-align: center;">SIGN IN</div>
-                    <div class="cursor-p flex cyan-700" id="sign-up" on-click="sign_up" style="padding: 16px; text-align: center;">SIGN UP</div>
-                </div>
-            </div>
-        </div>
-    </template>
-
-    <script>
-    Polymer({
-
-        behaviors: [
-            Polymer.NeonSharedElementAnimatableBehavior
-        ],
-
-        is: "user-check-layout",
-
-        properties: {
-            animationConfig: {
-                type: Object,
-                value: function() {
-                    return {
-                        "entry": [{
-                            id: "reverse-ripple",
-                            name: "reverse-ripple-animation",
-                            toPage: this
-                        }],
-
-                        "exit": [{
-                            name: "fade-out-animation",
-                            node: this.$.container,
-                            timing: {
-                                delay: 200,
-                                duration: 100
-                            }
-                        }, {
-                            fromPage: this,
-                            id: "ripple",
-                            name: "ripple-animation"
-                        }]
-                    };
-                }
-            },
-
-            selected: {
-                type: Number,
-                value: 2
-            },
-
-            sharedElements: {
-                type: Object
-            }
-        },
-
-        sign_in: function() {
-            FlowRouter.setQueryParams({
-                "route": "sign-in"
-            });
-        },
-
-        sign_up: function() {
-            FlowRouter.setQueryParams({
-                "route": "sign-up"
-            });
-        },
-
-        swiper_up: function(e, d) {
-            if (d.x < $(window).width() / 2) {
-                if (0 <= this.selected && this.selected < 2) {
-                    this.selected = parseInt(this.selected) + 1;
-                }
-            } else {
-                if (0 < this.selected && this.selected <= 2) {
-                    this.selected = parseInt(this.selected) - 1;
-                }
-            }
-        }
-
-    });
-    </script>
-
-</dom-module>
-</div></body></html>
+</div></body></html> 
