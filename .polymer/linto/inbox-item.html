@@ -25,6 +25,7 @@
             if (Polymer.dom(e).localTarget.id != "selectable-icon") {
                 e.stopPropagation();
 
+                document.querySelector("#patent-view").item = this.item;
                 document.querySelector("#main-page").selected = 2;
                 document.querySelector("#patent-view paper-scroll-header-panel").fire("iron-resize");
             }

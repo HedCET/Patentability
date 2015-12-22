@@ -78,7 +78,7 @@
                 <paper-icon-button class="selection-hidden" icon="search" on-click="search_bar"></paper-icon-button>
             </paper-toolbar>
 
-            <div class="blue-700" style="height: 256px"></div>
+            <div class="blue-700" id="vis-patent-taxonomy" style="height: 256px"></div>
 
             <iron-selector activate-event="click" attr-for-selected="item" multi selectable="inbox-item" selected-attribute="selected" selected-values="{{patent_selected}}">
                 <template is="dom-repeat" items="[[project]]">
@@ -113,6 +113,118 @@
 
     <script>
     Polymer({
+
+        attached: function() {
+            var edges = [],
+                nodes = [],
+                taxonomyA = {},
+                taxonomyZ = {};
+
+            this.project.forEach(function(A) {
+                A.patent.forEach(function(B) {
+
+                    var C = B.concept.split(/;/).filter(Boolean);
+
+                    C.forEach(function(D) {
+                        _key(taxonomyA, [D, B.p_no]);
+                    });
+                });
+            });
+
+            Object.keys(taxonomyA).sort(function(keyA, keyZ) {
+                return (_.size(taxonomyA[keyZ]) - _.size(taxonomyA[keyZ]));
+            }).forEach(function(index) {
+                if (_.size(taxonomyZ) < 10 && 1 < _.size(taxonomyA[index])) {
+                    taxonomyZ[index] = taxonomyA[index];
+                }
+            });
+
+            _.each(taxonomyZ, function(valueA, keyA, list) {
+                var idA = Random.id();
+
+                nodes.push({
+                    color: {
+                        background: "#2196F3",
+                        border: "#FFFFFF",
+                        highlight: {
+                            background: "#64B5F6",
+                            border: "#FFFFFF"
+                        },
+                        hover: {
+                            background: "#64B5F6",
+                            border: "#FFFFFF"
+                        }
+                    },
+                    group: "taxonomy",
+                    id: idA,
+                    label: keyA,
+                    // size: _.size(valueA)
+                });
+
+                _.each(valueA, function(valueZ, keyZ, list) {
+                    var idZ = Random.id();
+
+                    nodes.push({
+                        color: {
+                            background: "#BBDEFB",
+                            border: "#FFFFFF",
+                            highlight: {
+                                background: "#64B5F6",
+                                border: "#FFFFFF"
+                            },
+                            hover: {
+                                background: "#64B5F6",
+                                border: "#FFFFFF"
+                            }
+                        },
+                        group: "patent",
+                        id: idZ,
+                        label: keyZ,
+                        // size: valueZ
+                    });
+
+                    edges.push({
+                        from: idZ,
+                        to: idA
+                    })
+                });
+            });
+
+            network = new vis.Network(document.querySelector("#vis-patent-taxonomy"), {
+                nodes: new vis.DataSet(nodes),
+                edges: new vis.DataSet(edges)
+            }, {
+                edges: {
+                    shadow: true,
+                    width: 2
+                },
+                groups: {
+                    patent: {
+                        shape: "dot"
+                    },
+                    taxonomy: {
+                        shape: "square"
+                    }
+                },
+                interaction: {
+                    hover: true
+                },
+                nodes: {
+                    borderWidth: 2,
+                    font: {
+                        color: "#FFFFFF",
+                        size: 16
+                    },
+                    shadow: true
+                }
+            });
+
+            network.once("afterDrawing", function(ctx) {
+                network.moveTo({
+                    scale: .5
+                });
+            });
+        },
 
         is: "inbox-view",
 

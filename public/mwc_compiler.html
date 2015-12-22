@@ -23356,6 +23356,7 @@ paper-calendar {
             if (Polymer.dom(e).localTarget.id != "selectable-icon") {
                 e.stopPropagation();
 
+                document.querySelector("#patent-view").item = this.item;
                 document.querySelector("#main-page").selected = 2;
                 document.querySelector("#patent-view paper-scroll-header-panel").fire("iron-resize");
             }
@@ -23475,7 +23476,7 @@ paper-calendar {
                 <paper-icon-button class="selection-hidden" icon="search" on-click="search_bar"></paper-icon-button>
             </paper-toolbar>
 
-            <div class="blue-700" style="height: 256px"></div>
+            <div class="blue-700" id="vis-patent-taxonomy" style="height: 256px"></div>
 
             <iron-selector activate-event="click" attr-for-selected="item" multi="" selectable="inbox-item" selected-attribute="selected" selected-values="{{patent_selected}}">
                 <template is="dom-repeat" items="[[project]]">
@@ -23510,6 +23511,118 @@ paper-calendar {
 
     <script>
     Polymer({
+
+        attached: function() {
+            var edges = [],
+                nodes = [],
+                taxonomyA = {},
+                taxonomyZ = {};
+
+            this.project.forEach(function(A) {
+                A.patent.forEach(function(B) {
+
+                    var C = B.concept.split(/;/).filter(Boolean);
+
+                    C.forEach(function(D) {
+                        _key(taxonomyA, [D, B.p_no]);
+                    });
+                });
+            });
+
+            Object.keys(taxonomyA).sort(function(keyA, keyZ) {
+                return (_.size(taxonomyA[keyZ]) - _.size(taxonomyA[keyZ]));
+            }).forEach(function(index) {
+                if (_.size(taxonomyZ) < 10 && 1 < _.size(taxonomyA[index])) {
+                    taxonomyZ[index] = taxonomyA[index];
+                }
+            });
+
+            _.each(taxonomyZ, function(valueA, keyA, list) {
+                var idA = Random.id();
+
+                nodes.push({
+                    color: {
+                        background: "#2196F3",
+                        border: "#FFFFFF",
+                        highlight: {
+                            background: "#64B5F6",
+                            border: "#FFFFFF"
+                        },
+                        hover: {
+                            background: "#64B5F6",
+                            border: "#FFFFFF"
+                        }
+                    },
+                    group: "taxonomy",
+                    id: idA,
+                    label: keyA,
+                    // size: _.size(valueA)
+                });
+
+                _.each(valueA, function(valueZ, keyZ, list) {
+                    var idZ = Random.id();
+
+                    nodes.push({
+                        color: {
+                            background: "#BBDEFB",
+                            border: "#FFFFFF",
+                            highlight: {
+                                background: "#64B5F6",
+                                border: "#FFFFFF"
+                            },
+                            hover: {
+                                background: "#64B5F6",
+                                border: "#FFFFFF"
+                            }
+                        },
+                        group: "patent",
+                        id: idZ,
+                        label: keyZ,
+                        // size: valueZ
+                    });
+
+                    edges.push({
+                        from: idZ,
+                        to: idA
+                    })
+                });
+            });
+
+            network = new vis.Network(document.querySelector("#vis-patent-taxonomy"), {
+                nodes: new vis.DataSet(nodes),
+                edges: new vis.DataSet(edges)
+            }, {
+                edges: {
+                    shadow: true,
+                    width: 2
+                },
+                groups: {
+                    patent: {
+                        shape: "dot"
+                    },
+                    taxonomy: {
+                        shape: "square"
+                    }
+                },
+                interaction: {
+                    hover: true
+                },
+                nodes: {
+                    borderWidth: 2,
+                    font: {
+                        color: "#FFFFFF",
+                        size: 16
+                    },
+                    shadow: true
+                }
+            });
+
+            network.once("afterDrawing", function(ctx) {
+                network.moveTo({
+                    scale: .5
+                });
+            });
+        },
 
         is: "inbox-view",
 
@@ -24362,19 +24475,7 @@ paper-calendar {
 
         properties: {
             item: {
-                type: Object,
-                value: function() {
-                    return {
-                        "title": "DOWNLOAD MANAGEMENT METHOD AND DEVICE BASED ON ANDROID BROWSER",
-                        "abstract": "\nThe present disclosure provides a download management method and device based on Android browser. The download management method includes the following steps: obtaining a physical address of a network card of a television when a download request input from a user through the browser is received; and judging whether the television corresponding to the physical address is granted a download permission corresponding to the download request; if the physical address is granted the download permission, implementing the download according to the download request; otherwise, if the physical address is not granted the download permission, preventing the download. The method and device of the present disclosure can effectively control the download contents of the television and thus prevent random downloads from reducing the safety and stability of the system and further thus improves the user experience.\n",
-                        "app_date": "2013-01-21",
-                        "assignee": "SHENZHEN COOCAA NETWORK TECHNOLOGY CO LTD",
-                        "concept": "Computer network;Network interface controller;Telecommunications network;Telecommunication;Address space;MAC address;Physical address;User interface;Cable television;Server (computing);Mobile device;Internet;Graphical user interface;Data transmission;Java package;Modularity;Module (mathematics);Television network;Airport terminal;Radio",
-                        "keyword": "download request;physical address;download management;permission corresponding;download permission;android browser;television corresponding;network card;judging whether the television;terminal",
-                        "p_no": "EP2768206A4",
-                        "_id": "kN4Eumq5gzGCFA3AA"
-                    };
-                }
+                type: Object
             }
         },
 

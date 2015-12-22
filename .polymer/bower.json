@@ -7,8 +7,9 @@
         "neon-elements": "PolymerElements/neon-elements#~1.0.0",
         "paper-date-picker": "polymer-paper-datepicker#~1.0.0",
         "paper-elements": "PolymerElements/paper-elements#~1.0.0",
-        "polymer": "Polymer/polymer#^1.0.0"
+        "polymer": "Polymer/polymer#^1.0.0",
+        "vis": "~4.11.0"
     },
     "name": "polymer-1.0",
-    "version": "1.7.5"
+    "version": "1.0.0"
 }
