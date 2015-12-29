@@ -57,9 +57,9 @@
                             <br>
 
                             <div class="horizontal layout">
-                                <img class="cursor-p" disabled src="/img/fb.png" style="margin: 4px; opacity: 0.1;">
-                                <img class="cursor-p" on-click="google" src="/img/google-plus.png" style="margin: 4px;">
-                                <img class="cursor-p" disabled src="/img/twitter.png" style="margin: 4px; opacity: 0.1;">
+                                <img class="cursor-p" disabled src="/img/fb.png" style="opacity: 0.1;">
+                                <img class="cursor-p" on-click="google" src="/img/google-plus.png">
+                                <img class="cursor-p" disabled src="/img/twitter.png" style="opacity: 0.1;">
                             </div>
                         </div>
 
@@ -106,6 +106,22 @@
     <script>
     Polymer({
 
+        attached: function() {
+            this.async(function() {
+                Tracker.autorun(function() {
+                    if (Meteor.status().connected) {
+                        if (Meteor.user()) {
+                            FlowRouter.go("/inbox");
+                        }
+                    } else {
+                        if ((document.querySelector("#patentability_db").value || []).length) {
+                            FlowRouter.go("/inbox");
+                        }
+                    }
+                });
+            }, 1000);
+        },
+
         back: function() {
             this.selected = 0;
 
@@ -119,18 +135,18 @@
         google: function() {
             if (Meteor.status().connected) {
                 if (Meteor.isCordova) {
-                    document.querySelector("#load_awesome").active = true;
+                    document.querySelector("#load-awesome").active = true;
 
                     Meteor.cordova_g_plus({
                         cordova_g_plus: true,
                         profile: ["email", "email_verified", "gender", "locale", "name", "picture", "sub"]
                     }, function(error) {
                         Meteor.setTimeout(function() {
-                            document.querySelector("#load_awesome").active = false;
+                            document.querySelector("#load-awesome").active = false;
                         }, 1000 * 4);
 
                         if (error) {
-                            document.querySelector("#polymer_toast").toast(error);
+                            document.querySelector("#polymer-toast").toast(error);
                         }
                     });
                 } else {
@@ -140,13 +156,13 @@
                             requestPermissions: ["email", "profile"]
                         }, function(error) {
                             if (error) {
-                                document.querySelector("#polymer_toast").toast("errorNo - " + Accounts.LoginCancelledError.numericError);
+                                document.querySelector("#polymer-toast").toast("errorNo - " + Accounts.LoginCancelledError.numericError);
                             }
                         });
                     }
                 }
             } else {
-                document.querySelector("#polymer_toast").toast("server connection required");
+                document.querySelector("#polymer-toast").toast("server connection required");
             }
         },
 
@@ -174,40 +190,40 @@
                 if (valid_email.test(this.email)) {
                     switch (this.selected) {
                         case 1:
-                            document.querySelector("#load_awesome").active = true;
+                            document.querySelector("#load-awesome").active = true;
 
                             Accounts.forgotPassword({
                                 email: this.email
                             }, function(error) {
-                                document.querySelector("#load_awesome").active = false;
+                                document.querySelector("#load-awesome").active = false;
 
                                 if (error) {
-                                    document.querySelector("#polymer_toast").toast(error.reason);
+                                    document.querySelector("#polymer-toast").toast(error.reason);
                                 } else {
-                                    document.querySelector("#polymer_toast").toast("reset password url sent @ email");
+                                    document.querySelector("#polymer-toast").toast("reset password url sent @ email");
                                 }
                             });
                             break;
 
                         case 2:
-                            document.querySelector("#load_awesome").active = true;
+                            document.querySelector("#load-awesome").active = true;
 
                             Meteor.call("sendEnrollmentEmail", this.email, function(error, res) {
-                                document.querySelector("#load_awesome").active = false;
+                                document.querySelector("#load-awesome").active = false;
 
                                 if (error) {
-                                    document.querySelector("#polymer_toast").toast(error.reason);
+                                    document.querySelector("#polymer-toast").toast(error.reason);
                                 } else {
-                                    document.querySelector("#polymer_toast").toast(res);
+                                    document.querySelector("#polymer-toast").toast(res);
                                 }
                             });
                             break;
                     }
                 } else {
-                    document.querySelector("#polymer_toast").toast("invalid email");
+                    document.querySelector("#polymer-toast").toast("invalid email");
                 }
             } else {
-                document.querySelector("#polymer_toast").toast("server connection required");
+                document.querySelector("#polymer-toast").toast("server connection required");
             }
 
             this.$.request_prompt.close();
@@ -227,23 +243,23 @@
 
                 if (valid_email.test(this.email)) {
                     if (6 <= this.password.length) {
-                        document.querySelector("#load_awesome").active = true;
+                        document.querySelector("#load-awesome").active = true;
 
                         Meteor.loginWithPassword(this.email, this.password, function(error) {
-                            document.querySelector("#load_awesome").active = false;
+                            document.querySelector("#load-awesome").active = false;
 
                             if (error) {
-                                document.querySelector("#polymer_toast").toast(error.reason);
+                                document.querySelector("#polymer-toast").toast(error.reason);
                             }
                         });
                     } else {
-                        document.querySelector("#polymer_toast").toast("min password length is 6");
+                        document.querySelector("#polymer-toast").toast("min password length is 6");
                     }
                 } else {
-                    document.querySelector("#polymer_toast").toast("invalid email");
+                    document.querySelector("#polymer-toast").toast("invalid email");
                 }
             } else {
-                document.querySelector("#polymer_toast").toast("server connection required");
+                document.querySelector("#polymer-toast").toast("server connection required");
             }
         },
 
@@ -252,22 +268,22 @@
                 var valid_email = /^([\w-]+(?:\.[\w-]+)*)@((?:[\w-]+\.)*\w[\w-]{0,66})\.([a-z]{2,6}(?:\.[a-z]{2})?)$/i;
 
                 if (valid_email.test(this.email)) {
-                    document.querySelector("#load_awesome").active = true;
+                    document.querySelector("#load-awesome").active = true;
 
                     Meteor.call("signUp", this.email, function(error, res) {
-                        document.querySelector("#load_awesome").active = false;
+                        document.querySelector("#load-awesome").active = false;
 
                         if (error) {
-                            document.querySelector("#polymer_toast").toast(error.reason);
+                            document.querySelector("#polymer-toast").toast(error.reason);
                         } else {
-                            document.querySelector("#polymer_toast").toast(res);
+                            document.querySelector("#polymer-toast").toast(res);
                         }
                     });
                 } else {
-                    document.querySelector("#polymer_toast").toast("invalid email");
+                    document.querySelector("#polymer-toast").toast("invalid email");
                 }
             } else {
-                document.querySelector("#polymer_toast").toast("server connection required");
+                document.querySelector("#polymer-toast").toast("server connection required");
             }
         }
 

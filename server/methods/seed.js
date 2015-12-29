@@ -1,76 +1,66 @@
 Meteor.methods({
 
-    seed_loop: function(input) {
+    seed: function(input) {
         this.unblock();
 
         check(input, String);
 
-        // var user = Meteor.user();
-        // if (!user) throw new Meteor.Error(422, "userNotFound");
+        var user = Meteor.user();
+        if (!user) throw new Meteor.Error(422, "userNotFound");
 
-        var row = patentability.findOne({
-            _id: input
-        });
-
-        var seed_loop = HTTP.call("GET", http_proxy, {
+        var seed_loop = HTTP.call("GET", http_proxy + "seed.php", {
             params: {
-                post: "getSeedData.php",
-                post_opt: "q=(ft:" + row.keyword + ")"
+                post_opt: "q=ft:" + input
             },
             timeout: 1000 * 60
         });
 
         if (seed_loop.statusCode === 200) {
-            if (JSON.parse(seed_loop.content) instanceof Object) {
-                var seed = JSON.parse(seed_loop.content);
+            if (Object.prototype.toString.call(JSON.parse(seed_loop.content)) === "[object Object]") {
+                var response = JSON.parse(seed_loop.content),
+                    seed = {};
 
-                for (var A = 0; A < seed.d1.length; A++) {
-                    var patent_loop = HTTP.call("GET", http_proxy, {
-                        params: {
-                            post: "getPublicationNumberData.php",
-                            post_opt: "pubnumber=" + seed.d1[A].pubNumber + "&fields=abstract,filing_date,assignees,concepts,keywords"
-                        },
-                        timeout: 1000 * 60
-                    });
+                if (_.has(response, "d1")) {
+                    for (var A = 0; A < response.d1.length; A++) {
+                        response.d1[A].p_no = response.d1[A].pubNumber;
+                        delete response.d1[A].pubNumber; // pubNumber => p_no
 
-                    if (patent_loop.statusCode === 200) {
-                        if (JSON.parse(patent_loop.content) instanceof Array) {
-                            var patent = JSON.parse(patent_loop.content)[0];
+                        var patent = _patent.findOne({
+                            p_no: response.d1[A].p_no
+                        });
 
-                            seed.d1[A].abstract = (patent.abstract ? patent.abstract : null);
-                            seed.d1[A].app_date = (patent.filing_date ? patent.filing_date : null);
-                            seed.d1[A].assignee = (patent.assignees ? patent.assignees : null);
-                            seed.d1[A].concept = (patent.concepts ? patent.concepts : null);
-                            seed.d1[A].keyword = (patent.keywords ? patent.keywords : null);
-
-                            if (1 < JSON.parse(patent_loop.content).length) {
-                                console.log(seed.d1[A].pubNumber, "1 < result");
-                            }
+                        if (patent) {
+                            response.d1[A]._id = patent._id;
                         } else {
-                            throw new Meteor.Error(422, "patent_loop JSON parse");
+                            response.d1[A]._id = _patent.insert(response.d1[A]);
                         }
-                    } else {
-                        throw new Meteor.Error(422, "patent_loop");
                     }
 
-                    seed.d1[A].p_no = seed.d1[A].pubNumber;
-                    delete seed.d1[A].pubNumber;
-
-                    seed.d1[A]._id = Random.id();
-
-                    patentability.update({
-                        _id: input
-                    }, {
-                        $addToSet: {
-                            patent: seed.d1[A]
-                        }
-                    });
+                    seed.match = response.d1.length;
+                    seed.patent = response.d1;
+                    seed.position = response.d1.length;
                 }
+
+                if (_.has(response, "concepts")) {
+                    seed.cluster = [];
+
+                    _.each(response.concepts, function(value, key) {
+                        seed.cluster.push({
+                            cluster_keyword: key,
+                            count: value[0],
+                            keyword: input
+                        })
+                    });
+
+                    seed.cluster = _.sortBy(seed.cluster, "count").reverse();
+                }
+
+                return seed;
             } else {
-                throw new Meteor.Error(422, "seed_loop JSON parse");
+                throw new Meteor.Error(422, "seed.php?q=ft:" + input + " JSON != Array");
             }
         } else {
-            throw new Meteor.Error(422, "seed_loop");
+            throw new Meteor.Error(422, "seed.php?q=ft:" + input + " status-code != 200");
         }
     }
 

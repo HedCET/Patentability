@@ -5,8 +5,8 @@ if (Meteor.isCordova) {
     }, false);
 
     function backbutton() {
-        if (document.querySelector("#exit_controller")) {
-            document.querySelector("#exit_controller").time(moment().format("x"));
+        if (document.querySelector("#exit-controller")) {
+            document.querySelector("#exit-controller").time(moment().format("x"));
         }
 
         FlowRouter.setQueryParams({

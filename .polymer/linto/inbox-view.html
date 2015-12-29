@@ -67,41 +67,38 @@
 
     <template>
         <paper-scroll-header-panel class="fit">
-            <paper-toolbar id="main-toolbar">
-                <paper-icon-button class="selection-visible" icon="arrow-back" on-click="clear_torrent_selection"></paper-icon-button>
+            <paper-toolbar id="toolbar">
+                <paper-icon-button class="selection-visible" icon="arrow-back" on-click="clear_patent_selected"></paper-icon-button>
                 <paper-icon-button class="selection-hidden" icon="menu" on-click="menu_toggle" paper-drawer-toggle></paper-icon-button>
 
-                <div class="title" id="main-toolbar-title">Patentability</div>
+                <div class="title" id="toolbar-title">Patentability</div>
 
                 <paper-icon-button class="selection-visible" icon="delete" on-click="remove_patent"></paper-icon-button>
                 <paper-icon-button class="selection-visible" icon="social:share" on-click="share"></paper-icon-button>
-                <paper-icon-button class="selection-hidden" icon="search" on-click="search_bar"></paper-icon-button>
+                <paper-icon-button class="selection-hidden" icon="search" on-click="searchbar"></paper-icon-button>
             </paper-toolbar>
 
-            <div class="blue-700" id="vis-patent-taxonomy" style="height: 256px"></div>
+            <div class="blue-700" id="vis-patent-taxonomy" style="cursor: pointer; height: 256px"></div>
 
             <iron-selector activate-event="click" attr-for-selected="item" multi selectable="inbox-item" selected-attribute="selected" selected-values="{{patent_selected}}">
-                <template is="dom-repeat" items="[[project]]">
-                    <template if="[[project_selected(menu_selected, item._id)]]" is="dom-if">
-                        <div class="blue-700 center-justified horizontal layout">
-                            <div class="blue-500 center horizontal layout li">
-                                <div class="cursor-d flex lowercase" style="line-height: 24px; padding: 16px;">[[item.keyword]]</div>
-
-                                <paper-icon-button data-index$="[[index]]" icon="sort" on-click="sort"></paper-icon-button>
-                                <paper-icon-button data-id$="[[item._id]]" icon="close" on-click="remove_project" style="margin-right: 8px;"></paper-icon-button>
-                            </div>
+                <div class="blue-700 center-justified horizontal layout">
+                    <div class="blue-500 center horizontal layout li">
+                        <div class="cursor-d flex" style="font-size: 16px; line-height: 24px; padding: 16px;">[[item.keyword]] <span hidden="[[!item.cluster_keyword]]">/ <span>[[item.cluster_keyword]]</span></span>
                         </div>
 
-                        <div class="center-justified horizontal layout">
-                            <div class="li">
-                                <paper-progress class="project_progress" data-id$="[[item._id]]" hidden style="width: 100%;"></paper-progress>
-                            </div>
-                        </div>
+                        <paper-icon-button icon="sort" on-click="sort"></paper-icon-button>
+                        <paper-icon-button icon="close" on-click="remove_project" style="margin-right: 8px;"></paper-icon-button>
+                    </div>
+                </div>
 
-                        <template as="patent" is="dom-repeat" items="[[item.patent]]">
-                            <inbox-item item$="[[patent]]"></inbox-item>
-                        </template>
-                    </template>
+                <div class="center-justified horizontal layout">
+                    <div class="li">
+                        <paper-progress class="project-progress" data-id$="[[item._id]]" hidden style="width: 100%;"></paper-progress>
+                    </div>
+                </div>
+
+                <template as="patent" is="dom-repeat" items="[[item.patent]]">
+                    <inbox-item item$="[[patent]]"></inbox-item>
                 </template>
             </iron-selector>
 
@@ -114,21 +111,130 @@
     <script>
     Polymer({
 
-        attached: function() {
+        is: "inbox-view",
+
+        menu_toggle: function() {
+            document.querySelector("layout-inbox").menu_toggle();
+        },
+
+        properties: {
+            item: {
+                type: Object,
+                value: function() {
+                    return {};
+                }
+            },
+
+            patent_selected: {
+                type: Array,
+                value: function() {
+                    return [];
+                }
+            }
+        },
+
+        searchbar: function() {
+            FlowRouter.setQueryParams({
+                "route": "search"
+            });
+        },
+
+        sort: function(e) {
+            this.set("item.patent", _.sortBy(this.item.patent, "app_date"));
+
+            document.querySelector("#polymer-toast").toast("sorted by app_date");
+        },
+
+        subscribe_patent: function(project_id) {
+            var _this = this,
+                project = _project.findOne({
+                    _id: project_id
+                });
+
+            var patent_id = _.map(project.patent, function(value) {
+                return (_patent.findOne({
+                    _id: value
+                }) ? null : value);
+            }).filter(Boolean);
+
+            if (patent_id.length) {
+                Meteor.subscribe("patent", patent_id, {
+                    onReady: function() {
+                        for (var A = 0; A < project.patent.length; A++) {
+                            var item = _patent.findOne({
+                                _id: project.patent[A]
+                            });
+
+                            project.patent[A] = (item ? item : {
+                                _id: project.patent[A]
+                            });
+
+                            project.patent[A].project = {
+                                _id: project._id
+                            };
+                        }
+
+                        _this.item = project;
+
+                        _this.vis_patent_taxonomy();
+                    }
+                });
+            } else {
+                for (var A = 0; A < project.patent.length; A++) {
+                    var item = _patent.findOne({
+                        _id: project.patent[A]
+                    });
+
+                    project.patent[A] = (item ? item : {
+                        _id: project.patent[A]
+                    });
+
+                    project.patent[A].project = {
+                        _id: project._id
+                    };
+                }
+
+                _this.item = project;
+
+                _this.vis_patent_taxonomy();
+            }
+
+            // observer
+        },
+
+        subscribe_project: function(project_id) {
+            var _this = this,
+                project = _project.findOne({
+                    _id: project_id
+                });
+
+            if (project) {
+                _this.subscribe_patent(project_id);
+            } else {
+                Meteor.subscribe("project", (project_id ? project_id : "#"), {
+                    onReady: function() {
+                        _this.subscribe_patent(project_id);
+                    }
+                });
+            }
+
+            // observer
+        },
+
+        vis_patent_taxonomy: function() {
             var edges = [],
                 nodes = [],
                 taxonomyA = {},
                 taxonomyZ = {};
 
-            this.project.forEach(function(A) {
-                A.patent.forEach(function(B) {
+            this.item.patent.forEach(function(A) {
+                if (_.has(A, "concept") && A.concept) {
+                    var B = A.concept.split(/;/).filter(Boolean);
 
-                    var C = B.concept.split(/;/).filter(Boolean);
-
-                    C.forEach(function(D) {
-                        _key(taxonomyA, [D, B.p_no]);
+                    B.forEach(function(C) {
+                        _key(taxonomyA, [C, A.p_no]);
                     });
-                });
+                }
             });
 
             Object.keys(taxonomyA).sort(function(keyA, keyZ) {
@@ -200,10 +306,10 @@
                 },
                 groups: {
                     patent: {
-                        shape: "dot"
+                        shape: "diamond"
                     },
                     taxonomy: {
-                        shape: "square"
+                        shape: "dot"
                     }
                 },
                 interaction: {
@@ -224,150 +330,6 @@
                     scale: .5
                 });
             });
-        },
-
-        is: "inbox-view",
-
-        menu_toggle: function() {
-            document.querySelector("layout-inbox").menu_toggle();
-        },
-
-        properties: {
-            menu_selected: {
-                type: String,
-                value: ""
-            },
-
-            project: {
-                type: Array,
-                value: function() {
-                    return [{
-                        "_id": "Msi8WeRdnwqSdgrNi",
-                        "cluster_keyword": "Management Method",
-                        "keyword": "android",
-                        "temporary_id": "FLq4D6jwzDaQARGyE",
-                        "patent": [{
-                            "title": "DOWNLOAD MANAGEMENT METHOD AND DEVICE BASED ON ANDROID BROWSER",
-                            "abstract": "\nThe present disclosure provides a download management method and device based on Android browser. The download management method includes the following steps: obtaining a physical address of a network card of a television when a download request input from a user through the browser is received; and judging whether the television corresponding to the physical address is granted a download permission corresponding to the download request; if the physical address is granted the download permission, implementing the download according to the download request; otherwise, if the physical address is not granted the download permission, preventing the download. The method and device of the present disclosure can effectively control the download contents of the television and thus prevent random downloads from reducing the safety and stability of the system and further thus improves the user experience.\n",
-                            "app_date": "2013-01-21",
-                            "assignee": "SHENZHEN COOCAA NETWORK TECHNOLOGY CO LTD",
-                            "concept": "Computer network;Network interface controller;Telecommunications network;Telecommunication;Address space;MAC address;Physical address;User interface;Cable television;Server (computing);Mobile device;Internet;Graphical user interface;Data transmission;Java package;Modularity;Module (mathematics);Television network;Airport terminal;Radio",
-                            "keyword": "download request;physical address;download management;permission corresponding;download permission;android browser;television corresponding;network card;judging whether the television;terminal",
-                            "p_no": "EP2768206A4",
-                            "_id": "kN4Eumq5gzGCFA3AA"
-                        }, {
-                            "title": "METHOD AND DEVICE FOR RUNNING LINUX APPLICATION IN ANDROID SYSTEM",
-                            "abstract": "A method and a device for running a Linux application in an Android system are provided. First, an Android application proxy processing module creates a shared display region, and the display configuration is set by a Linux application processing module (i.e. a Linux application) according to the created shared display region to share the display region; then, the Android application proxy processing module transfers the user events received to the Linux application processing module for processing, the user interface information created after being processed is sent by the Linux application processing module to a display module for display. The Android application proxy processing module creates the shared display region as the shared display region of the processed results of the Linux user events, and the user events of the Linux system and the user events of the Android system are managed together by the Android application proxy processing module to enable the Linux application to run normally in the Android system.",
-                            "app_date": "2010-10-01",
-                            "assignee": "BEIJING BORQS SOFTWARE TECH CO",
-                            "concept": "Proxy server;Graphical user interface;User interface;Android (board game)",
-                            "keyword": "running a linux application;android application proxy processing module;running linux;module creates;created shared;device for running a linux;linux user events;region as the shared;android system are managed;linux system and the user",
-                            "p_no": "WO2011120288A1",
-                            "_id": "XL4M8s3yYiF258DHQ"
-                        }, {
-                            "title": "Method for operating invisible system services on android platform",
-                            "abstract": "A method for operating an invisible system service on Android platform is disclosed. The method for operating system services on Android platform includes selectively registering a created system service in a context manager according to a type of the created system service, where the type of the system service comprises a first type for permitting access from an outside and a second type for not permitting access from the outside, and the selectively registering comprises registering in the context manager the created system service belonging to the first type and not registering in the context manager the created system service belonging to the second type.",
-                            "app_date": "2013-01-28",
-                            "assignee": "FOUNDATION SOONGSIL UNIV INDUSTRY COOPERATION",
-                            "concept": "Smartphone;CPU cache;Remote procedure call;Graphical user interface;User interface;Warez;Web cache;Waste;Android (robot);Flowchart",
-                            "keyword": "services on android platform;operating system services on android;context manager;invisible system services;created system service;service belonging;type of the system service;android operating;permitting access;illegally",
-                            "p_no": "US9043871B2",
-                            "_id": "cfXE5SLAFW53MPJg7"
-                        }, {
-                            "title": "METHOD AND DEVICE FOR LOADING ANDROID VIRTUAL MACHINE APPLICATION",
-                            "abstract": "A method and a device for loading a virtual machine application are provided herein. An exemplary method comprises: loading a management object of the virtual machine by the layer-booting object; reading the virtual machine configuration by the management object of the virtual machine; and invoking a creation function of the management object of the virtual machine by the virtual machine configuration and creating an operational instance of the virtual machine. The Android loading method and device for a virtual machine can be used to improve switching speed between instances.",
-                            "app_date": "2013-12-04",
-                            "assignee": "TENCENT TECH SHENZHEN CO LTD",
-                            "concept": "Mobile device;Streaming media;Virtual machine;Booting;Graphical user interface;User interface;Electromagnetism;Application programming interface;Telecommunication;Telecommunications network;Memory management;Smartphone;Printed circuit board;Internet;OLED;Application layer;Personal digital assistant;Electrical connector;Interrupt;Memory address",
-                            "keyword": "management object of the virtual;android virtual machine;operational instance of the virtual;device for loading;instance of the virtual machine;booting object;virtual machine configuration;object of the virtual machine;invoking;loading a virtual machine application",
-                            "p_no": "WO2014194619A1",
-                            "_id": "REEBj3evTpMy7y2AQ"
-                        }, {
-                            "title": "METHOD AND SYSTEM FOR ANDROID-BASED MULTI-TASK MANAGEMENT",
-                            "abstract": "Disclosed are a method and system for Android-based multi-task management. When a task scheduling module is used to switchover into the multi-task management system, multiple co-existing tasks operate simultaneously. A state tracking module is used to maintain states in the multi-task management system. Display view management for a program running in the background is implemented by a window management module. A multi-task window display area for task thumbnails is displayed, where the last frame of the application execution interface image corresponding to a task is used as the task thumbnail.",
-                            "app_date": "2012-09-27",
-                            "assignee": "TCL MOBILE COMM CO LTD HUIZHOU",
-                            "concept": "Graphical user interface;User interface;Task management;Android (board game);Thumbnail;Scheduling (computing)",
-                            "keyword": "android based multi task management;task thumbnail;window display area for task;module is used;used as the task;displayed",
-                            "p_no": "WO2013097505A1",
-                            "_id": "BAiGYyGhx79h5MzZK"
-                        }, {
-                            "title": "INSTALLER AND METHOD FOR ADDING AN ANDROID PLATFORM DYNAMIC LIBRARY",
-                            "abstract": "An installer for adding an Android platform dynamic library comprises a unit for generating an external directory which generates an external directory for storing a library, a unit for generating library information which generates library information including at least one of library name information and library location information, and a control unit which stores the library in the external directory and stores the generated library information in an external library management directory.",
-                            "app_date": "2011-11-18",
-                            "assignee": "UNIV NAT CHONNAM IND FOUND",
-                            "concept": "Dynamic linker;Android (board game)",
-                            "keyword": "installer and method for adding;library location information;android platform dynamic;platform dynamic library;adding an android;generates an external;unit for generating;external directory for storing;library information in an external;name information and library",
-                            "p_no": "WO2012086930A3",
-                            "_id": "DMcdALBwjhuEL5oBg"
-                        }, {
-                            "title": "Provider Management Methods and Systems for a Portable Device Running Android Platform",
-                            "abstract": "A provider management method conforming to an Android platform is provided. An authentication procedure is performed between a consumer and a provider, wherein the authentication procedure is performed via a binding unit, and the binding unit is an interface enabling inter-process communication conforming to the Android platform.",
-                            "app_date": "2010-10-07",
-                            "assignee": "MEDIATEK INC",
-                            "concept": "Telecommunication;Encryption;Mobile device;Digital signature;Digital electronics;Information retrieval;Managed code;Authentication;Graphical user interface;Client (computing);User interface;Optical fiber;Netbook;Computer program;Mobile phone;Database;Kernel (algebra);Kernel (computing);Machine-readable data;Execution (computing)",
-                            "keyword": "provider management methods;android platform;authentication procedure is performed;performed via a binding unit;consumer;portable device running an android;devices such as mobile;provider management method conforming;requesting a service;enabling inter",
-                            "p_no": "US20110154436A1",
-                            "_id": "96rfrEwmBgypufprc"
-                        }, {
-                            "title": "METHOD OF PROVIDING ASSOCIATED APPLICATION IN ANDROID PLATFORM-BASED RECEIVER",
-                            "abstract": "Provided is a method of providing an associated application in an Android platform-based receiver, including (a) obtaining identification information including at least one of current channel information and current program information of a digital broadcast; (b) obtaining and executing an associated Android application associated with the digital broadcast selected from a plurality of Android applications based on an attribute information included in each of the plurality of Android applications and the identification information; and (c) changing a state of the associated Android application based on an event when the event is received. Accordingly, an associated Android application, the life cycle of which is managed while associated with a digital broadcast and which is personalized for a user based on attributes or a pre-designed associated condition, is provided.",
-                            "app_date": "2013-06-12",
-                            "assignee": "ANYPOINT MEDIA GROUP KOREA OFFICE",
-                            "concept": "Social network;Receiver (radio);Digital television;Video on demand;Telecommunications network;Telecommunication;Android (operating system);Application programming interface;Digital terrestrial television;Graphical user interface;Smartphone;GSM frequency bands;Application server;Korean Intellectual Property Office;Set-top box;IPTV;Computer network;Java (programming language);Signal processing;Analog television",
-                            "keyword": "digital broadcast;associated android application;platform based receiver;associated application;android platform;providing an associated;program information;identification information;channel information;broadcast receiver",
-                            "p_no": "US20150113579A1",
-                            "_id": "9mNKxQ9hMmN77sjMc"
-                        }, {
-                            "title": "CLOUD MANAGEMENT SYSTEMS AND METHODS FOR EXECUTING APPLICATIONS OF ANDROID SYSTEMS",
-                            "abstract": "A cloud management system for executing applications of Android system includes at least one user device and a cloud simulator. The cloud simulator couples to the user device via a network and is arranged for receiving a request from the user device, providing a first virtual phone interface corresponding to the user device to the user device in response to the request, wherein the first virtual phone interface includes respective applications of Android system, receiving an application selection from the user device and performing a first application corresponding to the application selection and returning the execution result for the first application to the user device for displaying via the first virtual phone interface.",
-                            "app_date": "2015-02-03",
-                            "assignee": "NAT UNIV TSINGHUA",
-                            "concept": "User interface;Mobile device;Graphical user interface;Online game;Telecommunication;Signal processing;Smartphone;Application programming interface;Analog-to-digital converter;Video game;Component-based software engineering;Wireless network;Multi-core processor;Authentication;Telecommunications network;Software component;Digital electronics;Web browser;Internet;Virtual private server",
-                            "keyword": "cloud simulator couples;user device;executing applications;virtual phone interface;applications of android;applications apps;receiving an application;application selection;cloud management;execution result corresponding",
-                            "p_no": "US20150341416A1",
-                            "_id": "aTP4mzzKRACQ83gRt"
-                        }, {
-                            "title": "ANDROID SYSTEM-BASED MULTIUSER MANAGEMENT METHOD, DEVICE, AND COMPUTER STORAGE MEDIUM",
-                            "abstract": "An Android system-based multiuser management method, device, and computer storage medium. The method is applicable in an Android system terminal. A first application associated with a first user can be run in a first child window of the Android system terminal; a second application associated with a second user can be run in a second child window of the Android system terminal. The method comprises: receiving an operation instruction of a user with respect to the second application (101); determining, on the basis of the operation instruction, a data area corresponding to preconfigured second callout information as a to-be-accessed data area (102), where the second callout information is used for expressing that a second child window and a second user correspond to each other; and, accessing the to-be-accessed data area (103).",
-                            "app_date": "2014-06-30",
-                            "assignee": "ZTE CORP",
-                            "concept": "Computer data storage;Android (board game)",
-                            "keyword": "android system based multiuser management;computer storage medium;accessed data area;device;application associated;run in a first child;child window of the android;operation instruction;callout information;android system terminal",
-                            "p_no": "WO2015176359A1",
-                            "_id": "BM3sQSbineeLPSdgh"
-                        }, {
-                            "title": "METHOD FOR MANAGING AND DISPLAYING FOLDERS BASED ON ANDROID SYSTEM AND MOBILE TERMINAL THEREOF",
-                            "abstract": "Disclosed are a method for managing and displaying folders based on android system and a mobile terminal thereof. The method for managing folders comprises: obtaining a selection instruction for selecting a folder to be processed among folders displayed on a display interface; generating a display property file for hiding the folder to be processed based on the selection instruction; storing the display property file in the folder to be processed, and when reading and recording the folder to be processed and then judging whether there is a corresponding display property file stored in the folder to be processed, hiding the folder to be processed where the display property file is stored from the display interface. The application can effectively solve the technical problem that folders can not be hided simply, quickly and effectively in the prior art.",
-                            "app_date": "2014-01-27",
-                            "assignee": "HUAWEI DEVICE CO LTD",
-                            "concept": "Mobile device;User interface;Android (robot);Android (board game)",
-                            "keyword": "managing and displaying folders;mobile terminal;displaying folders based on android;stored from the display;display property file is stored;display interface;selection instruction;hiding the folder;folder to be processed;file stored",
-                            "p_no": "WO2014117707A1",
-                            "_id": "TukmfbTBrrPhBC8wh"
-                        }]
-                    }];
-                }
-            },
-
-            patent_selected: {
-                type: Array,
-                value: function() {
-                    return [];
-                }
-            }
-        },
-
-        project_selected: function(menu_opt, project_opt) {
-            return (menu_opt == "" ? true : menu_opt == project_opt);
-        },
-
-        sort: function(e) {
-            var index = Polymer.dom(e).localTarget.dataset.index;
-
-            this.set("project." + index + ".patent", _.sortBy(this.project[index].patent, "app_date"));
-
-            document.querySelector("#polymer-toast").toast("sorted by app_date");
         }
 
     });

@@ -1,0 +1,495 @@
+<dom-module id="search-view">
+
+    <style>
+    :host {
+        display: none;
+    }
+    
+    :host([active]) {
+        display: block;
+    }
+    
+    paper-badge {
+        --paper-badge-background: var(--paper-grey-500);
+    }
+    
+    paper-progress {
+        --paper-progress-active-color: var(--paper-red-500);
+        --paper-progress-secondary-color: var(--paper-red-500);
+    }
+    
+    paper-toolbar {
+        --paper-toolbar-background: white;
+        --paper-toolbar-color: black;
+    }
+    
+    paper-toolbar paper-icon-button {
+        margin: 0!important;
+    }
+    
+    input {
+        background: transparent;
+        border: none;
+        font-size: 18px;
+        padding: 0 12px;
+    }
+    </style>
+
+    <template>
+        <paper-scroll-header-panel fixed class="fit" style="background: rgba(238, 238, 238, .95); z-index: 10;">
+            <paper-toolbar>
+                <paper-icon-button icon="arrow-back" on-click="back"></paper-icon-button>
+
+                <input autofocus class="flex" is="iron-input" placeholder="search" bind-value="{{search_input}}">
+
+                <paper-badge for="save" hidden="[[!return_boolean(patent_selected.length)]]" label="[[return_text(patent_selected.length)]]"></paper-badge>
+                <paper-icon-button hidden="[[!return_boolean(patent_selected.length)]]" icon="save" id="save" on-click="save"></paper-icon-button>
+
+                <paper-icon-button hidden="[[return_boolean(patent_selected.length)]]" icon="filter-list" id="filter" on-click="filter"></paper-icon-button>
+            </paper-toolbar>
+
+            <paper-progress hidden id="search-progress" indeterminate style="left: 0; position: fixed; width: 100%; z-index: 1;"></paper-progress>
+
+            <div class="center-justified horizontal layout" hidden="[[!return_boolean(cluster.length)]]">
+                <div class="horizontal layout li">
+                    <div class="cursor-d flex self-center" style="font-size: 16px; line-height: 24px; padding: 16px;"><b>[[return_text(cluster.length)]]</b> match in <b>concept</b></div>
+                    <div class="etc self-end" hidden="[[is_cluster(search_type)]]" style="color: #757575; font-size: 14px; line-height: 20px; margin-right: 8px;">iconText is weight</div>
+                </div>
+            </div>
+
+            <iron-selector activate-event="click" attr-for-selected="data-index" on-iron-select="add_cluster_project">
+                <template is="dom-repeat" items="[[cluster]]">
+                    <div class="center-justified horizontal layout" data-index$="[[index]]">
+                        <div class="cursor-p horizontal hover layout li white" style="border-bottom: 1px solid #EEE;">
+                            <div style="padding: 16px; padding-right: 8px;">
+                                <selectable-icon icon_class$="[[return_class(item.cluster_keyword)]]" icon_text$="[[return_text(item.count)]]"></selectable-icon>
+                            </div>
+
+                            <div class="flex layout vertical" style="padding: 16px; padding-left: 8px;">
+                                <div class="lowercase" style="font-size: 16px; line-height: 24px;">[[item.cluster_keyword]]</div>
+                                <div class="center horizontal layout" style="color: #757575; font-size: 14px; line-height: 20px; width: 100%;">keyword&nbsp;-&nbsp;<span class="lowercase">[[item.keyword]]</span></div>
+                            </div>
+                        </div>
+                    </div>
+                </template>
+            </iron-selector>
+
+            <div class="center-justified horizontal layout" hidden="[[!return_boolean(patent.length)]]">
+                <div class="center horizontal layout li">
+                    <div class="cursor-d flex" style="font-size: 16px; line-height: 24px; padding: 16px;"><b>[[return_text(match)]]</b> match in <b>[[search_type]]</b></div>
+                </div>
+            </div>
+
+            <iron-selector activate-event="click" attr-for-selected="item" multi selectable="patent-item" selected-attribute="selected" selected-values="{{patent_selected}}">
+                <template is="dom-repeat" items="[[patent]]">
+                    <patent-item item$="[[item]]"></patent-item>
+                </template>
+            </iron-selector>
+
+            <div style="min-height: 80px;"></div>
+        </paper-scroll-header-panel>
+
+        <paper-dialog id="filter-prompt" style="width: 320px;" with-backdrop>
+            <div class="layout vertical">
+                <div style="border-bottom: 2px solid #888; font-size: 16px; line-height: 24px; margin: 8px 0; padding: 4px 0;">search type</div>
+
+                <paper-radio-group class="vertical layout" selected="{{search_type}}" style="padding: 8px 0;">
+                    <paper-radio-button name="assignee">assignee</paper-radio-button>
+                    <paper-radio-button name="cluster">cluster</paper-radio-button>
+                    <paper-radio-button name="p_no">patent no</paper-radio-button>
+                    <paper-radio-button name="seed">seed</paper-radio-button>
+                    <paper-radio-button name="text">text</paper-radio-button>
+                </paper-radio-group>
+            </div>
+        </paper-dialog>
+
+        <paper-dialog id="save-prompt" style="width: 320px;" with-backdrop>
+            <paper-input label="enter projectName to save" value="{{projectName}}"></paper-input>
+
+            <div class="buttons">
+                <paper-button onclick="document.querySelector('#save-prompt').close();">
+                    <iron-icon icon="close"></iron-icon>
+                    cancel
+                </paper-button>
+                <paper-button on-click="save_ok">
+                    <iron-icon icon="check"></iron-icon>
+                    ok
+                </paper-button>
+            </div>
+        </paper-dialog>
+    </template>
+
+    <script>
+    Polymer({
+
+        add_cluster_project: function(e, d) {
+            if (Meteor.status().connected) {
+                var _this = this;
+
+                Meteor.call("insert_cluster", _.pick(_this.cluster[d.item.dataset.index], "cluster_keyword", "keyword"), function(error, response) {
+                    if (error) {
+                        document.querySelector("#polymer-toast").toast(error.reason);
+                    } else {
+                        document.querySelector("#polymer-toast").toast("i cluster added / updated");
+
+                        // select project
+                    }
+                });
+            } else {
+                document.querySelector("#polymer-toast").toast("server connection required");
+            }
+        },
+
+        back: function() {
+            FlowRouter.setQueryParams({
+                "route": null
+            });
+        },
+
+        filter: function() {
+            this.$["filter-prompt"].open();
+        },
+
+        is: "search-view",
+
+        is_cluster: function(text) {
+            return (text == "cluster");
+        },
+
+        listeners: {
+            "content-scroll": "_scroll"
+        },
+
+        observers: [
+            "_type(search_type)",
+            "_input(search_input)"
+        ],
+
+        properties: {
+            active: {
+                notify: true,
+                reflectToAttribute: true,
+                type: Boolean,
+                value: false
+            },
+            cluster: {
+                type: Array,
+                value: function() {
+                    return [];
+                }
+            },
+            match: {
+                type: Number,
+                value: 0
+            },
+            patent: {
+                type: Array,
+                value: function() {
+                    return [];
+                }
+            },
+            patent_selected: {
+                type: Array,
+                value: function() {
+                    return [];
+                }
+            },
+            position: {
+                type: Number,
+                value: 0
+            },
+            projectName: {
+                type: String,
+                value: ""
+            },
+            search_input: {
+                type: String,
+                value: function() {
+                    this.async(function() {
+                        this.search_input = (FlowRouter.getQueryParam("search_input") ? FlowRouter.getQueryParam("search_input") : "");
+                    }, 400);
+
+                    return "";
+                }
+            },
+            search_type: {
+                type: String,
+                value: function() {
+                    return (FlowRouter.getQueryParam("search_type") ? FlowRouter.getQueryParam("search_type") : "cluster");
+                }
+            }
+        },
+
+        return_boolean: function(bool) {
+            return (bool ? true : false);
+        },
+
+        return_class: function(text) {
+            return polymer_color(text ? text : "#");
+        },
+
+        return_text: function(text) {
+            return (text ? text : "#");
+        },
+
+        save: function() {
+            if (this.patent_selected.length) {
+                this.$["save-prompt"].open();
+            } else {
+                document.querySelector("#polymer-toast").toast("no patent selected");
+            }
+        },
+
+        save_ok: function() {
+            if (Meteor.status().connected) {
+                var _this = this;
+
+                Meteor.call("insert_project", {
+                    patent: _.map(_this.patent_selected, function(value) {
+                        return value._id
+                    }),
+                    projectName: _this.projectName
+                }, function(error, response) {
+                    if (error) {
+                        document.querySelector("#polymer-toast").toast(error.reason);
+                    } else {
+                        document.querySelector("#polymer-toast").toast("i project added / updated");
+
+                        // select project
+                    }
+                });
+
+                _this.patent_selected = [];
+            } else {
+                document.querySelector("#polymer-toast").toast("server connection required");
+            }
+
+            this.$["save-prompt"].close();
+        },
+
+        search_assignee: function() {
+            this.$["search-progress"].hidden = false;
+
+            this.debounce("search", function() {
+                this.search_input = this.search_input.trim();
+
+                if (this.search_input.length) {
+                    if (Meteor.status().connected) {
+                        var _this = this;
+
+                        Meteor.call("patent", "q=allas:" + _this.search_input + "&start=" + _this.position, function(error, response) {
+                            _this.$["search-progress"].hidden = true;
+
+                            if (!error) {
+                                _this.match = response.match;
+                                _this.patent = _this.patent.concat(response.patent);
+                                _this.position = response.position;
+                            }
+                        });
+                    } else {
+                        document.querySelector("#polymer-toast").toast("server connection required");
+                    }
+                } else {
+                    this.$["search-progress"].hidden = true;
+                }
+            }, 1000 * 4);
+        },
+
+        search_cluster: function() {
+            this.$["search-progress"].hidden = false;
+
+            this.debounce("search", function() {
+                this.search_input = this.search_input.trim();
+
+                if (this.search_input.length) {
+                    if (Meteor.status().connected) {
+                        var _this = this;
+
+                        Meteor.call("cluster", _this.search_input, function(error, response) {
+                            _this.$["search-progress"].hidden = true;
+
+                            if (!error) {
+                                _this.cluster = response;
+                            }
+                        });
+                    } else {
+                        document.querySelector("#polymer-toast").toast("server connection required");
+                    }
+                } else {
+                    this.$["search-progress"].hidden = true;
+                }
+            }, 1000 * 4);
+        },
+
+        search_p_no: function() {
+            this.$["search-progress"].hidden = false;
+
+            this.debounce("search", function() {
+                this.search_input = this.search_input.trim();
+
+                if (this.search_input.length) {
+                    if (Meteor.status().connected) {
+                        var _this = this;
+
+                        Meteor.call("normalize", _this.search_input, function(error, response) {
+                            _this.$["search-progress"].hidden = true;
+
+                            if (!error && response.length) {
+                                _this.$["search-progress"].hidden = false;
+
+                                Meteor.call("patent", "q=pn:" + response[0] + "&start=" + _this.position, function(error, response) {
+                                    _this.$["search-progress"].hidden = true;
+
+                                    if (!error) {
+                                        _this.match = response.match;
+                                        _this.patent = _this.patent.concat(response.patent);
+                                        _this.position = response.position;
+                                    }
+                                });
+                            }
+                        });
+                    } else {
+                        document.querySelector("#polymer-toast").toast("server connection required");
+                    }
+                } else {
+                    this.$["search-progress"].hidden = true;
+                }
+            }, 1000 * 4);
+        },
+
+        search_seed: function() {
+            this.$["search-progress"].hidden = false;
+
+            this.debounce("search", function() {
+                this.search_input = this.search_input.trim();
+
+                if (this.search_input.length) {
+                    if (Meteor.status().connected) {
+                        var _this = this;
+
+                        Meteor.call("seed", _this.search_input, function(error, response) {
+                            _this.$["search-progress"].hidden = true;
+
+                            if (!error) {
+                                if (_.has(response, "cluster")) {
+                                    _this.cluster = response.cluster;
+                                }
+
+                                if (_.has(response, "match") && _.has(response, "patent") && _.has(response, "position")) {
+                                    _this.match = response.match;
+                                    _this.patent = _this.patent.concat(response.patent);
+                                    _this.position = response.position;
+                                }
+                            }
+                        });
+                    } else {
+                        document.querySelector("#polymer-toast").toast("server connection required");
+                    }
+                } else {
+                    this.$["search-progress"].hidden = true;
+                }
+            }, 1000 * 4);
+        },
+
+        search_text: function() {
+            this.$["search-progress"].hidden = false;
+
+            this.debounce("search", function() {
+                this.search_input = this.search_input.trim();
+
+                if (this.search_input.length) {
+                    if (Meteor.status().connected) {
+                        var _this = this;
+
+                        Meteor.call("patent", "q=ft:" + _this.search_input + "&start=" + _this.position, function(error, response) {
+                            _this.$["search-progress"].hidden = true;
+
+                            if (!error) {
+                                _this.match = response.match;
+                                _this.patent = _this.patent.concat(response.patent);
+                                _this.position = response.position;
+                            }
+                        });
+                    } else {
+                        document.querySelector("#polymer-toast").toast("server connection required");
+                    }
+                } else {
+                    this.$["search-progress"].hidden = true;
+                }
+            }, 1000 * 4);
+        },
+
+        _input: function(value) {
+            this.cluster = [];
+            this.match = 0;
+            this.patent = [];
+            this.patent_selected = [];
+            this.position = 0;
+
+            if (value) {
+                switch (this.search_type) {
+                    case "assignee":
+                        this.search_assignee();
+                        break;
+
+                    case "p_no":
+                        this.search_p_no();
+                        break;
+
+                    case "seed":
+                        this.search_seed();
+                        break;
+
+                    case "text":
+                        this.search_text();
+                        break;
+
+                    default:
+                        this.search_cluster();
+                        break;
+                }
+            }
+
+            FlowRouter.setQueryParams({
+                "search_input": this.search_input
+            });
+        },
+
+        _scroll: function(e, d) {
+            if (d.target.scrollHeight - (d.target.clientHeight * 1.5) < d.target.scrollTop && this.position <= this.match) {
+                switch (this.search_type) {
+                    case "assignee":
+                        this.search_assignee();
+                        break;
+
+                        // case "p_no":
+                        //     this.search_p_no();
+                        //     break;
+
+                        // case "seed":
+                        //     this.search_seed();
+                        //     break;
+
+                    case "text":
+                        this.search_text();
+                        break;
+
+                        // default:
+                        //     this.search_cluster();
+                        //     break;
+                }
+            }
+        },
+
+        _type: function(value) {
+            this.search_input = "";
+
+            FlowRouter.setQueryParams({
+                "search_type": this.search_type
+            });
+        }
+
+    });
+    </script>
+
+</dom-module>

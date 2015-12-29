@@ -1,0 +1,53 @@
+<dom-module id="patent-item">
+
+    <template>
+        <div class="center-justified horizontal layout">
+            <div class="cursor-p horizontal hover layout li white" style="border-bottom: 1px solid #EEE;">
+                <div style="padding: 16px; padding-right: 8px;">
+                    <selectable-icon icon_class$="[[return_p_no_class(item.p_no)]]" icon_text$="[[return_p_no_text(item.p_no)]]" id="selectable-icon" selected$="[[selected]]"></selectable-icon>
+                </div>
+
+                <div class="flex layout vertical" style="padding: 16px; padding-left: 8px;">
+                    <div class="lowercase" style="font-size: 16px; line-height: 24px;">[[item.title]]</div>
+                    <div class="center horizontal layout" style="color: #757575; font-size: 14px; line-height: 20px; width: 100%;">[[item.p_no]]</div>
+                </div>
+            </div>
+        </div>
+    </template>
+
+    <script>
+    Polymer({
+
+        click: function(e) {
+            if (Polymer.dom(e).localTarget.id != "selectable-icon") {
+                e.stopPropagation();
+
+            }
+        },
+
+        is: "patent-item",
+
+        properties: {
+            item: {
+                type: Object
+            },
+            selected: {
+                notify: true,
+                reflectToAttribute: true,
+                type: Boolean,
+                value: false
+            }
+        },
+
+        return_p_no_class: function(text) {
+            return polymer_color(text.match(/^[A-Z]{2}/) ? text.match(/^[A-Z]{2}/)[0] : "#");
+        },
+
+        return_p_no_text: function(text) {
+            return (text.match(/^[A-Z]{2}/) ? text.match(/^[A-Z]{2}/)[0] : "#");
+        }
+
+    });
+    </script>
+
+</dom-module>

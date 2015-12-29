@@ -1,11 +1,11 @@
 App.accessRule("*://*.googleusercontent.com/*");
 
-// App.icons({
-//     "android_ldpi": ".build/drawable-ldpi/ic_launcher.png",
-//     "android_mdpi": ".build/drawable-mdpi/ic_launcher.png",
-//     "android_hdpi": ".build/drawable-hdpi/ic_launcher.png",
-//     "android_xhdpi": ".build/drawable-xhdpi/ic_launcher.png"
-// });
+App.icons({
+    "android_ldpi": ".build/drawable-ldpi/ic_launcher.png",
+    "android_mdpi": ".build/drawable-mdpi/ic_launcher.png",
+    "android_hdpi": ".build/drawable-hdpi/ic_launcher.png",
+    "android_xhdpi": ".build/drawable-xhdpi/ic_launcher.png"
+});
 
 App.info({
     id: "com.vcompile.patentability",
@@ -28,4 +28,4 @@ App.info({
 //     "android_xhdpi_landscape": ".build/splash/splash-1280x720.png"
 // });
 
-// App.setPreference("android-installLocation", "preferExternal");
+App.setPreference("android-installLocation", "preferExternal");

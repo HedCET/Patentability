@@ -1,3 +1,3 @@
-Meteor.subscribe("project");
-Meteor.subscribe("torrent");
-Meteor.subscribe("worker");
+Meteor.subscribe("project", "#");
+// Meteor.subscribe("patent");
+// Meteor.subscribe("worker");
