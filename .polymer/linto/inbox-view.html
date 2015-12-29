@@ -87,7 +87,7 @@
                         </div>
 
                         <paper-icon-button icon="sort" on-click="sort"></paper-icon-button>
-                        <paper-icon-button icon="close" on-click="remove_project" style="margin-right: 8px;"></paper-icon-button>
+                        <paper-icon-button icon="close" onclick="document.querySelector('#remove-prompt').open();" style="margin-right: 8px;"></paper-icon-button>
                     </div>
                 </div>
 
@@ -106,6 +106,21 @@
         </paper-scroll-header-panel>
 
         <paper-fab class="menu-b" id="fab" icon="add" on-click="add_project"></paper-fab>
+
+        <paper-dialog id="remove-prompt" style="width: 320px;" with-backdrop>
+            <div style="font-size: 16px; line-height: 24px;">Are you sure to delete this project ?</div>
+
+            <div class="buttons">
+                <paper-button onclick="document.querySelector('#remove-prompt').close();">
+                    <iron-icon icon="close"></iron-icon>
+                    cancel
+                </paper-button>
+                <paper-button on-click="remove_ok">
+                    <iron-icon icon="check"></iron-icon>
+                    ok
+                </paper-button>
+            </div>
+        </paper-dialog>
     </template>
 
     <script>
@@ -133,6 +148,26 @@
             }
         },
 
+        remove_ok: function(e) {
+            if (Meteor.status().connected) {
+                var _this = this;
+
+                Meteor.call("remove_project", _this.item._id, function(error, response) {
+                    if (error) {
+                        document.querySelector("#polymer-toast").toast(error.reason);
+                    } else {
+                        document.querySelector("#polymer-toast").toast(response);
+
+                        // home page
+                    }
+                });
+            } else {
+                document.querySelector("#polymer-toast").toast("server connection required");
+            }
+
+            this.$["remove-prompt"].close();
+        },
+
         searchbar: function() {
             FlowRouter.setQueryParams({
                 "route": "search"
@@ -151,55 +186,57 @@
                     _id: project_id
                 });
 
-            var patent_id = _.map(project.patent, function(value) {
-                return (_patent.findOne({
-                    _id: value
-                }) ? null : value);
-            }).filter(Boolean);
+            if (project) {
+                var patent_id = _.map(project.patent, function(value) {
+                    return (_patent.findOne({
+                        _id: value
+                    }) ? null : value);
+                }).filter(Boolean);
 
-            if (patent_id.length) {
-                Meteor.subscribe("patent", patent_id, {
-                    onReady: function() {
-                        for (var A = 0; A < project.patent.length; A++) {
-                            var item = _patent.findOne({
-                                _id: project.patent[A]
-                            });
+                if (patent_id.length) {
+                    Meteor.subscribe("patent", patent_id, {
+                        onReady: function() {
+                            for (var A = 0; A < project.patent.length; A++) {
+                                var item = _patent.findOne({
+                                    _id: project.patent[A]
+                                });
 
-                            project.patent[A] = (item ? item : {
-                                _id: project.patent[A]
-                            });
+                                project.patent[A] = (item ? item : {
+                                    _id: project.patent[A]
+                                });
 
-                            project.patent[A].project = {
-                                _id: project._id
-                            };
+                                project.patent[A].project = {
+                                    _id: project._id
+                                };
+                            }
+
+                            _this.item = project;
+
+                            _this.vis_patent_taxonomy();
                         }
+                    });
+                } else {
+                    for (var A = 0; A < project.patent.length; A++) {
+                        var item = _patent.findOne({
+                            _id: project.patent[A]
+                        });
 
-                        _this.item = project;
+                        project.patent[A] = (item ? item : {
+                            _id: project.patent[A]
+                        });
 
-                        _this.vis_patent_taxonomy();
+                        project.patent[A].project = {
+                            _id: project._id
+                        };
                     }
-                });
-            } else {
-                for (var A = 0; A < project.patent.length; A++) {
-                    var item = _patent.findOne({
-                        _id: project.patent[A]
-                    });
 
-                    project.patent[A] = (item ? item : {
-                        _id: project.patent[A]
-                    });
+                    _this.item = project;
 
-                    project.patent[A].project = {
-                        _id: project._id
-                    };
+                    _this.vis_patent_taxonomy();
                 }
 
-                _this.item = project;
-
-                _this.vis_patent_taxonomy();
+                // observer
             }
-
-            // observer
         },
 
         subscribe_project: function(project_id) {

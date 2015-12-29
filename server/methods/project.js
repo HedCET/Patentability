@@ -103,6 +103,32 @@ Meteor.methods({
 
             return _id;
         }
+    },
+
+    remove_project: function(_id) {
+        this.unblock();
+
+        var user = Meteor.user();
+        if (!user) throw new Meteor.Error(422, "userNotFound");
+
+        check(_id, String);
+
+        var row = _project.findOne({
+            _id: _id,
+            user: user._id
+        });
+
+        if (row) {
+            _project.update({
+                _id: row._id
+            }, {
+                $pull: {
+                    user: user._id
+                }
+            });
+
+            return "1 project removed";
+        } else return "notFound";
     }
 
 });

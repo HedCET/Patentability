@@ -132,7 +132,12 @@
                     } else {
                         document.querySelector("#polymer-toast").toast("i cluster added / updated");
 
-                        // select project
+                        FlowRouter.setQueryParams({
+                            "route": "project",
+                            "project_id": response._id
+                        });
+
+                        _this.active = false;
                     }
                 });
             } else {
@@ -255,7 +260,10 @@
                     } else {
                         document.querySelector("#polymer-toast").toast("i project added / updated");
 
-                        // select project
+                        FlowRouter.setQueryParams({
+                            "route": "project",
+                            "project_id": response
+                        });
                     }
                 });
 

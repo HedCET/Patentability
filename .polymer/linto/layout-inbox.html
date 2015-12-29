@@ -38,10 +38,10 @@
                     <div class="flex" style="overflow: auto;">
                         <iron-selector activate-event="click" id="menu-opt" on-iron-select="menu_opt" selected-attribute="selected">
                             <template is="dom-repeat" items="[[project]]">
-                                <div class="cursor-p horizontal hover justified layout relative" data-id$="trending" style="border-bottom: 1px solid #EEE;">
-                                    <div class="flex horizontal justified layout" style="padding: 8px 16px;">
+                                <div class="cursor-p horizontal hover justified layout relative" data-id$="[[item._id]]" style="border-bottom: 1px solid #EEE;">
+                                    <div class="flex horizontal justified layout" style="padding: 12px 16px;">
                                         <div class="etc flex self-center" style="font-size: 16px; line-height: 24px;">[[return_menu_text(item)]]</div>
-                                        <div class="self-start" style="color: #757575; font-size: 14px; line-height: 20px;">[[return_text(item.patent.length)]]</div>
+                                        <div class="self-start" style="color: #757575; font-size: 14px; line-height: 20px; padding-left: 8px;">[[return_text(item.patent.length)]]</div>
                                     </div>
 
                                     <paper-ripple></paper-ripple>
@@ -281,15 +281,14 @@
         //     return (worker == "search")
         // },
 
-        // menu_opt: function(e, d) {
-        //     this.$.drawer.closeDrawer();
+        menu_opt: function(e, d) {
+            this.$.drawer.closeDrawer();
 
-        //     this.$.main_toolbar.className = this.$.main_toolbar.className.replace(/ ?[a-z\-]+\-500/g, "") + (d.item.dataset.id == "trend" ? "" : " " + document.querySelector("#menu_opt .iron-selected selectable-icon").icon_class);
-
-        //     this.$.main_page.selected = (d.item.dataset.id == "trend" ? 0 : 1);
-
-        //     this.menu_selected = d.item.dataset.id;
-        // },
+            FlowRouter.setQueryParams({
+                "route": "project",
+                "project_id": d.item.dataset.id
+            });
+        },
 
         menu_toggle: function() {
             if (this.$.drawer.narrow && this.$.drawer.getBoundingClientRect().width < parseInt(this.$.drawer.responsiveWidth)) {
