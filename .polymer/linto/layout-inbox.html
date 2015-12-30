@@ -59,6 +59,7 @@
             <neon-animated-pages class="fit" id="main-page" main selected="1">
                 <home-page id="home-page"></home-page>
                 <inbox-view id="inbox-view"></inbox-view>
+                <!-- item$="[[inbox_view(project, project_index)]]" -->
                 <patent-view id="patent-view"></patent-view>
             </neon-animated-pages>
         </paper-drawer-panel>
@@ -124,10 +125,6 @@
                 _this.user = (Meteor.user() ? Meteor.user() : {});
             });
 
-            Tracker.autorun(function() {
-                _this.project = _project.find().fetch();
-            });
-
             //     Meteor.setTimeout(function() {
             //         if (6 < moment.duration(moment().diff(moment(_this.trend.time))).asHours() || !_this.trend.keyword.length) {
             //             Meteor.call("trend", function(error, response) {
@@ -145,74 +142,86 @@
             //         }
             //     }, 1000);
 
-            //     Meteor.setTimeout(function() {
-            //         _project.find().observe({
-            //             added: function(row) {
-            //                 for (var A = 0; A < row.torrent.length; A++) {
-            //                     var item = _torrent.findOne({
-            //                         _id: row.torrent[A]
-            //                     });
+            Meteor.setTimeout(function() {
+                _project.find().observe({
+                    added: function(row) {
+                        for (var A = 0; A < row.patent.length; A++) {
+                            var item = _patent.findOne({
+                                _id: row.patent[A]
+                            });
 
-            //                     row.torrent[A] = (item ? item : {
-            //                         _id: row.torrent[A]
-            //                     });
+                            row.patent[A] = (item ? item : {
+                                _id: row.patent[A]
+                            });
 
-            //                     row.torrent[A].project = {
-            //                         _id: row._id
-            //                     };
-            //                 }
+                            row.patent[A].project = {
+                                _id: row._id
+                            };
+                        }
 
-            //                 var index = _.map(_this.project, function(A) {
-            //                     return A._id;
-            //                 }).indexOf(row._id);
+                        var index = _.map(_this.project, function(A) {
+                            return A._id;
+                        }).indexOf(row._id);
 
-            //                 if (index == -1) {
-            //                     _this.project.unshift(row);
-            //                 } else {
-            //                     // _this.project[index] = row;
-            //                     // _this.project[index] = _.clone(_this.project[index]);
-            //                 }
+                        if (index == -1) {
+                            _this.unshift("project", row);
 
-            //                 _this.project = _.clone(_this.project);
-            //             },
+                            var patent = _.map(row.patent, function(value) {
+                                return (_patent.findOne({
+                                    _id: value._id
+                                }) ? null : value._id);
+                            }).filter(Boolean);
 
-            //             changed: function(row, old) {
-            //                 for (var A = 0; A < row.torrent.length; A++) {
-            //                     var item = _torrent.findOne({
-            //                         _id: row.torrent[A]
-            //                     });
+                            if (patent.length) {
+                                Meteor.subscribe("patent", patent);
 
-            //                     row.torrent[A] = (item ? item : {
-            //                         _id: row.torrent[A]
-            //                     });
+                                console.log("subscribing", patent.length);
+                            }
+                        } else {
+                            // _this.project[index] = row;
+                            // _this.project[index] = _.clone(_this.project[index]);
+                        }
 
-            //                     row.torrent[A].project = {
-            //                         _id: row._id
-            //                     };
-            //                 }
+                        _this.project = _this.project;
+                    },
 
-            //                 var index = _.map(_this.project, function(A) {
-            //                     return A._id;
-            //                 }).indexOf(row._id);
+                    // changed: function(row, old) {
+                    //     for (var A = 0; A < row.patent.length; A++) {
+                    //         var item = _patent.findOne({
+                    //             _id: row.patent[A]
+                    //         });
 
-            //                 if (-1 < index) {
-            //                     _this.project[index] = row;
-            //                     _this.project = _.clone(_this.project);
-            //                 }
-            //             },
+                    //         row.patent[A] = (item ? item : {
+                    //             _id: row.patent[A]
+                    //         });
 
-            //             removed: function(old) {
-            //                 var index = _.map(_this.project, function(A) {
-            //                     return A._id;
-            //                 }).indexOf(old._id);
+                    //         row.patent[A].project = {
+                    //             _id: row._id
+                    //         };
+                    //     }
 
-            //                 if (-1 < index) {
-            //                     _this.project.splice(index, 1);
-            //                     _this.project = _.clone(_this.project);
-            //                 }
-            //             }
-            //         });
-            //     }, 1000);
+                    //     var index = _.map(_this.project, function(A) {
+                    //         return A._id;
+                    //     }).indexOf(row._id);
+
+                    //     if (-1 < index) {
+                    //         _this.project[index] = row;
+                    //         _this.project = _.clone(_this.project);
+                    //     }
+                    // },
+
+                    // removed: function(old) {
+                    //     var index = _.map(_this.project, function(A) {
+                    //         return A._id;
+                    //     }).indexOf(old._id);
+
+                    //     if (-1 < index) {
+                    //         _this.project.splice(index, 1);
+                    //         _this.project = _.clone(_this.project);
+                    //     }
+                    // }
+                });
+            }, 1000);
 
             //     Meteor.setTimeout(function() {
             //         _torrent.find().observe({
@@ -267,6 +276,10 @@
         // clear_torrent_selection: function() {
         //     this.torrent_selected = [];
         // },
+
+        inbox_view: function(project, index) {
+            return (this.project[index] ? this.project[index] : {});
+        },
 
         // initialize_trend: function() {
         //     this.trend = {
@@ -325,6 +338,10 @@
                 value: function() {
                     return [];
                 }
+            },
+            project_index: {
+                type: Number,
+                value: 0
             },
             user: {
                 type: Object,

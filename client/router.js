@@ -75,10 +75,6 @@ inbox.route("/", {
             case "project":
                 document.querySelector("#main-page").selected = 1;
                 document.querySelector("#inbox-view paper-scroll-header-panel").fire("iron-resize");
-
-                if (FlowRouter.getQueryParam("project_id")) {
-                    document.querySelector("#inbox-view").subscribe_project(FlowRouter.getQueryParam("project_id"));
-                }
                 break;
 
             case "search":
