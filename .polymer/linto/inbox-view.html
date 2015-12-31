@@ -199,7 +199,6 @@
 
         properties: {
             item: {
-                observer: "_item",
                 type: Object,
                 value: function() {
                     return {};
@@ -244,15 +243,27 @@
             });
         },
 
-        vis_network: function() {
-            var _this = this;
+        _scroll: function(e, d) {
+            if (d.target.scrollHeight - (d.target.clientHeight * 1.5) < d.target.scrollTop) {
+                if (this.item.match && this.item.position && this.item.position < this.item.match) {
+                    this.$["project-progress"].hidden = false;
 
-            _this.debounce("vis_network", function() {
-                if (_this.item.patent) {
+                    Meteor.call("update_project", this.item._id, function(error, response) {
+                        if (error) {
+                            document.querySelector("#polymer-toast").toast(error.reason);
+                        }
+                    });
+                }
+            }
+        },
+
+        _vis_network: function() {
+            this.debounce("_vis_network", function() {
+                if (this.item.patent) {
                     var listA = {},
                         listZ = {};
 
-                    _this.item.patent.forEach(function(A) {
+                    this.item.patent.forEach(function(A) {
                         if (A.concept) {
                             var B = A.concept.split(/;/).filter(Boolean);
 
@@ -323,24 +334,6 @@
                     _nodes.remove(nodes);
                 }
             }, 1000);
-        },
-
-        _item: function(newValue, oldValue) {
-            this.vis_network();
-        },
-
-        _scroll: function(e, d) {
-            if (d.target.scrollHeight - (d.target.clientHeight * 1.5) < d.target.scrollTop) {
-                if (this.item.match && this.item.position && this.item.position < this.item.match) {
-                    this.$["project-progress"].hidden = false;
-
-                    Meteor.call("update_project", this.item._id, function(error, response) {
-                        if (error) {
-                            document.querySelector("#polymer-toast").toast(error.reason);
-                        }
-                    });
-                }
-            }
         }
 
     });

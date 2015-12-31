@@ -134,12 +134,18 @@
                     } else {
                         document.querySelector("#polymer-toast").toast("i cluster added / updated");
 
-                        FlowRouter.setQueryParams({
-                            "route": "project",
-                            "project_index": 0
-                        });
+                        Meteor.subscribe("project", response._id, {
+                            onReady: function() {
+                                FlowRouter.setQueryParams({
+                                    "route": "project",
+                                    "project_index": _.map(document.querySelector("layout-inbox").project, function(item) {
+                                        return item._id;
+                                    }).indexOf(response._id)
+                                });
 
-                        _this.active = false;
+                                _this.active = false;
+                            }
+                        });
                     }
                 });
             } else {
@@ -212,11 +218,13 @@
             search_input: {
                 type: String,
                 value: function() {
+                    var search_input = (FlowRouter.getQueryParam("search_input") ? FlowRouter.getQueryParam("search_input") : "");
+
                     this.async(function() {
-                        this.search_input = (FlowRouter.getQueryParam("search_input") ? FlowRouter.getQueryParam("search_input") : "");
+                        this.search_input = search_input;
                     }, 400);
 
-                    return "";
+                    // return "";
                 }
             },
             search_type: {
@@ -262,9 +270,17 @@
                     } else {
                         document.querySelector("#polymer-toast").toast("i project added / updated");
 
-                        FlowRouter.setQueryParams({
-                            "route": "project",
-                            "project_index": 0
+                        Meteor.subscribe("project", response, {
+                            onReady: function() {
+                                FlowRouter.setQueryParams({
+                                    "route": "project",
+                                    "project_index": _.map(document.querySelector("layout-inbox").project, function(item) {
+                                        return item._id;
+                                    }).indexOf(response)
+                                });
+
+                                _this.active = false;
+                            }
                         });
                     }
                 });

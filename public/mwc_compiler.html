@@ -22136,7 +22136,6 @@ mwcLayout = new PolymerLayout();
 
         properties: {
             item: {
-                observer: "_item",
                 type: Object,
                 value: function() {
                     return {};
@@ -22181,15 +22180,27 @@ mwcLayout = new PolymerLayout();
             });
         },
 
-        vis_network: function() {
-            var _this = this;
+        _scroll: function(e, d) {
+            if (d.target.scrollHeight - (d.target.clientHeight * 1.5) < d.target.scrollTop) {
+                if (this.item.match && this.item.position && this.item.position < this.item.match) {
+                    this.$["project-progress"].hidden = false;
 
-            _this.debounce("vis_network", function() {
-                if (_this.item.patent) {
+                    Meteor.call("update_project", this.item._id, function(error, response) {
+                        if (error) {
+                            document.querySelector("#polymer-toast").toast(error.reason);
+                        }
+                    });
+                }
+            }
+        },
+
+        _vis_network: function() {
+            this.debounce("_vis_network", function() {
+                if (this.item.patent) {
                     var listA = {},
                         listZ = {};
 
-                    _this.item.patent.forEach(function(A) {
+                    this.item.patent.forEach(function(A) {
                         if (A.concept) {
                             var B = A.concept.split(/;/).filter(Boolean);
 
@@ -22260,24 +22271,6 @@ mwcLayout = new PolymerLayout();
                     _nodes.remove(nodes);
                 }
             }, 1000);
-        },
-
-        _item: function(newValue, oldValue) {
-            this.vis_network();
-        },
-
-        _scroll: function(e, d) {
-            if (d.target.scrollHeight - (d.target.clientHeight * 1.5) < d.target.scrollTop) {
-                if (this.item.match && this.item.position && this.item.position < this.item.match) {
-                    this.$["project-progress"].hidden = false;
-
-                    Meteor.call("update_project", this.item._id, function(error, response) {
-                        if (error) {
-                            document.querySelector("#polymer-toast").toast(error.reason);
-                        }
-                    });
-                }
-            }
         }
 
     });
@@ -22344,7 +22337,7 @@ mwcLayout = new PolymerLayout();
 
             <neon-animated-pages class="fit" id="main-page" main="" selected="1">
                 <home-page id="home-page"></home-page>
-                <inbox-view id="inbox-view" item$="[[inbox_view(project.*, project_selected)]]"></inbox-view>
+                <inbox-view id="inbox-view"></inbox-view>
                 <patent-view id="patent-view"></patent-view>
             </neon-animated-pages>
         </paper-drawer-panel>
@@ -22443,6 +22436,16 @@ mwcLayout = new PolymerLayout();
 
                         if (-1 < index) {
                             _this.splice("project", index, 1, row);
+
+                            var patent = _.map(row.patent, function(value) {
+                                return (_patent.findOne({
+                                    _id: value._id
+                                }) ? null : value._id);
+                            }).filter(Boolean);
+
+                            if (patent.length) {
+                                Meteor.subscribe("patent", patent);
+                            }
                         }
                     },
 
@@ -22503,10 +22506,6 @@ mwcLayout = new PolymerLayout();
         //     this.torrent_selected = [];
         // },
 
-        inbox_view: function(change, index) {
-            return (this.project[index] ? this.project[index] : {});
-        },
-
         // initialize_trend: function() {
         //     this.trend = {
         //         keyword: [],
@@ -22537,10 +22536,9 @@ mwcLayout = new PolymerLayout();
             }
         },
 
-        // observers: [
-        //     // "project_change(project.splices)",
-        //     "torrent_selected_change(torrent_selected.splices)"
-        // ],
+        observers: [
+            "_inbox_view(project.*, project_selected)"
+        ],
 
         // project_change: function(change) {
         //     this.debounce("project_change", function() {
@@ -22764,6 +22762,13 @@ mwcLayout = new PolymerLayout();
 
         user_prompt: function() {
             this.$["user-prompt"].open();
+        },
+
+        _inbox_view: function(change, index) {
+            this.debounce("_inbox_view", function() {
+                this.$["inbox-view"].item = (change.base[index] ? change.base[index] : {});
+                this.$["inbox-view"]._vis_network();
+            }, 1000);
         }
 
     });
@@ -23220,12 +23225,18 @@ mwcLayout = new PolymerLayout();
                     } else {
                         document.querySelector("#polymer-toast").toast("i cluster added / updated");
 
-                        FlowRouter.setQueryParams({
-                            "route": "project",
-                            "project_index": 0
-                        });
+                        Meteor.subscribe("project", response._id, {
+                            onReady: function() {
+                                FlowRouter.setQueryParams({
+                                    "route": "project",
+                                    "project_index": _.map(document.querySelector("layout-inbox").project, function(item) {
+                                        return item._id;
+                                    }).indexOf(response._id)
+                                });
 
-                        _this.active = false;
+                                _this.active = false;
+                            }
+                        });
                     }
                 });
             } else {
@@ -23298,11 +23309,13 @@ mwcLayout = new PolymerLayout();
             search_input: {
                 type: String,
                 value: function() {
+                    var search_input = (FlowRouter.getQueryParam("search_input") ? FlowRouter.getQueryParam("search_input") : "");
+
                     this.async(function() {
-                        this.search_input = (FlowRouter.getQueryParam("search_input") ? FlowRouter.getQueryParam("search_input") : "");
+                        this.search_input = search_input;
                     }, 400);
 
-                    return "";
+                    // return "";
                 }
             },
             search_type: {
@@ -23348,9 +23361,17 @@ mwcLayout = new PolymerLayout();
                     } else {
                         document.querySelector("#polymer-toast").toast("i project added / updated");
 
-                        FlowRouter.setQueryParams({
-                            "route": "project",
-                            "project_index": 0
+                        Meteor.subscribe("project", response, {
+                            onReady: function() {
+                                FlowRouter.setQueryParams({
+                                    "route": "project",
+                                    "project_index": _.map(document.querySelector("layout-inbox").project, function(item) {
+                                        return item._id;
+                                    }).indexOf(response)
+                                });
+
+                                _this.active = false;
+                            }
                         });
                     }
                 });

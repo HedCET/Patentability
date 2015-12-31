@@ -58,7 +58,7 @@
 
             <neon-animated-pages class="fit" id="main-page" main selected="1">
                 <home-page id="home-page"></home-page>
-                <inbox-view id="inbox-view" item$="[[inbox_view(project.*, project_selected)]]"></inbox-view>
+                <inbox-view id="inbox-view"></inbox-view>
                 <patent-view id="patent-view"></patent-view>
             </neon-animated-pages>
         </paper-drawer-panel>
@@ -183,6 +183,16 @@
 
                         if (-1 < index) {
                             _this.splice("project", index, 1, row);
+
+                            var patent = _.map(row.patent, function(value) {
+                                return (_patent.findOne({
+                                    _id: value._id
+                                }) ? null : value._id);
+                            }).filter(Boolean);
+
+                            if (patent.length) {
+                                Meteor.subscribe("patent", patent);
+                            }
                         }
                     },
 
@@ -243,10 +253,6 @@
         //     this.torrent_selected = [];
         // },
 
-        inbox_view: function(change, index) {
-            return (this.project[index] ? this.project[index] : {});
-        },
-
         // initialize_trend: function() {
         //     this.trend = {
         //         keyword: [],
@@ -277,10 +283,9 @@
             }
         },
 
-        // observers: [
-        //     // "project_change(project.splices)",
-        //     "torrent_selected_change(torrent_selected.splices)"
-        // ],
+        observers: [
+            "_inbox_view(project.*, project_selected)"
+        ],
 
         // project_change: function(change) {
         //     this.debounce("project_change", function() {
@@ -504,6 +509,13 @@
 
         user_prompt: function() {
             this.$["user-prompt"].open();
+        },
+
+        _inbox_view: function(change, index) {
+            this.debounce("_inbox_view", function() {
+                this.$["inbox-view"].item = (change.base[index] ? change.base[index] : {});
+                this.$["inbox-view"]._vis_network();
+            }, 1000);
         }
 
     });
