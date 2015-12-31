@@ -85,7 +85,7 @@
                     <div class="blue-500 center horizontal layout li">
                         <div class="cursor-d flex lowercase" style="font-size: 16px; line-height: 24px; padding: 16px;">[[return_title_text(item)]]</div>
 
-                        <paper-icon-button icon="close" onclick="document.querySelector('#remove-prompt').open();" style="margin-right: 8px;"></paper-icon-button>
+                        <paper-icon-button icon="close" onclick="document.querySelector('#remove-project-prompt').open();" style="margin-right: 8px;"></paper-icon-button>
                     </div>
                 </div>
 
@@ -103,15 +103,15 @@
 
         <paper-fab class="menu-b" id="fab" icon="add" on-click="add_project"></paper-fab>
 
-        <paper-dialog id="remove-prompt" style="width: 320px;" with-backdrop>
+        <paper-dialog id="remove-project-prompt" style="width: 320px;" with-backdrop>
             <div style="font-size: 16px; line-height: 24px;">Are you sure to delete this project ?</div>
 
             <div class="buttons">
-                <paper-button onclick="document.querySelector('#remove-prompt').close();">
+                <paper-button onclick="document.querySelector('#remove-project-prompt').close();">
                     <iron-icon icon="close"></iron-icon>
                     cancel
                 </paper-button>
-                <paper-button on-click="remove_ok">
+                <paper-button on-click="remove_project_ok">
                     <iron-icon icon="check"></iron-icon>
                     ok
                 </paper-button>
@@ -222,11 +222,24 @@
             }
         },
 
-        remove_ok: function(e) {
-            if (Meteor.status().connected) {
-                var _this = this;
+        remove_patent: function() {
+            $("inbox-item.iron-selected").addClass("undo");
 
-                Meteor.call("remove_project", _this.item._id, function(error, response) {
+            document.querySelector("#polymer-toast").undo = {
+                patent: _.map(this.patent_selected, function(item) {
+                    return item._id;
+                }),
+                project: this.item._id
+            };
+
+            document.querySelector("#polymer-toast").toast(this.patent_selected.length + " patent removed");
+
+            this.clear_patent_selected();
+        },
+
+        remove_project_ok: function() {
+            if (Meteor.status().connected) {
+                Meteor.call("remove_project", this.item._id, function(error, response) {
                     if (error) {
                         document.querySelector("#polymer-toast").toast(error.reason);
                     } else {
@@ -239,7 +252,7 @@
                 document.querySelector("#polymer-toast").toast("server connection required");
             }
 
-            this.$["remove-prompt"].close();
+            this.$["remove-project-prompt"].close();
         },
 
         return_title_text: function(item) {

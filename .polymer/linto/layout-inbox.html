@@ -403,10 +403,10 @@
 
         return_patent_count: function(patent) {
             var A = _.countBy(patent, function(item) {
-                return item.p_no ? "YES" : "NO";
+                return (item.p_no ? "yes" : "no");
             });
 
-            return (A.YES && A.NO ? A.YES + " / " : "") + (patent.length ? patent.length : "#");
+            return ((A.yes && A.no) ? A.yes + " / " : "") + (patent.length ? patent.length : "#");
         },
 
         return_text: function(text) {

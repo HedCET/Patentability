@@ -22022,7 +22022,7 @@ mwcLayout = new PolymerLayout();
                     <div class="blue-500 center horizontal layout li">
                         <div class="cursor-d flex lowercase" style="font-size: 16px; line-height: 24px; padding: 16px;">[[return_title_text(item)]]</div>
 
-                        <paper-icon-button icon="close" onclick="document.querySelector('#remove-prompt').open();" style="margin-right: 8px;"></paper-icon-button>
+                        <paper-icon-button icon="close" onclick="document.querySelector('#remove-project-prompt').open();" style="margin-right: 8px;"></paper-icon-button>
                     </div>
                 </div>
 
@@ -22040,15 +22040,15 @@ mwcLayout = new PolymerLayout();
 
         <paper-fab class="menu-b" id="fab" icon="add" on-click="add_project"></paper-fab>
 
-        <paper-dialog id="remove-prompt" style="width: 320px;" with-backdrop="">
+        <paper-dialog id="remove-project-prompt" style="width: 320px;" with-backdrop="">
             <div style="font-size: 16px; line-height: 24px;">Are you sure to delete this project ?</div>
 
             <div class="buttons">
-                <paper-button onclick="document.querySelector('#remove-prompt').close();">
+                <paper-button onclick="document.querySelector('#remove-project-prompt').close();">
                     <iron-icon icon="close"></iron-icon>
                     cancel
                 </paper-button>
-                <paper-button on-click="remove_ok">
+                <paper-button on-click="remove_project_ok">
                     <iron-icon icon="check"></iron-icon>
                     ok
                 </paper-button>
@@ -22159,11 +22159,24 @@ mwcLayout = new PolymerLayout();
             }
         },
 
-        remove_ok: function(e) {
-            if (Meteor.status().connected) {
-                var _this = this;
+        remove_patent: function() {
+            $("inbox-item.iron-selected").addClass("undo");
 
-                Meteor.call("remove_project", _this.item._id, function(error, response) {
+            document.querySelector("#polymer-toast").undo = {
+                patent: _.map(this.patent_selected, function(item) {
+                    return item._id;
+                }),
+                project: this.item._id
+            };
+
+            document.querySelector("#polymer-toast").toast(this.patent_selected.length + " patent removed");
+
+            this.clear_patent_selected();
+        },
+
+        remove_project_ok: function() {
+            if (Meteor.status().connected) {
+                Meteor.call("remove_project", this.item._id, function(error, response) {
                     if (error) {
                         document.querySelector("#polymer-toast").toast(error.reason);
                     } else {
@@ -22176,7 +22189,7 @@ mwcLayout = new PolymerLayout();
                 document.querySelector("#polymer-toast").toast("server connection required");
             }
 
-            this.$["remove-prompt"].close();
+            this.$["remove-project-prompt"].close();
         },
 
         return_title_text: function(item) {
@@ -22665,10 +22678,10 @@ mwcLayout = new PolymerLayout();
 
         return_patent_count: function(patent) {
             var A = _.countBy(patent, function(item) {
-                return item.p_no ? "YES" : "NO";
+                return (item.p_no ? "yes" : "no");
             });
 
-            return (A.YES && A.NO ? A.YES + " / " : "") + (patent.length ? patent.length : "#");
+            return ((A.yes && A.no) ? A.yes + " / " : "") + (patent.length ? patent.length : "#");
         },
 
         return_text: function(text) {
@@ -22998,7 +23011,7 @@ mwcLayout = new PolymerLayout();
 
     <template>
         <paper-toast class="cursor-d horizontal justified layout" duration="4000" id="toast" on-transitionend="transition" style="font-size: 16px; margin-right: 12px; padding: 16px; z-index: 1000;" text="">
-            <div class="cursor-p self-start" hidden="[[!undo.torrent]]" on-click="clear_undo" style="color: #FFEB3B; margin-left: 8px;">UNDO</div>
+            <div class="cursor-p self-start" hidden$="[[!undo.patent]]" on-click="clear_undo" style="color: #FFEB3B; margin-left: 8px;">UNDO</div>
         </paper-toast>
     </template>
 
@@ -23054,20 +23067,20 @@ mwcLayout = new PolymerLayout();
                 if (this.$.toast.opened) {
                     document.querySelector(".menu-b").translate3d(0, "-" + ($("#toast #label").height() + 48) + "px", 0);
                 } else {
-                    if (this.undo.torrent) {
+                    if (this.undo.patent) {
                         if (Meteor.status().connected) {
-                            Meteor.call("remove_torrent", this.undo, function(error) {
+                            Meteor.call("remove_patent", this.undo, function(error) {
                                 if (error) {
                                     console.log(error);
                                 } else {
-                                    $("inbox-item.undo").removeClass("undo");
+                                    $("inbox-item.undo").remove();
                                 }
                             });
                         } else {
                             document.querySelector("#polymer-toast").toast("server connection required");
                         }
 
-                        this.undo = {};
+                        this.set("undo", {});
                     }
 
                     document.querySelector(".menu-b").translate3d(0, 0, 0);
@@ -23215,13 +23228,13 @@ mwcLayout = new PolymerLayout();
                     } else {
                         document.querySelector("#polymer-toast").toast("i cluster added / updated");
 
-                        Meteor.subscribe("project", response._id, {
+                        Meteor.subscribe("project", response, {
                             onReady: function() {
                                 FlowRouter.setQueryParams({
                                     "route": "project",
                                     "project_selected": _.map(document.querySelector("layout-inbox").project, function(item) {
                                         return item._id;
-                                    }).indexOf(response._id)
+                                    }).indexOf(response)
                                 });
 
                                 _this.active = false;

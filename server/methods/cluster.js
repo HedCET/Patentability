@@ -44,19 +44,12 @@ Meteor.methods({
         var user = Meteor.user();
         if (!user) throw new Meteor.Error(422, "userNotFound");
 
-        var row = _project.findOne(input);
+        input.user = user._id;
 
-        if (row) {
-            _project.update({
-                _id: row._id
-            }, {
-                $addToSet: {
-                    user: user._id
-                }
-            });
+        var project = _project.findOne(input);
 
-            input.user = row.user;
-            input._id = row._id;
+        if (project) {
+            input._id = project._id;
         } else {
             input.match = 0;
             input.patent = [];
@@ -80,7 +73,7 @@ Meteor.methods({
             });
         }
 
-        return input;
+        return input._id;
     }
 
 });

@@ -75,6 +75,39 @@ Meteor.methods({
         } else {
             throw new Meteor.Error(422, "patent.php?" + query + " status-code != 200");
         }
+    },
+
+    remove_patent: function(input) {
+        this.unblock();
+
+        var user = Meteor.user();
+        if (!user) throw new Meteor.Error(422, "userNotFound");
+
+        check(input, {
+            patent: [String],
+            project: String
+        });
+
+        var project = _project.findOne({
+            _id: input.project
+        });
+
+        if (project) {
+            var patent = _.intersection(project.patent, input.patent);
+
+            _patent.update({
+                _id: {
+                    $in: patent
+                },
+                user: user._id
+            }, {
+                $pull: {
+                    project: project._id
+                }
+            }, {
+                multi: true
+            });
+        }
     }
 
 });

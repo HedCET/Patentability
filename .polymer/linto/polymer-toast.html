@@ -2,7 +2,7 @@
 
     <template>
         <paper-toast class="cursor-d horizontal justified layout" duration="4000" id="toast" on-transitionend="transition" style="font-size: 16px; margin-right: 12px; padding: 16px; z-index: 1000;" text="">
-            <div class="cursor-p self-start" hidden="[[!undo.torrent]]" on-click="clear_undo" style="color: #FFEB3B; margin-left: 8px;">UNDO</div>
+            <div class="cursor-p self-start" hidden$="[[!undo.patent]]" on-click="clear_undo" style="color: #FFEB3B; margin-left: 8px;">UNDO</div>
         </paper-toast>
     </template>
 
@@ -58,20 +58,20 @@
                 if (this.$.toast.opened) {
                     document.querySelector(".menu-b").translate3d(0, "-" + ($("#toast #label").height() + 48) + "px", 0);
                 } else {
-                    if (this.undo.torrent) {
+                    if (this.undo.patent) {
                         if (Meteor.status().connected) {
-                            Meteor.call("remove_torrent", this.undo, function(error) {
+                            Meteor.call("remove_patent", this.undo, function(error) {
                                 if (error) {
                                     console.log(error);
                                 } else {
-                                    $("inbox-item.undo").removeClass("undo");
+                                    $("inbox-item.undo").remove();
                                 }
                             });
                         } else {
                             document.querySelector("#polymer-toast").toast("server connection required");
                         }
 
-                        this.undo = {};
+                        this.set("undo", {});
                     }
 
                     document.querySelector(".menu-b").translate3d(0, 0, 0);

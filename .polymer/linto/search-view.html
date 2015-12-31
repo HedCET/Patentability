@@ -134,13 +134,13 @@
                     } else {
                         document.querySelector("#polymer-toast").toast("i cluster added / updated");
 
-                        Meteor.subscribe("project", response._id, {
+                        Meteor.subscribe("project", response, {
                             onReady: function() {
                                 FlowRouter.setQueryParams({
                                     "route": "project",
                                     "project_selected": _.map(document.querySelector("layout-inbox").project, function(item) {
                                         return item._id;
-                                    }).indexOf(response._id)
+                                    }).indexOf(response)
                                 });
 
                                 _this.active = false;
