@@ -22017,7 +22017,7 @@ mwcLayout = new PolymerLayout();
 
             <div class="blue-700" id="vis-network" style="cursor: pointer; height: 256px"></div>
 
-            <iron-selector activate-event="click" attr-for-selected="item" multi="" selectable="inbox-item" selected-attribute="selected" selected-values="{{patent_selected}}">
+            <iron-selector activate-event="click" attr-for-selected="item" multi="" on-iron-deselect="patent_selection_changed" on-iron-select="patent_selection_changed" selectable="inbox-item" selected-attribute="selected" selected-values="{{patent_selected}}">
                 <div class="blue-700 center-justified horizontal layout">
                     <div class="blue-500 center horizontal layout li">
                         <div class="cursor-d flex lowercase" style="font-size: 16px; line-height: 24px; padding: 16px;">[[return_title_text(item)]]</div>
@@ -22120,6 +22120,10 @@ mwcLayout = new PolymerLayout();
             });
         },
 
+        clear_patent_selected: function() {
+            this.patent_selected = [];
+        },
+
         filter_p_no: function(item) {
             return (item.p_no);
         },
@@ -22134,6 +22138,12 @@ mwcLayout = new PolymerLayout();
             document.querySelector("layout-inbox").menu_toggle();
         },
 
+        patent_selection_changed: function() {
+            this.$.fab.toggleClass("move-down", this.patent_selected.length);
+            this.$.toolbar.toggleClass("selection", this.patent_selected.length);
+            this.$["toolbar-title"].textContent = (this.patent_selected.length ? this.patent_selected.length : "Patentability");
+        },
+
         properties: {
             item: {
                 type: Object,
@@ -22141,7 +22151,6 @@ mwcLayout = new PolymerLayout();
                     return {};
                 }
             },
-
             patent_selected: {
                 type: Array,
                 value: function() {
@@ -22320,7 +22329,7 @@ mwcLayout = new PolymerLayout();
                                 <div class="cursor-p horizontal hover justified layout relative" data-index$="[[index]]" style="border-bottom: 1px solid #EEE;">
                                     <div class="flex horizontal justified layout" style="padding: 12px 16px;">
                                         <div class="etc flex lowercase self-center" style="font-size: 16px; line-height: 24px;">[[return_menu_text(item)]]</div>
-                                        <div class="self-start" style="color: #757575; font-size: 14px; line-height: 20px; padding-left: 8px;">[[return_text(item.patent.length)]]</div>
+                                        <div class="self-start" style="color: #757575; font-size: 14px; line-height: 20px; padding-left: 8px;">[[return_patent_count(item.patent)]]</div>
                                     </div>
 
                                     <paper-ripple></paper-ripple>
@@ -22408,14 +22417,17 @@ mwcLayout = new PolymerLayout();
                             }).filter(Boolean);
 
                             if (patent.length) {
-                                Meteor.subscribe("patent", patent);
+                                Meteor.subscribe("patent", {
+                                    patent: patent,
+                                    project: row._id
+                                });
                             }
                         } else {
                             // _this.splice("project", index, 1, row);
                         }
                     },
 
-                    changed: function(row, old) {
+                    changed: function(row, old_row) {
                         for (var A = 0; A < row.patent.length; A++) {
                             var item = _patent.findOne({
                                 _id: row.patent[A]
@@ -22444,15 +22456,18 @@ mwcLayout = new PolymerLayout();
                             }).filter(Boolean);
 
                             if (patent.length) {
-                                Meteor.subscribe("patent", patent);
+                                Meteor.subscribe("patent", {
+                                    patent: patent,
+                                    project: row._id
+                                });
                             }
                         }
                     },
 
-                    removed: function(old) {
+                    removed: function(old_row) {
                         var index = _.map(_this.project, function(A) {
                             return A._id;
-                        }).indexOf(old._id);
+                        }).indexOf(old_row._id);
 
                         if (-1 < index) {
                             _this.splice("project", index, 1);
@@ -22475,7 +22490,7 @@ mwcLayout = new PolymerLayout();
                         }
                     },
 
-                    changed: function(row, old) {
+                    changed: function(row, old_row) {
                         for (var A = 0; A < _this.project.length; A++) {
                             var index = _.map(_this.project[A].patent, function(item) {
                                 return item._id;
@@ -22487,11 +22502,11 @@ mwcLayout = new PolymerLayout();
                         }
                     },
 
-                    removed: function(old) {
+                    removed: function(old_row) {
                         for (var A = 0; A < _this.project.length; A++) {
                             var index = _.map(_this.project[A].patent, function(item) {
                                 return item._id;
-                            }).indexOf(old._id);
+                            }).indexOf(old_row._id);
 
                             if (-1 < index) {
                                 _this.splice("project." + A + ".patent", index, 1);
@@ -22501,10 +22516,6 @@ mwcLayout = new PolymerLayout();
                 });
             }, 1000);
         },
-
-        // clear_torrent_selection: function() {
-        //     this.torrent_selected = [];
-        // },
 
         // initialize_trend: function() {
         //     this.trend = {
@@ -22539,18 +22550,6 @@ mwcLayout = new PolymerLayout();
         observers: [
             "_inbox_view(project.*, project_selected)"
         ],
-
-        // project_change: function(change) {
-        //     this.debounce("project_change", function() {
-        //         if (this.menu_selected != "trend") {
-        //             this.$.main_page.selected = (this.project.length ? 1 : 0);
-        //         }
-        //     }, 1000 * 4);
-        // },
-
-        // project_selected: function(menu_opt, project_opt) {
-        //     return (menu_opt == "" ? true : menu_opt == project_opt);
-        // },
 
         properties: {
             project: {
@@ -22664,6 +22663,14 @@ mwcLayout = new PolymerLayout();
             return (item.projectName ? item.projectName : ((item.keyword ? item.keyword : "#") + (item.cluster_keyword ? " / " + item.cluster_keyword : "")));
         },
 
+        return_patent_count: function(patent) {
+            var A = _.countBy(patent, function(item) {
+                return item.p_no ? "YES" : "NO";
+            });
+
+            return (A.YES && A.NO ? A.YES + " / " : "") + (patent.length ? patent.length : "#");
+        },
+
         return_text: function(text) {
             return (text ? text : "#");
         },
@@ -22675,14 +22682,6 @@ mwcLayout = new PolymerLayout();
         return_time_s: function(time) {
             return (moment(time).isValid() ? moment(time).format("MMM DD ddd hh:mm A") : "#");
         },
-
-        // return_torrent_count: function(torrent) {
-        //     var A = _.countBy(torrent, function(item) {
-        //         return item.url ? "YES" : "NO";
-        //     });
-
-        //     return (A.YES && A.NO ? A.YES + " / " : "") + (torrent.length ? torrent.length : "#");
-        // },
 
         // return_torrent_description: function(item) {
         //     return (item.size ? item.size : "#") + " | " + (item.leech ? item.leech + "L" : "#") + " / " + (item.seed ? item.seed + "S" : "#");
@@ -22750,15 +22749,6 @@ mwcLayout = new PolymerLayout();
                 document.querySelector("#polymer-toast").toast("server connection required");
             }
         },
-
-        // torrent_selected_change: function(change) {
-        //     this.$.main_toolbar_title.textContent = (this.torrent_selected.length ? this.torrent_selected.length : "Patentability");
-
-        //     this.$.main_toolbar.toggleClass("grey-500", this.torrent_selected.length);
-        //     this.$.main_toolbar.toggleClass("selection", this.torrent_selected.length);
-
-        //     this.$.fab.toggleClass("move-down", this.torrent_selected.length);
-        // },
 
         user_prompt: function() {
             this.$["user-prompt"].open();
@@ -23229,7 +23219,7 @@ mwcLayout = new PolymerLayout();
                             onReady: function() {
                                 FlowRouter.setQueryParams({
                                     "route": "project",
-                                    "project_index": _.map(document.querySelector("layout-inbox").project, function(item) {
+                                    "project_selected": _.map(document.querySelector("layout-inbox").project, function(item) {
                                         return item._id;
                                     }).indexOf(response._id)
                                 });
@@ -23365,7 +23355,7 @@ mwcLayout = new PolymerLayout();
                             onReady: function() {
                                 FlowRouter.setQueryParams({
                                     "route": "project",
-                                    "project_index": _.map(document.querySelector("layout-inbox").project, function(item) {
+                                    "project_selected": _.map(document.querySelector("layout-inbox").project, function(item) {
                                         return item._id;
                                     }).indexOf(response)
                                 });

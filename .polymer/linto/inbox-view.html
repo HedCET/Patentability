@@ -80,7 +80,7 @@
 
             <div class="blue-700" id="vis-network" style="cursor: pointer; height: 256px"></div>
 
-            <iron-selector activate-event="click" attr-for-selected="item" multi selectable="inbox-item" selected-attribute="selected" selected-values="{{patent_selected}}">
+            <iron-selector activate-event="click" attr-for-selected="item" multi on-iron-deselect="patent_selection_changed" on-iron-select="patent_selection_changed" selectable="inbox-item" selected-attribute="selected" selected-values="{{patent_selected}}">
                 <div class="blue-700 center-justified horizontal layout">
                     <div class="blue-500 center horizontal layout li">
                         <div class="cursor-d flex lowercase" style="font-size: 16px; line-height: 24px; padding: 16px;">[[return_title_text(item)]]</div>
@@ -183,6 +183,10 @@
             });
         },
 
+        clear_patent_selected: function() {
+            this.patent_selected = [];
+        },
+
         filter_p_no: function(item) {
             return (item.p_no);
         },
@@ -197,6 +201,12 @@
             document.querySelector("layout-inbox").menu_toggle();
         },
 
+        patent_selection_changed: function() {
+            this.$.fab.toggleClass("move-down", this.patent_selected.length);
+            this.$.toolbar.toggleClass("selection", this.patent_selected.length);
+            this.$["toolbar-title"].textContent = (this.patent_selected.length ? this.patent_selected.length : "Patentability");
+        },
+
         properties: {
             item: {
                 type: Object,
@@ -204,7 +214,6 @@
                     return {};
                 }
             },
-
             patent_selected: {
                 type: Array,
                 value: function() {

@@ -36,6 +36,7 @@ _worker_cluster = function(worker_id) {
                                 _id: patent._id
                             }, {
                                 $addToSet: {
+                                    project: project._id,
                                     user: {
                                         $each: project.user
                                     }
@@ -45,8 +46,8 @@ _worker_cluster = function(worker_id) {
 
                             cluster.d[A]._id = patent._id;
                         } else {
+                            cluster.d[A].project = [project._id];
                             cluster.d[A].user = project.user;
-                            cluster.d[A].user_removed = [];
 
                             cluster.d[A]._id = _patent.insert(cluster.d[A])
                         }
