@@ -73,7 +73,7 @@ Meteor.methods({
 
             return row._id;
         } else {
-            var _id = _project.insert({
+            var project_id = _project.insert({
                 patent: patent,
                 projectName: input.projectName,
                 user: [user._id]
@@ -83,14 +83,14 @@ Meteor.methods({
 
                 if (!_worker.findOne({
                         patent: item,
-                        project: _id,
+                        project: project_id,
                         status: "",
                         type: "patent"
                     })) {
 
                     _worker.insert({
                         patent: item,
-                        project: _id,
+                        project: project_id,
                         status: "",
                         time_insert: moment().format(),
                         type: "patent",
@@ -101,20 +101,20 @@ Meteor.methods({
 
             });
 
-            return _id;
+            return project_id;
         }
     },
 
-    remove_project: function(_id) {
+    remove_project: function(project_id) {
         this.unblock();
 
         var user = Meteor.user();
         if (!user) throw new Meteor.Error(422, "userNotFound");
 
-        check(_id, String);
+        check(project_id, String);
 
         var row = _project.findOne({
-            _id: _id,
+            _id: project_id,
             user: user._id
         });
 
@@ -128,6 +128,36 @@ Meteor.methods({
             });
 
             return "1 project removed";
+        } else return "notFound";
+    },
+
+    update_project: function(project_id) {
+        this.unblock();
+
+        var user = Meteor.user();
+        if (!user) throw new Meteor.Error(422, "userNotFound");
+
+        check(project_id, String);
+
+        var row = _project.findOne({
+            _id: project_id,
+            user: user._id
+        });
+
+        if (row) {
+            if (row.match && row.position && row.position < row.match && !_worker.findOne({
+                    project: row._id,
+                    status: "",
+                    type: "cluster"
+                })) {
+                _worker.insert({
+                    project: row._id,
+                    status: "",
+                    time_insert: moment().format(),
+                    type: "cluster",
+                    user: row.user
+                });
+            }
         } else return "notFound";
     }
 

@@ -43,7 +43,7 @@ Meteor.publish("patent", function(patent_id) {
             user: false,
             user_removed: false
         },
-        limit: 500,
+        limit: 250,
         sort: {
             time: -1
         }

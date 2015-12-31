@@ -83,25 +83,22 @@
             <iron-selector activate-event="click" attr-for-selected="item" multi selectable="inbox-item" selected-attribute="selected" selected-values="{{patent_selected}}">
                 <div class="blue-700 center-justified horizontal layout">
                     <div class="blue-500 center horizontal layout li">
-                        <div class="cursor-d flex lowercase" style="font-size: 16px; line-height: 24px; padding: 16px;">[[item.keyword]] <span hidden="[[!item.cluster_keyword]]">/ <span>[[item.cluster_keyword]]</span></span>
-                        </div>
+                        <div class="cursor-d flex lowercase" style="font-size: 16px; line-height: 24px; padding: 16px;">[[return_title_text(item)]]</div>
 
                         <paper-icon-button icon="close" onclick="document.querySelector('#remove-prompt').open();" style="margin-right: 8px;"></paper-icon-button>
-                    </div>
-                </div>
-
-                <div class="center-justified horizontal layout">
-                    <div class="li">
-                        <paper-progress class="project-progress" data-id$="[[item._id]]" hidden style="width: 100%;"></paper-progress>
                     </div>
                 </div>
 
                 <template as="patent" is="dom-repeat" items="[[item.patent]]" filter="filter_p_no">
                     <inbox-item item$="[[patent]]"></inbox-item>
                 </template>
-            </iron-selector>
 
-            <div style="min-height: 80px;"></div>
+                <div class="center-justified horizontal layout" style="height: 88px;">
+                    <div class="center-center vertical layout li">
+                        <paper-spinner active data-id$="[[item._id]]" hidden id="project-progress"></paper-spinner>
+                    </div>
+                </div>
+            </iron-selector>
         </paper-scroll-header-panel>
 
         <paper-fab class="menu-b" id="fab" icon="add" on-click="add_project"></paper-fab>
@@ -192,6 +189,10 @@
 
         is: "inbox-view",
 
+        listeners: {
+            "content-scroll": "_scroll"
+        },
+
         menu_toggle: function() {
             document.querySelector("layout-inbox").menu_toggle();
         },
@@ -231,6 +232,10 @@
             }
 
             this.$["remove-prompt"].close();
+        },
+
+        return_title_text: function(item) {
+            return (item.projectName ? item.projectName : ((item.keyword ? item.keyword : "#") + (item.cluster_keyword ? " / " + item.cluster_keyword : "")));
         },
 
         searchbar: function() {
@@ -322,6 +327,20 @@
 
         _item: function(newValue, oldValue) {
             this.vis_network();
+        },
+
+        _scroll: function(e, d) {
+            if (d.target.scrollHeight - (d.target.clientHeight * 1.5) < d.target.scrollTop) {
+                if (this.item.match && this.item.position && this.item.position < this.item.match) {
+                    this.$["project-progress"].hidden = false;
+
+                    Meteor.call("update_project", this.item._id, function(error, response) {
+                        if (error) {
+                            document.querySelector("#polymer-toast").toast(error.reason);
+                        }
+                    });
+                }
+            }
         }
 
     });

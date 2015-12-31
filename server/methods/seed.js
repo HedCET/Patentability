@@ -20,7 +20,7 @@ Meteor.methods({
                 var response = JSON.parse(seed_loop.content),
                     seed = {};
 
-                if (_.has(response, "d1")) {
+                if (response.d1) {
                     for (var A = 0; A < response.d1.length; A++) {
                         response.d1[A].p_no = response.d1[A].pubNumber;
                         delete response.d1[A].pubNumber; // pubNumber => p_no
@@ -41,7 +41,7 @@ Meteor.methods({
                     seed.position = response.d1.length;
                 }
 
-                if (_.has(response, "concepts")) {
+                if (response.concepts) {
                     seed.cluster = [];
 
                     _.each(response.concepts, function(value, key) {

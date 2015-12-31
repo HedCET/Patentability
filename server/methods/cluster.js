@@ -58,7 +58,9 @@ Meteor.methods({
             input.user = row.user;
             input._id = row._id;
         } else {
+            input.match = 0;
             input.patent = [];
+            input.position = 0;
             input.user = [user._id]
 
             input._id = _project.insert(input);

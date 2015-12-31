@@ -45,7 +45,7 @@ Meteor.methods({
             if (Object.prototype.toString.call(JSON.parse(http_proxy_response.content)) === "[object Object]") {
                 var response = JSON.parse(http_proxy_response.content);
 
-                if (_.has(response, "d")) {
+                if (response.d) {
                     for (var A = 0; A < response.d.length; A++) {
                         response.d[A].p_no = response.d[A].pubnum;
                         delete response.d[A].pubnum; // pubnum => p_no

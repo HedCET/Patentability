@@ -124,23 +124,6 @@
                 _this.user = (Meteor.user() ? Meteor.user() : {});
             });
 
-            //     Meteor.setTimeout(function() {
-            //         if (6 < moment.duration(moment().diff(moment(_this.trend.time))).asHours() || !_this.trend.keyword.length) {
-            //             Meteor.call("trend", function(error, response) {
-            //                 if (error) {
-            //                     document.querySelector("#polymer-toast").toast(error.reason);
-            //                 } else {
-            //                     if (response.length) {
-            //                         _this.trend = {
-            //                             keyword: response,
-            //                             time: moment().format()
-            //                         };
-            //                     }
-            //                 }
-            //             });
-            //         }
-            //     }, 1000);
-
             Meteor.setTimeout(function() {
                 _project.find().observe({
                     added: function(row) {
@@ -175,7 +158,7 @@
                                 Meteor.subscribe("patent", patent);
                             }
                         } else {
-                            _this.splice("project", index, 1, row);
+                            // _this.splice("project", index, 1, row);
                         }
                     },
 

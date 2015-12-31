@@ -14981,6 +14981,83 @@ The `aria-labelledby` attribute will be set to the header element, if one exists
 
 
 
+<script>
+
+  /** @polymerBehavior */
+  Polymer.PaperSpinnerBehavior = {
+
+    listeners: {
+      'animationend': '__reset',
+      'webkitAnimationEnd': '__reset'
+    },
+
+    properties: {
+      /**
+       * Displays the spinner.
+       */
+      active: {
+        type: Boolean,
+        value: false,
+        reflectToAttribute: true,
+        observer: '__activeChanged'
+      },
+
+      /**
+       * Alternative text content for accessibility support.
+       * If alt is present, it will add an aria-label whose content matches alt when active.
+       * If alt is not present, it will default to 'loading' as the alt value.
+       */
+      alt: {
+        type: String,
+        value: 'loading',
+        observer: '__altChanged'
+      },
+
+      __coolingDown: {
+        type: Boolean,
+        value: false
+      }
+    },
+
+    __computeContainerClasses: function(active, coolingDown) {
+      return [
+        active || coolingDown ? 'active' : '',
+        coolingDown ? 'cooldown' : ''
+      ].join(' ');
+    },
+
+    __activeChanged: function(active, old) {
+      this.__setAriaHidden(!active);
+      this.__coolingDown = !active && old;
+    },
+
+    __altChanged: function(alt) {
+      // user-provided `aria-label` takes precedence over prototype default
+      if (alt === this.getPropertyInfo('alt').value) {
+        this.alt = this.getAttribute('aria-label') || alt;
+      } else {
+        this.__setAriaHidden(alt==='');
+        this.setAttribute('aria-label', alt);
+      }
+    },
+
+    __setAriaHidden: function(hidden) {
+      var attr = 'aria-hidden';
+      if (hidden) {
+        this.setAttribute(attr, 'true');
+      } else {
+        this.removeAttribute(attr);
+      }
+    },
+
+    __reset: function() {
+      this.active = false;
+      this.__coolingDown = false;
+    }
+  };
+</script>
+
+
 
 
 
@@ -20719,6 +20796,399 @@ mwcLayout = new PolymerLayout();
 })();
 
 </script>
+<dom-module id="paper-spinner-styles" assetpath="/bower_components/paper-spinner/">
+  <template>
+    <style>
+      /*
+      /**************************/
+      /* STYLES FOR THE SPINNER */
+      /**************************/
+
+      /*
+       * Constants:
+       *      STROKEWIDTH = 3px
+       *      ARCSIZE     = 270 degrees (amount of circle the arc takes up)
+       *      ARCTIME     = 1333ms (time it takes to expand and contract arc)
+       *      ARCSTARTROT = 216 degrees (how much the start location of the arc
+       *                                should rotate each time, 216 gives us a
+       *                                5 pointed star shape (it's 360/5 * 3).
+       *                                For a 7 pointed star, we might do
+       *                                360/7 * 3 = 154.286)
+       *      CONTAINERWIDTH = 28px
+       *      SHRINK_TIME = 400ms
+       */
+
+      :host {
+        display: inline-block;
+        position: relative;
+        width: 28px; /* CONTAINERWIDTH */
+        height: 28px; /* CONTAINERWIDTH */
+      }
+
+      #spinnerContainer {
+        width: 100%;
+        height: 100%;
+
+        /* The spinner does not have any contents that would have to be
+         * flipped if the direction changes. Always use ltr so that the
+         * style works out correctly in both cases. */
+        direction: ltr;
+      }
+
+      #spinnerContainer.active {
+        /* duration: 360 * ARCTIME / (ARCSTARTROT + (360-ARCSIZE)) */
+        -webkit-animation: container-rotate 1568ms linear infinite;
+        animation: container-rotate 1568ms linear infinite;
+      }
+
+      @-webkit-keyframes container-rotate {
+        to { -webkit-transform: rotate(360deg) }
+      }
+
+      @keyframes container-rotate {
+        to { transform: rotate(360deg) }
+      }
+
+      .spinner-layer {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        opacity: 0;
+        white-space: nowrap;
+        border-color: var(--paper-spinner-color, --google-blue-500);
+      }
+
+      .layer-1 {
+        border-color: var(--paper-spinner-layer-1-color, --google-blue-500);
+      }
+
+      .layer-2 {
+        border-color: var(--paper-spinner-layer-2-color, --google-red-500);
+      }
+
+      .layer-3 {
+        border-color: var(--paper-spinner-layer-3-color, --google-yellow-500);
+      }
+
+      .layer-4 {
+        border-color: var(--paper-spinner-layer-4-color, --google-green-500);
+      }
+
+      /**
+       * IMPORTANT NOTE ABOUT CSS ANIMATION PROPERTIES (keanulee):
+       *
+       * iOS Safari (tested on iOS 8.1) does not handle animation-delay very well - it doesn't
+       * guarantee that the animation will start _exactly_ after that value. So we avoid using
+       * animation-delay and instead set custom keyframes for each color (as layer-2undant as it
+       * seems).
+       *
+       * We write out each animation in full (instead of separating animation-name,
+       * animation-duration, etc.) because under the polyfill, Safari does not recognize those
+       * specific properties properly, treats them as -webkit-animation, and overrides the
+       * other animation rules. See https://github.com/Polymer/platform/issues/53.
+       */
+      .active .spinner-layer {
+        /* durations: 4 * ARCTIME */
+        -webkit-animation: fill-unfill-rotate 5332ms cubic-bezier(0.4, 0.0, 0.2, 1) infinite both;
+        animation: fill-unfill-rotate 5332ms cubic-bezier(0.4, 0.0, 0.2, 1) infinite both;
+        opacity: 1;
+      }
+
+      .active .spinner-layer.layer-1 {
+        /* durations: 4 * ARCTIME */
+        -webkit-animation: fill-unfill-rotate 5332ms cubic-bezier(0.4, 0.0, 0.2, 1) infinite both, layer-1-fade-in-out 5332ms cubic-bezier(0.4, 0.0, 0.2, 1) infinite both;
+        animation: fill-unfill-rotate 5332ms cubic-bezier(0.4, 0.0, 0.2, 1) infinite both, layer-1-fade-in-out 5332ms cubic-bezier(0.4, 0.0, 0.2, 1) infinite both;
+      }
+
+      .active .spinner-layer.layer-2 {
+        /* durations: 4 * ARCTIME */
+        -webkit-animation: fill-unfill-rotate 5332ms cubic-bezier(0.4, 0.0, 0.2, 1) infinite both, layer-2-fade-in-out 5332ms cubic-bezier(0.4, 0.0, 0.2, 1) infinite both;
+        animation: fill-unfill-rotate 5332ms cubic-bezier(0.4, 0.0, 0.2, 1) infinite both, layer-2-fade-in-out 5332ms cubic-bezier(0.4, 0.0, 0.2, 1) infinite both;
+      }
+
+      .active .spinner-layer.layer-3 {
+        /* durations: 4 * ARCTIME */
+        -webkit-animation: fill-unfill-rotate 5332ms cubic-bezier(0.4, 0.0, 0.2, 1) infinite both, layer-3-fade-in-out 5332ms cubic-bezier(0.4, 0.0, 0.2, 1) infinite both;
+        animation: fill-unfill-rotate 5332ms cubic-bezier(0.4, 0.0, 0.2, 1) infinite both, layer-3-fade-in-out 5332ms cubic-bezier(0.4, 0.0, 0.2, 1) infinite both;
+      }
+
+      .active .spinner-layer.layer-4 {
+        /* durations: 4 * ARCTIME */
+        -webkit-animation: fill-unfill-rotate 5332ms cubic-bezier(0.4, 0.0, 0.2, 1) infinite both, layer-4-fade-in-out 5332ms cubic-bezier(0.4, 0.0, 0.2, 1) infinite both;
+        animation: fill-unfill-rotate 5332ms cubic-bezier(0.4, 0.0, 0.2, 1) infinite both, layer-4-fade-in-out 5332ms cubic-bezier(0.4, 0.0, 0.2, 1) infinite both;
+      }
+
+      @-webkit-keyframes fill-unfill-rotate {
+        12.5% { -webkit-transform: rotate(135deg);  } /* 0.5 * ARCSIZE */
+        25%   { -webkit-transform: rotate(270deg);  } /* 1   * ARCSIZE */
+        37.5% { -webkit-transform: rotate(405deg);  } /* 1.5 * ARCSIZE */
+        50%   { -webkit-transform: rotate(540deg);  } /* 2   * ARCSIZE */
+        62.5% { -webkit-transform: rotate(675deg);  } /* 2.5 * ARCSIZE */
+        75%   { -webkit-transform: rotate(810deg);  } /* 3   * ARCSIZE */
+        87.5% { -webkit-transform: rotate(945deg);  } /* 3.5 * ARCSIZE */
+        to    { -webkit-transform: rotate(1080deg); } /* 4   * ARCSIZE */
+      }
+
+      @keyframes fill-unfill-rotate {
+        12.5% { transform: rotate(135deg);  } /* 0.5 * ARCSIZE */
+        25%   { transform: rotate(270deg);  } /* 1   * ARCSIZE */
+        37.5% { transform: rotate(405deg);  } /* 1.5 * ARCSIZE */
+        50%   { transform: rotate(540deg);  } /* 2   * ARCSIZE */
+        62.5% { transform: rotate(675deg);  } /* 2.5 * ARCSIZE */
+        75%   { transform: rotate(810deg);  } /* 3   * ARCSIZE */
+        87.5% { transform: rotate(945deg);  } /* 3.5 * ARCSIZE */
+        to    { transform: rotate(1080deg); } /* 4   * ARCSIZE */
+      }
+
+      /**
+       * HACK: Even though the intention is to have the current .spinner-layer at
+       * `opacity: 1`, we set it to `opacity: 0.99` instead since this forces Chrome
+       * to do proper subpixel rendering for the elements being animated. This is
+       * especially visible in Chrome 39 on Ubuntu 14.04. See:
+       *
+       * - https://github.com/Polymer/paper-spinner/issues/9
+       * - https://code.google.com/p/chromium/issues/detail?id=436255
+       */
+      @-webkit-keyframes layer-1-fade-in-out {
+        from { opacity: 0.99; }
+        25% { opacity: 0.99; }
+        26% { opacity: 0; }
+        89% { opacity: 0; }
+        90% { opacity: 0.99; }
+        100% { opacity: 0.99; }
+      }
+
+      @keyframes layer-1-fade-in-out {
+        from { opacity: 0.99; }
+        25% { opacity: 0.99; }
+        26% { opacity: 0; }
+        89% { opacity: 0; }
+        90% { opacity: 0.99; }
+        100% { opacity: 0.99; }
+      }
+
+      @-webkit-keyframes layer-2-fade-in-out {
+        from { opacity: 0; }
+        15% { opacity: 0; }
+        25% { opacity: 0.99; }
+        50% { opacity: 0.99; }
+        51% { opacity: 0; }
+      }
+
+      @keyframes layer-2-fade-in-out {
+        from { opacity: 0; }
+        15% { opacity: 0; }
+        25% { opacity: 0.99; }
+        50% { opacity: 0.99; }
+        51% { opacity: 0; }
+      }
+
+      @-webkit-keyframes layer-3-fade-in-out {
+        from { opacity: 0; }
+        40% { opacity: 0; }
+        50% { opacity: 0.99; }
+        75% { opacity: 0.99; }
+        76% { opacity: 0; }
+      }
+
+      @keyframes layer-3-fade-in-out {
+        from { opacity: 0; }
+        40% { opacity: 0; }
+        50% { opacity: 0.99; }
+        75% { opacity: 0.99; }
+        76% { opacity: 0; }
+      }
+
+      @-webkit-keyframes layer-4-fade-in-out {
+        from { opacity: 0; }
+        65% { opacity: 0; }
+        75% { opacity: 0.99; }
+        90% { opacity: 0.99; }
+        100% { opacity: 0; }
+      }
+
+      @keyframes layer-4-fade-in-out {
+        from { opacity: 0; }
+        65% { opacity: 0; }
+        75% { opacity: 0.99; }
+        90% { opacity: 0.99; }
+        100% { opacity: 0; }
+      }
+
+      /**
+       * Patch the gap that appear between the two adjacent div.circle-clipper while the
+       * spinner is rotating (appears on Chrome 38, Safari 7.1, and IE 11).
+       *
+       * Update: the gap no longer appears on Chrome when .spinner-layer's opacity is 0.99,
+       * but still does on Safari and IE.
+       */
+      .gap-patch {
+        position: absolute;
+        box-sizing: border-box;
+        top: 0;
+        left: 45%;
+        width: 10%;
+        height: 100%;
+        overflow: hidden;
+        border-color: inherit;
+      }
+
+      .gap-patch .circle {
+        width: 1000%;
+        left: -450%;
+      }
+
+      .circle-clipper {
+        display: inline-block;
+        position: relative;
+        width: 50%;
+        height: 100%;
+        overflow: hidden;
+        border-color: inherit;
+      }
+
+      .circle-clipper .circle {
+        width: 200%;
+      }
+
+      .circle {
+        box-sizing: border-box;
+        height: 100%;
+        border-width: 3px; /* STROKEWIDTH */
+        border-style: solid;
+        border-color: inherit;
+        border-bottom-color: transparent !important;
+        border-radius: 50%;
+        -webkit-animation: none;
+        animation: none;
+
+        @apply(--layout-fit);
+      }
+
+      .circle-clipper.left .circle {
+        border-right-color: transparent !important;
+        -webkit-transform: rotate(129deg);
+        transform: rotate(129deg);
+      }
+
+      .circle-clipper.right .circle {
+        left: -100%;
+        border-left-color: transparent !important;
+        -webkit-transform: rotate(-129deg);
+        transform: rotate(-129deg);
+      }
+
+      .active .circle-clipper.left .circle {
+        /* duration: ARCTIME */
+        -webkit-animation: left-spin 1333ms cubic-bezier(0.4, 0.0, 0.2, 1) infinite both;
+        animation: left-spin 1333ms cubic-bezier(0.4, 0.0, 0.2, 1) infinite both;
+      }
+
+      .active .circle-clipper.right .circle {
+        /* duration: ARCTIME */
+        -webkit-animation: right-spin 1333ms cubic-bezier(0.4, 0.0, 0.2, 1) infinite both;
+        animation: right-spin 1333ms cubic-bezier(0.4, 0.0, 0.2, 1) infinite both;
+      }
+
+      @-webkit-keyframes left-spin {
+        from { -webkit-transform: rotate(130deg); }
+        50% { -webkit-transform: rotate(-5deg); }
+        to { -webkit-transform: rotate(130deg); }
+      }
+
+      @keyframes left-spin {
+        from { transform: rotate(130deg); }
+        50% { transform: rotate(-5deg); }
+        to { transform: rotate(130deg); }
+      }
+
+      @-webkit-keyframes right-spin {
+        from { -webkit-transform: rotate(-130deg); }
+        50% { -webkit-transform: rotate(5deg); }
+        to { -webkit-transform: rotate(-130deg); }
+      }
+
+      @keyframes right-spin {
+        from { transform: rotate(-130deg); }
+        50% { transform: rotate(5deg); }
+        to { transform: rotate(-130deg); }
+      }
+
+      #spinnerContainer.cooldown {
+        /* duration: SHRINK_TIME */
+        -webkit-animation: container-rotate 1568ms linear infinite, fade-out 400ms cubic-bezier(0.4, 0.0, 0.2, 1);
+        animation: container-rotate 1568ms linear infinite, fade-out 400ms cubic-bezier(0.4, 0.0, 0.2, 1);
+      }
+
+      @-webkit-keyframes fade-out {
+        from { opacity: 0.99; }
+        to { opacity: 0; }
+      }
+
+      @keyframes fade-out {
+        from { opacity: 0.99; }
+        to { opacity: 0; }
+      }
+    </style>
+  </template>
+</dom-module>
+<dom-module id="paper-spinner" assetpath="/bower_components/paper-spinner/">
+  <template>
+    <style include="paper-spinner-styles"></style>
+
+    <div id="spinnerContainer" class-name="[[__computeContainerClasses(active, __coolingDown)]]">
+      <div class="spinner-layer layer-1">
+        <div class="circle-clipper left">
+          <div class="circle"></div>
+        </div><div class="gap-patch">
+          <div class="circle"></div>
+        </div><div class="circle-clipper right">
+          <div class="circle"></div>
+        </div>
+      </div>
+
+      <div class="spinner-layer layer-2">
+        <div class="circle-clipper left">
+          <div class="circle"></div>
+        </div><div class="gap-patch">
+          <div class="circle"></div>
+        </div><div class="circle-clipper right">
+          <div class="circle"></div>
+        </div>
+      </div>
+
+      <div class="spinner-layer layer-3">
+        <div class="circle-clipper left">
+          <div class="circle"></div>
+        </div><div class="gap-patch">
+          <div class="circle"></div>
+        </div><div class="circle-clipper right">
+          <div class="circle"></div>
+        </div>
+      </div>
+
+      <div class="spinner-layer layer-4">
+        <div class="circle-clipper left">
+          <div class="circle"></div>
+        </div><div class="gap-patch">
+          <div class="circle"></div>
+        </div><div class="circle-clipper right">
+          <div class="circle"></div>
+        </div>
+      </div>
+    </div>
+  </template>
+
+  <script>
+    Polymer({
+      is: 'paper-spinner',
+
+      behaviors: [
+        Polymer.PaperSpinnerBehavior
+      ]
+    });
+  </script>
+</dom-module>
 <dom-module id="iron-a11y-announcer" assetpath="/bower_components/iron-a11y-announcer/">
   <style>
     :host {
@@ -21550,25 +22020,22 @@ mwcLayout = new PolymerLayout();
             <iron-selector activate-event="click" attr-for-selected="item" multi="" selectable="inbox-item" selected-attribute="selected" selected-values="{{patent_selected}}">
                 <div class="blue-700 center-justified horizontal layout">
                     <div class="blue-500 center horizontal layout li">
-                        <div class="cursor-d flex lowercase" style="font-size: 16px; line-height: 24px; padding: 16px;">[[item.keyword]] <span hidden="[[!item.cluster_keyword]]">/ <span>[[item.cluster_keyword]]</span></span>
-                        </div>
+                        <div class="cursor-d flex lowercase" style="font-size: 16px; line-height: 24px; padding: 16px;">[[return_title_text(item)]]</div>
 
                         <paper-icon-button icon="close" onclick="document.querySelector('#remove-prompt').open();" style="margin-right: 8px;"></paper-icon-button>
-                    </div>
-                </div>
-
-                <div class="center-justified horizontal layout">
-                    <div class="li">
-                        <paper-progress class="project-progress" data-id$="[[item._id]]" hidden="" style="width: 100%;"></paper-progress>
                     </div>
                 </div>
 
                 <template as="patent" is="dom-repeat" items="[[item.patent]]" filter="filter_p_no">
                     <inbox-item item$="[[patent]]"></inbox-item>
                 </template>
-            </iron-selector>
 
-            <div style="min-height: 80px;"></div>
+                <div class="center-justified horizontal layout" style="height: 88px;">
+                    <div class="center-center vertical layout li">
+                        <paper-spinner active="" data-id$="[[item._id]]" hidden="" id="project-progress"></paper-spinner>
+                    </div>
+                </div>
+            </iron-selector>
         </paper-scroll-header-panel>
 
         <paper-fab class="menu-b" id="fab" icon="add" on-click="add_project"></paper-fab>
@@ -21659,6 +22126,10 @@ mwcLayout = new PolymerLayout();
 
         is: "inbox-view",
 
+        listeners: {
+            "content-scroll": "_scroll"
+        },
+
         menu_toggle: function() {
             document.querySelector("layout-inbox").menu_toggle();
         },
@@ -21698,6 +22169,10 @@ mwcLayout = new PolymerLayout();
             }
 
             this.$["remove-prompt"].close();
+        },
+
+        return_title_text: function(item) {
+            return (item.projectName ? item.projectName : ((item.keyword ? item.keyword : "#") + (item.cluster_keyword ? " / " + item.cluster_keyword : "")));
         },
 
         searchbar: function() {
@@ -21789,6 +22264,20 @@ mwcLayout = new PolymerLayout();
 
         _item: function(newValue, oldValue) {
             this.vis_network();
+        },
+
+        _scroll: function(e, d) {
+            if (d.target.scrollHeight - (d.target.clientHeight * 1.5) < d.target.scrollTop) {
+                if (this.item.match && this.item.position && this.item.position < this.item.match) {
+                    this.$["project-progress"].hidden = false;
+
+                    Meteor.call("update_project", this.item._id, function(error, response) {
+                        if (error) {
+                            document.querySelector("#polymer-toast").toast(error.reason);
+                        }
+                    });
+                }
+            }
         }
 
     });
@@ -21895,23 +22384,6 @@ mwcLayout = new PolymerLayout();
                 _this.user = (Meteor.user() ? Meteor.user() : {});
             });
 
-            //     Meteor.setTimeout(function() {
-            //         if (6 < moment.duration(moment().diff(moment(_this.trend.time))).asHours() || !_this.trend.keyword.length) {
-            //             Meteor.call("trend", function(error, response) {
-            //                 if (error) {
-            //                     document.querySelector("#polymer-toast").toast(error.reason);
-            //                 } else {
-            //                     if (response.length) {
-            //                         _this.trend = {
-            //                             keyword: response,
-            //                             time: moment().format()
-            //                         };
-            //                     }
-            //                 }
-            //             });
-            //         }
-            //     }, 1000);
-
             Meteor.setTimeout(function() {
                 _project.find().observe({
                     added: function(row) {
@@ -21946,7 +22418,7 @@ mwcLayout = new PolymerLayout();
                                 Meteor.subscribe("patent", patent);
                             }
                         } else {
-                            _this.splice("project", index, 1, row);
+                            // _this.splice("project", index, 1, row);
                         }
                     },
 
@@ -22650,7 +23122,7 @@ mwcLayout = new PolymerLayout();
     </style>
 
     <template>
-        <paper-scroll-header-panel fixed="" class="fit" style="background: rgba(238, 238, 238, .95); z-index: 10;">
+        <paper-scroll-header-panel class="fit" style="background: rgba(238, 238, 238, .95); z-index: 10;">
             <paper-toolbar>
                 <paper-icon-button icon="arrow-back" on-click="back"></paper-icon-button>
 
@@ -22661,8 +23133,6 @@ mwcLayout = new PolymerLayout();
 
                 <paper-icon-button hidden="[[return_boolean(patent_selected.length)]]" icon="filter-list" id="filter" on-click="filter"></paper-icon-button>
             </paper-toolbar>
-
-            <paper-progress hidden="" id="search-progress" indeterminate="" style="left: 0; position: fixed; width: 100%; z-index: 1;"></paper-progress>
 
             <div class="center-justified horizontal layout" hidden="[[!return_boolean(cluster.length)]]">
                 <div class="horizontal layout li">
@@ -22700,7 +23170,11 @@ mwcLayout = new PolymerLayout();
                 </template>
             </iron-selector>
 
-            <div style="min-height: 80px;"></div>
+            <div class="center-justified horizontal layout" style="height: 88px;">
+                <div class="center-center vertical layout li">
+                    <paper-spinner active="" hidden="" id="search-progress"></paper-spinner>
+                </div>
+            </div>
         </paper-scroll-header-panel>
 
         <paper-dialog id="filter-prompt" style="width: 320px;" with-backdrop="">
@@ -22748,7 +23222,7 @@ mwcLayout = new PolymerLayout();
 
                         FlowRouter.setQueryParams({
                             "route": "project",
-                            "project_id": response._id
+                            "project_index": 0
                         });
 
                         _this.active = false;
@@ -22876,7 +23350,7 @@ mwcLayout = new PolymerLayout();
 
                         FlowRouter.setQueryParams({
                             "route": "project",
-                            "project_id": response
+                            "project_index": 0
                         });
                     }
                 });

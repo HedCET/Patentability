@@ -11,89 +11,85 @@ _worker_cluster = function(worker_id) {
     });
 
     if (project) {
-        var match = 0,
-            position = 0;
+        var cluster_loop = HTTP.call("GET", http_proxy + "patent.php", {
+            params: {
+                post_opt: "q=ft:" + project.keyword + "&cluster_keyword=" + project.cluster_keyword + "&action_page=cluster_keywords&start=" + project.position
+            },
+            timeout: 1000 * 60
+        });
 
-        do {
-            var cluster_loop = HTTP.call("GET", http_proxy + "patent.php", {
-                params: {
-                    post_opt: "q=ft:" + project.keyword + "&cluster_keyword=" + project.cluster_keyword + "&action_page=cluster_keywords&start=" + position
-                },
-                timeout: 1000 * 60
-            });
+        if (cluster_loop.statusCode === 200) {
+            if (Object.prototype.toString.call(JSON.parse(cluster_loop.content)) === "[object Object]") {
+                var cluster = JSON.parse(cluster_loop.content);
 
-            if (cluster_loop.statusCode === 200) {
-                if (Object.prototype.toString.call(JSON.parse(cluster_loop.content)) === "[object Object]") {
-                    var cluster = JSON.parse(cluster_loop.content);
+                if (cluster.d) {
+                    for (var A = 0; A < cluster.d.length; A++) {
+                        cluster.d[A].p_no = cluster.d[A].pubnum;
+                        delete cluster.d[A].pubnum; // pubnum => p_no
 
-                    match = cluster.count.Matches;
-                    position = cluster.count.nextStart;
+                        var patent = _patent.findOne({
+                            p_no: cluster.d[A].p_no
+                        });
 
-                    if (_.has(cluster, "d")) {
-                        for (var A = 0; A < cluster.d.length; A++) {
-                            cluster.d[A].p_no = cluster.d[A].pubnum;
-                            delete cluster.d[A].pubnum; // pubnum => p_no
-
-                            var patent = _patent.findOne({
-                                p_no: cluster.d[A].p_no
+                        if (patent) {
+                            _patent.update({
+                                _id: patent._id
+                            }, {
+                                $addToSet: {
+                                    user: {
+                                        $each: project.user
+                                    }
+                                },
+                                $set: cluster.d[A]
                             });
 
-                            if (patent) {
-                                _patent.update({
-                                    _id: patent._id
-                                }, {
-                                    $addToSet: {
-                                        user: {
-                                            $each: project.user
-                                        }
-                                    },
-                                    $set: cluster.d[A]
-                                });
+                            cluster.d[A]._id = patent._id;
+                        } else {
+                            cluster.d[A].user = project.user;
+                            cluster.d[A].user_removed = [];
 
-                                cluster.d[A]._id = patent._id;
-                            } else {
-                                cluster.d[A].user = project.user;
-                                cluster.d[A].user_removed = [];
-
-                                cluster.d[A]._id = _patent.insert(cluster.d[A])
-                            }
-
-                            if (!_worker.findOne({
-                                    patent: cluster.d[A]._id,
-                                    project: project._id,
-                                    status: "",
-                                    type: "patent"
-                                })) {
-                                _worker.insert({
-                                    patent: cluster.d[A]._id,
-                                    project: project._id,
-                                    status: "",
-                                    time_insert: moment().format(),
-                                    type: "patent",
-                                    user: project.user
-                                });
-                            }
+                            cluster.d[A]._id = _patent.insert(cluster.d[A])
                         }
 
-                        _project.update({
-                            _id: project._id
-                        }, {
-                            $addToSet: {
-                                patent: {
-                                    $each: _.map(cluster.d, function(value) {
-                                        return value._id
-                                    }).filter(Boolean)
-                                }
-                            }
-                        });
+                        if (!_worker.findOne({
+                                patent: cluster.d[A]._id,
+                                project: project._id,
+                                status: "",
+                                type: "patent"
+                            })) {
+                            _worker.insert({
+                                patent: cluster.d[A]._id,
+                                project: project._id,
+                                status: "",
+                                time_insert: moment().format(),
+                                type: "patent",
+                                user: project.user
+                            });
+                        }
                     }
-                } else {
-                    console.log("patent.php?q=ft:" + project.keyword + ")&cluster_keyword=" + project.cluster_keyword + "&action_page=cluster_keywords&start=" + position + " JSON != Object");
+
+                    _project.update({
+                        _id: project._id
+                    }, {
+                        $addToSet: {
+                            patent: {
+                                $each: _.map(cluster.d, function(value) {
+                                    return value._id
+                                }).filter(Boolean)
+                            }
+                        },
+                        $set: {
+                            match: cluster.count.Matches,
+                            position: cluster.count.nextStart
+                        }
+                    });
                 }
             } else {
-                console.log("patent.php?q=ft:" + project.keyword + ")&cluster_keyword=" + project.cluster_keyword + "&action_page=cluster_keywords&start=" + position + " status-code != 200");
+                console.log("patent.php?q=ft:" + project.keyword + ")&cluster_keyword=" + project.cluster_keyword + "&action_page=cluster_keywords&start=" + project.position + " JSON != Object");
             }
-        } while (position <= match && position < 30);
+        } else {
+            console.log("patent.php?q=ft:" + project.keyword + ")&cluster_keyword=" + project.cluster_keyword + "&action_page=cluster_keywords&start=" + project.position + " status-code != 200");
+        }
 
         _worker.update({
             _id: worker_id
