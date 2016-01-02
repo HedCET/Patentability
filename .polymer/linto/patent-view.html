@@ -1,6 +1,15 @@
 <dom-module id="patent-view">
 
     <style>
+    input {
+        background: transparent;
+        border: none;
+    }
+    
+    paper-badge {
+        --paper-badge-background: var(--paper-grey-500);
+    }
+    
     paper-menu-button {
         padding: 0;
     }
@@ -28,22 +37,26 @@
 
                 <paper-icon-button data-id$="[[item._id]]" icon="delete" on-click="remove_patent"></paper-icon-button>
                 <paper-icon-button data-id$="[[item._id]]" icon="social:share" on-click="share"></paper-icon-button>
-
-                <paper-menu-button horizontal-align="right">
-                    <paper-icon-button class="dropdown-trigger" icon="more-vert"></paper-icon-button>
-
-                    <paper-menu class="dropdown-content" style="min-width: 200px;">
-                        <paper-item class="cursor-p">Manage Taxonomy</paper-item>
-                    </paper-menu>
-                </paper-menu-button>
             </paper-toolbar>
 
             <div class="blue-700">
                 <div class="center-justified horizontal layout">
                     <div class="horizontal layout li wrap" style="padding: 4px 12px;">
-                        <template as="concept" is="dom-repeat" items="[[return_concept_array(item.concept)]]">
-                            <div class="cursor-p lowercase" on-click="concept_opt" style="background: rgba(255, 255, 255, .95); border-radius: 24px; color: #1976D2; margin: 4px 8px 4px 0; padding: 4px 12px;">[[concept]]</div>
+                        <template as="concept" is="dom-repeat" items="[[return_concept(item.concept)]]">
+                            <div class="cursor-p lowercase" style="background: rgba(255, 255, 255, .95); border-radius: 24px; color: #1976D2; font-size: 16px; line-height: 24px; margin: 4px 8px 4px 0; padding: 4px 12px;">[[concept]]</div>
                         </template>
+
+                        <template as="tag" is="dom-repeat" items="[[item.project.tag]]">
+                            <div class="cursor-p lowercase" style="background: rgba(255, 255, 255, .95); border-radius: 24px; color: #1976D2; font-size: 16px; line-height: 24px; margin: 4px 8px 4px 0; padding: 4px 12px;"><span>[[tag]]</span>
+                                <iron-icon data-index$="[[index]]" icon="cancel" on-click="remove_tag" style="margin-left: 8px;"></iron-icon>
+                            </div>
+                        </template>
+
+                        <div class="cursor-p lowercase user-tag" style="background: rgba(255, 255, 255, .95); border-radius: 24px; color: #1976D2; font-size: 16px; line-height: 24px; margin: 4px 8px 4px 0; padding: 4px 12px;">
+                            <input bind-value="{{tag_input}}" class="editer" hidden is="iron-input" placeholder="private tag" style="color: #1976D2; font-size: 16px;">
+                            <iron-icon class="editer" hidden icon="check-circle" on-click="insert_tag" style="margin-left: 8px;"></iron-icon>
+                            <iron-icon class="controller" icon="add-circle" on-click="editer_open"></iron-icon>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -104,11 +117,42 @@
             document.querySelector("#inbox-view paper-scroll-header-panel").fire("iron-resize");
         },
 
+        editer_open: function() {
+            $(".user-tag .controller").attr("hidden", true);
+            $(".user-tag .editer").attr("hidden", false);
+
+            this.async(function() {
+                $(".user-tag input.editer").focus();
+            }, 400);
+        },
+
         is: "patent-view",
 
         properties: {
+            tag_input: {
+                type: String,
+                value: ""
+            },
             item: {
                 type: Object
+            }
+        },
+
+        remove_tag: function(e) {
+            if (Meteor.status().connected) {
+                this.splice("item.project.tag", Polymer.dom(e).localTarget.dataset.index, 1);
+
+                Meteor.call("remove_tag", {
+                    patent: this.item._id,
+                    project: this.item.project._id,
+                    tag_index: Polymer.dom(e).localTarget.dataset.index
+                }, function(error, response) {
+                    if (!error) {
+                        document.querySelector("#inbox-view")._vis_network();
+                    }
+                });
+            } else {
+                document.querySelector("#polymer-toast").toast("server connection required");
             }
         },
 
@@ -120,8 +164,34 @@
             return (text ? text.replace(/;/g, ", ") : "#");
         },
 
-        return_concept_array: function(text) {
-            return (text ? text.split(/;/) : "#");
+        return_concept: function(text) {
+            return (text ? text.split(/;/).filter(Boolean) : "#");
+        },
+
+        insert_tag: function() {
+            $(".user-tag .editer").attr("hidden", true);
+            $(".user-tag .controller").attr("hidden", false);
+
+            if (Meteor.status().connected) {
+                this.tag_input = this.tag_input.trim();
+
+                if (this.tag_input) {
+                    this.push("item.project.tag", this.tag_input);
+
+                    Meteor.call("insert_tag", {
+                        patent: this.item._id,
+                        project: this.item.project._id,
+                        tag_input: this.tag_input
+                    }, function(error, response) {
+                        if (!error) {
+                            document.querySelector("#inbox-view")._vis_network();
+                        }
+                    });
+                }
+
+            } else {
+                document.querySelector("#polymer-toast").toast("server connection required");
+            }
         }
 
     });

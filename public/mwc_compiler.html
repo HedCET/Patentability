@@ -22011,7 +22011,6 @@ mwcLayout = new PolymerLayout();
                 <div class="title" id="toolbar-title">Patentability</div>
 
                 <paper-icon-button class="selection-visible" icon="delete" on-click="remove_patent"></paper-icon-button>
-                <paper-icon-button class="selection-visible" icon="social:share" on-click="share"></paper-icon-button>
                 <paper-icon-button class="selection-hidden" icon="search" on-click="searchbar"></paper-icon-button>
             </paper-toolbar>
 
@@ -22219,8 +22218,8 @@ mwcLayout = new PolymerLayout();
         _vis_network: function() {
             this.debounce("_vis_network", function() {
                 if (this.item.patent) {
-                    var listA = {},
-                        listZ = {};
+                    listA = {};
+                    listZ = {};
 
                     this.item.patent.forEach(function(A) {
                         if (A.concept) {
@@ -22230,10 +22229,14 @@ mwcLayout = new PolymerLayout();
                                 _key(listA, [C, A.p_no]);
                             });
                         }
+
+                        A.project.tag.forEach(function(tag) {
+                            _key(listA, [tag, A.p_no]);
+                        });
                     });
 
                     Object.keys(listA).sort(function(keyA, keyZ) {
-                        return (_.size(listA[keyZ]) - _.size(listA[keyZ]));
+                        return (_.size(listA[keyZ]) - _.size(listA[keyA]));
                     }).forEach(function(index) {
                         if (_.size(listZ) < 10 && 1 < _.size(listA[index])) {
                             listZ[index] = listA[index];
@@ -22292,7 +22295,7 @@ mwcLayout = new PolymerLayout();
                     _edges.remove(edges);
                     _nodes.remove(nodes);
                 }
-            }, 1000);
+            }, 400);
         }
 
     });
@@ -22412,8 +22415,22 @@ mwcLayout = new PolymerLayout();
                             });
 
                             row.patent[A].project = {
-                                _id: row._id
+                                _id: row._id,
+                                tag: (row.tag ? (row.tag[row.patent[A]._id] ? row.tag[row.patent[A]._id] : []) : [])
                             };
+                        }
+
+                        var patent = _.map(row.patent, function(item) {
+                            return (_patent.findOne({
+                                _id: item._id
+                            }) ? null : item._id);
+                        }).filter(Boolean);
+
+                        if (patent.length) {
+                            Meteor.subscribe("patent", {
+                                patent: patent,
+                                project: row._id
+                            });
                         }
 
                         var index = _.map(_this.project, function(A) {
@@ -22422,21 +22439,8 @@ mwcLayout = new PolymerLayout();
 
                         if (index == -1) {
                             _this.unshift("project", row);
-
-                            var patent = _.map(row.patent, function(value) {
-                                return (_patent.findOne({
-                                    _id: value._id
-                                }) ? null : value._id);
-                            }).filter(Boolean);
-
-                            if (patent.length) {
-                                Meteor.subscribe("patent", {
-                                    patent: patent,
-                                    project: row._id
-                                });
-                            }
                         } else {
-                            // _this.splice("project", index, 1, row);
+                            _this.splice("project", index, 1, row);
                         }
                     },
 
@@ -22451,8 +22455,22 @@ mwcLayout = new PolymerLayout();
                             });
 
                             row.patent[A].project = {
-                                _id: row._id
+                                _id: row._id,
+                                tag: (row.tag ? (row.tag[row.patent[A]._id] ? row.tag[row.patent[A]._id] : []) : [])
                             };
+                        }
+
+                        var patent = _.map(row.patent, function(item) {
+                            return (_patent.findOne({
+                                _id: item._id
+                            }) ? null : item._id);
+                        }).filter(Boolean);
+
+                        if (patent.length) {
+                            Meteor.subscribe("patent", {
+                                patent: patent,
+                                project: row._id
+                            });
                         }
 
                         var index = _.map(_this.project, function(A) {
@@ -22461,19 +22479,6 @@ mwcLayout = new PolymerLayout();
 
                         if (-1 < index) {
                             _this.splice("project", index, 1, row);
-
-                            var patent = _.map(row.patent, function(value) {
-                                return (_patent.findOne({
-                                    _id: value._id
-                                }) ? null : value._id);
-                            }).filter(Boolean);
-
-                            if (patent.length) {
-                                Meteor.subscribe("patent", {
-                                    patent: patent,
-                                    project: row._id
-                                });
-                            }
                         }
                     },
 
@@ -22487,7 +22492,7 @@ mwcLayout = new PolymerLayout();
                         }
                     }
                 });
-            }, 1000);
+            }, 400);
 
             Meteor.setTimeout(function() {
                 _patent.find().observe({
@@ -22527,7 +22532,8 @@ mwcLayout = new PolymerLayout();
                         }
                     }
                 });
-            }, 1000);
+            }, 400);
+
         },
 
         // initialize_trend: function() {
@@ -22619,47 +22625,6 @@ mwcLayout = new PolymerLayout();
         //     }
         // },
 
-        // remove_ok: function(e) {
-        //     if (Meteor.status().connected) {
-        //         var _this = this;
-
-        //         Meteor.call("remove_project", _this.$.remove_prompt.dataset.id, function(error, response) {
-        //             if (error) {
-        //                 document.querySelector("#polymer-toast").toast(error.reason);
-        //             } else {
-        //                 document.querySelector("#polymer-toast").toast(response);
-
-        //                 _this.$.main_toolbar.className = _this.$.main_toolbar.className.replace(/ ?[a-z\-]+\-500/g, "");
-
-        //                 _this.menu_selected = "";
-        //             }
-        //         });
-        //     } else {
-        //         document.querySelector("#polymer-toast").toast("server connection required");
-        //     }
-
-        //     this.$.remove_prompt.close();
-        // },
-
-        // remove_project: function(e) {
-        //     this.$.remove_prompt.dataset.id = Polymer.dom(e).localTarget.dataset.id;
-        //     this.$.remove_prompt.open();
-        // },
-
-        // remove_torrent: function() {
-        //     $("inbox-item.iron-selected").addClass("undo");
-
-        //     document.querySelector("#polymer-toast").undo = {
-        //         torrent: _.map(this.torrent_selected, function(A) {
-        //             return A._id;
-        //         })
-        //     };
-
-        //     document.querySelector("#polymer-toast").toast(this.torrent_selected.length + " torrent removed");
-
-        //     this.clear_torrent_selection();
-        // },
-
         // return_class: function(text) {
         //     return polymer_color(text ? text : "#");
         // },
@@ -22695,37 +22660,6 @@ mwcLayout = new PolymerLayout();
         return_time_s: function(time) {
             return (moment(time).isValid() ? moment(time).format("MMM DD ddd hh:mm A") : "#");
         },
-
-        // return_torrent_description: function(item) {
-        //     return (item.size ? item.size : "#") + " | " + (item.leech ? item.leech + "L" : "#") + " / " + (item.seed ? item.seed + "S" : "#");
-        // },
-
-        // schedule: function(e) {
-        //     this.$.schedule_prompt.dataset.id = Polymer.dom(e).localTarget.dataset.id;
-        //     this.$.schedule_prompt.open();
-        // },
-
-        // schedule_ok: function(e) {
-        //     if (Meteor.status().connected) {
-        //         var _this = this;
-
-        //         Meteor.call("schedule_project", _this.$.schedule_prompt.dataset.id, function(error, response) {
-        //             if (error) {
-        //                 document.querySelector("#polymer-toast").toast(error.reason);
-        //             } else {
-        //                 document.querySelector("#polymer-toast").toast(response);
-
-        //                 _this.$.main_toolbar.className = _this.$.main_toolbar.className.replace(/ ?[a-z\-]+\-500/g, "");
-
-        //                 _this.menu_selected = "";
-        //             }
-        //         });
-        //     } else {
-        //         document.querySelector("#polymer-toast").toast("server connection required");
-        //     }
-
-        //     this.$.schedule_prompt.close();
-        // },
 
         // share: function() {
         //     var body = "";
@@ -22771,7 +22705,7 @@ mwcLayout = new PolymerLayout();
             this.debounce("_inbox_view", function() {
                 this.$["inbox-view"].item = (change.base[index] ? change.base[index] : {});
                 this.$["inbox-view"]._vis_network();
-            }, 1000);
+            }, 400);
         }
 
     });
@@ -22880,6 +22814,15 @@ mwcLayout = new PolymerLayout();
 <dom-module id="patent-view" assetpath="/linto/">
 
     <style>
+    input {
+        background: transparent;
+        border: none;
+    }
+    
+    paper-badge {
+        --paper-badge-background: var(--paper-grey-500);
+    }
+    
     paper-menu-button {
         padding: 0;
     }
@@ -22907,22 +22850,26 @@ mwcLayout = new PolymerLayout();
 
                 <paper-icon-button data-id$="[[item._id]]" icon="delete" on-click="remove_patent"></paper-icon-button>
                 <paper-icon-button data-id$="[[item._id]]" icon="social:share" on-click="share"></paper-icon-button>
-
-                <paper-menu-button horizontal-align="right">
-                    <paper-icon-button class="dropdown-trigger" icon="more-vert"></paper-icon-button>
-
-                    <paper-menu class="dropdown-content" style="min-width: 200px;">
-                        <paper-item class="cursor-p">Manage Taxonomy</paper-item>
-                    </paper-menu>
-                </paper-menu-button>
             </paper-toolbar>
 
             <div class="blue-700">
                 <div class="center-justified horizontal layout">
                     <div class="horizontal layout li wrap" style="padding: 4px 12px;">
-                        <template as="concept" is="dom-repeat" items="[[return_concept_array(item.concept)]]">
-                            <div class="cursor-p lowercase" on-click="concept_opt" style="background: rgba(255, 255, 255, .95); border-radius: 24px; color: #1976D2; margin: 4px 8px 4px 0; padding: 4px 12px;">[[concept]]</div>
+                        <template as="concept" is="dom-repeat" items="[[return_concept(item.concept)]]">
+                            <div class="cursor-p lowercase" style="background: rgba(255, 255, 255, .95); border-radius: 24px; color: #1976D2; font-size: 16px; line-height: 24px; margin: 4px 8px 4px 0; padding: 4px 12px;">[[concept]]</div>
                         </template>
+
+                        <template as="tag" is="dom-repeat" items="[[item.project.tag]]">
+                            <div class="cursor-p lowercase" style="background: rgba(255, 255, 255, .95); border-radius: 24px; color: #1976D2; font-size: 16px; line-height: 24px; margin: 4px 8px 4px 0; padding: 4px 12px;"><span>[[tag]]</span>
+                                <iron-icon data-index$="[[index]]" icon="cancel" on-click="remove_tag" style="margin-left: 8px;"></iron-icon>
+                            </div>
+                        </template>
+
+                        <div class="cursor-p lowercase user-tag" style="background: rgba(255, 255, 255, .95); border-radius: 24px; color: #1976D2; font-size: 16px; line-height: 24px; margin: 4px 8px 4px 0; padding: 4px 12px;">
+                            <input bind-value="{{tag_input}}" class="editer" hidden="" is="iron-input" placeholder="private tag" style="color: #1976D2; font-size: 16px;">
+                            <iron-icon class="editer" hidden="" icon="check-circle" on-click="insert_tag" style="margin-left: 8px;"></iron-icon>
+                            <iron-icon class="controller" icon="add-circle" on-click="editer_open"></iron-icon>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -22983,11 +22930,42 @@ mwcLayout = new PolymerLayout();
             document.querySelector("#inbox-view paper-scroll-header-panel").fire("iron-resize");
         },
 
+        editer_open: function() {
+            $(".user-tag .controller").attr("hidden", true);
+            $(".user-tag .editer").attr("hidden", false);
+
+            this.async(function() {
+                $(".user-tag input.editer").focus();
+            }, 400);
+        },
+
         is: "patent-view",
 
         properties: {
+            tag_input: {
+                type: String,
+                value: ""
+            },
             item: {
                 type: Object
+            }
+        },
+
+        remove_tag: function(e) {
+            if (Meteor.status().connected) {
+                this.splice("item.project.tag", Polymer.dom(e).localTarget.dataset.index, 1);
+
+                Meteor.call("remove_tag", {
+                    patent: this.item._id,
+                    project: this.item.project._id,
+                    tag_index: Polymer.dom(e).localTarget.dataset.index
+                }, function(error, response) {
+                    if (!error) {
+                        document.querySelector("#inbox-view")._vis_network();
+                    }
+                });
+            } else {
+                document.querySelector("#polymer-toast").toast("server connection required");
             }
         },
 
@@ -22999,8 +22977,34 @@ mwcLayout = new PolymerLayout();
             return (text ? text.replace(/;/g, ", ") : "#");
         },
 
-        return_concept_array: function(text) {
-            return (text ? text.split(/;/) : "#");
+        return_concept: function(text) {
+            return (text ? text.split(/;/).filter(Boolean) : "#");
+        },
+
+        insert_tag: function() {
+            $(".user-tag .editer").attr("hidden", true);
+            $(".user-tag .controller").attr("hidden", false);
+
+            if (Meteor.status().connected) {
+                this.tag_input = this.tag_input.trim();
+
+                if (this.tag_input) {
+                    this.push("item.project.tag", this.tag_input);
+
+                    Meteor.call("insert_tag", {
+                        patent: this.item._id,
+                        project: this.item.project._id,
+                        tag_input: this.tag_input
+                    }, function(error, response) {
+                        if (!error) {
+                            document.querySelector("#inbox-view")._vis_network();
+                        }
+                    });
+                }
+
+            } else {
+                document.querySelector("#polymer-toast").toast("server connection required");
+            }
         }
 
     });
@@ -23103,6 +23107,13 @@ mwcLayout = new PolymerLayout();
         display: block;
     }
     
+    input {
+        background: transparent;
+        border: none;
+        font-size: 18px;
+        padding: 0 12px;
+    }
+    
     paper-badge {
         --paper-badge-background: var(--paper-grey-500);
     }
@@ -23120,13 +23131,6 @@ mwcLayout = new PolymerLayout();
     paper-toolbar paper-icon-button {
         margin: 0!important;
     }
-    
-    input {
-        background: transparent;
-        border: none;
-        font-size: 18px;
-        padding: 0 12px;
-    }
     </style>
 
     <template>
@@ -23134,9 +23138,9 @@ mwcLayout = new PolymerLayout();
             <paper-toolbar>
                 <paper-icon-button icon="arrow-back" on-click="back"></paper-icon-button>
 
-                <input autofocus="" class="flex" is="iron-input" placeholder="search" bind-value="{{search_input}}">
+                <input autofocus="" bind-value="{{search_input}}" class="flex" is="iron-input" placeholder="search">
 
-                <paper-badge for="save" hidden="[[!return_boolean(patent_selected.length)]]" label="[[return_text(patent_selected.length)]]"></paper-badge>
+                <paper-badge for="save" hidden="[[!return_boolean(patent_selected.length)]]" label="[[return_text(patent_selected.length)]]" style="top: 8px!important;"></paper-badge>
                 <paper-icon-button hidden="[[!return_boolean(patent_selected.length)]]" icon="save" id="save" on-click="save"></paper-icon-button>
 
                 <paper-icon-button hidden="[[return_boolean(patent_selected.length)]]" icon="filter-list" id="filter" on-click="filter"></paper-icon-button>
@@ -23357,7 +23361,7 @@ mwcLayout = new PolymerLayout();
                     patent: _.map(_this.patent_selected, function(value) {
                         return value._id
                     }),
-                    projectName: _this.projectName
+                    projectName: (_this.projectName ? _this.projectName : Random.id(4))
                 }, function(error, response) {
                     if (error) {
                         document.querySelector("#polymer-toast").toast(error.reason);
@@ -23412,7 +23416,7 @@ mwcLayout = new PolymerLayout();
                 } else {
                     this.$["search-progress"].hidden = true;
                 }
-            }, 1000 * 4);
+            }, 400 * 4);
         },
 
         search_cluster: function() {
@@ -23438,7 +23442,7 @@ mwcLayout = new PolymerLayout();
                 } else {
                     this.$["search-progress"].hidden = true;
                 }
-            }, 1000 * 4);
+            }, 400 * 4);
         },
 
         search_p_no: function() {
@@ -23474,7 +23478,7 @@ mwcLayout = new PolymerLayout();
                 } else {
                     this.$["search-progress"].hidden = true;
                 }
-            }, 1000 * 4);
+            }, 400 * 4);
         },
 
         search_seed: function() {
@@ -23508,7 +23512,7 @@ mwcLayout = new PolymerLayout();
                 } else {
                     this.$["search-progress"].hidden = true;
                 }
-            }, 1000 * 4);
+            }, 400 * 4);
         },
 
         search_text: function() {
@@ -23536,7 +23540,7 @@ mwcLayout = new PolymerLayout();
                 } else {
                     this.$["search-progress"].hidden = true;
                 }
-            }, 1000 * 4);
+            }, 400 * 4);
         },
 
         _input: function(value) {
@@ -23927,7 +23931,7 @@ mwcLayout = new PolymerLayout();
                         }
                     }
                 });
-            }, 1000);
+            }, 400 * 4);
         },
 
         back: function() {
@@ -23951,7 +23955,7 @@ mwcLayout = new PolymerLayout();
                     }, function(error) {
                         Meteor.setTimeout(function() {
                             document.querySelector("#load-awesome").active = false;
-                        }, 1000 * 4);
+                        }, 400 * 8);
 
                         if (error) {
                             document.querySelector("#polymer-toast").toast(error);

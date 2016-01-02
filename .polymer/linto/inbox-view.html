@@ -74,7 +74,6 @@
                 <div class="title" id="toolbar-title">Patentability</div>
 
                 <paper-icon-button class="selection-visible" icon="delete" on-click="remove_patent"></paper-icon-button>
-                <paper-icon-button class="selection-visible" icon="social:share" on-click="share"></paper-icon-button>
                 <paper-icon-button class="selection-hidden" icon="search" on-click="searchbar"></paper-icon-button>
             </paper-toolbar>
 
@@ -282,8 +281,8 @@
         _vis_network: function() {
             this.debounce("_vis_network", function() {
                 if (this.item.patent) {
-                    var listA = {},
-                        listZ = {};
+                    listA = {};
+                    listZ = {};
 
                     this.item.patent.forEach(function(A) {
                         if (A.concept) {
@@ -293,10 +292,14 @@
                                 _key(listA, [C, A.p_no]);
                             });
                         }
+
+                        A.project.tag.forEach(function(tag) {
+                            _key(listA, [tag, A.p_no]);
+                        });
                     });
 
                     Object.keys(listA).sort(function(keyA, keyZ) {
-                        return (_.size(listA[keyZ]) - _.size(listA[keyZ]));
+                        return (_.size(listA[keyZ]) - _.size(listA[keyA]));
                     }).forEach(function(index) {
                         if (_.size(listZ) < 10 && 1 < _.size(listA[index])) {
                             listZ[index] = listA[index];
@@ -355,7 +358,7 @@
                     _edges.remove(edges);
                     _nodes.remove(nodes);
                 }
-            }, 1000);
+            }, 400);
         }
 
     });

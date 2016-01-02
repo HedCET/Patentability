@@ -137,8 +137,22 @@
                             });
 
                             row.patent[A].project = {
-                                _id: row._id
+                                _id: row._id,
+                                tag: (row.tag ? (row.tag[row.patent[A]._id] ? row.tag[row.patent[A]._id] : []) : [])
                             };
+                        }
+
+                        var patent = _.map(row.patent, function(item) {
+                            return (_patent.findOne({
+                                _id: item._id
+                            }) ? null : item._id);
+                        }).filter(Boolean);
+
+                        if (patent.length) {
+                            Meteor.subscribe("patent", {
+                                patent: patent,
+                                project: row._id
+                            });
                         }
 
                         var index = _.map(_this.project, function(A) {
@@ -147,21 +161,8 @@
 
                         if (index == -1) {
                             _this.unshift("project", row);
-
-                            var patent = _.map(row.patent, function(value) {
-                                return (_patent.findOne({
-                                    _id: value._id
-                                }) ? null : value._id);
-                            }).filter(Boolean);
-
-                            if (patent.length) {
-                                Meteor.subscribe("patent", {
-                                    patent: patent,
-                                    project: row._id
-                                });
-                            }
                         } else {
-                            // _this.splice("project", index, 1, row);
+                            _this.splice("project", index, 1, row);
                         }
                     },
 
@@ -176,8 +177,22 @@
                             });
 
                             row.patent[A].project = {
-                                _id: row._id
+                                _id: row._id,
+                                tag: (row.tag ? (row.tag[row.patent[A]._id] ? row.tag[row.patent[A]._id] : []) : [])
                             };
+                        }
+
+                        var patent = _.map(row.patent, function(item) {
+                            return (_patent.findOne({
+                                _id: item._id
+                            }) ? null : item._id);
+                        }).filter(Boolean);
+
+                        if (patent.length) {
+                            Meteor.subscribe("patent", {
+                                patent: patent,
+                                project: row._id
+                            });
                         }
 
                         var index = _.map(_this.project, function(A) {
@@ -186,19 +201,6 @@
 
                         if (-1 < index) {
                             _this.splice("project", index, 1, row);
-
-                            var patent = _.map(row.patent, function(value) {
-                                return (_patent.findOne({
-                                    _id: value._id
-                                }) ? null : value._id);
-                            }).filter(Boolean);
-
-                            if (patent.length) {
-                                Meteor.subscribe("patent", {
-                                    patent: patent,
-                                    project: row._id
-                                });
-                            }
                         }
                     },
 
@@ -212,7 +214,7 @@
                         }
                     }
                 });
-            }, 1000);
+            }, 400);
 
             Meteor.setTimeout(function() {
                 _patent.find().observe({
@@ -252,7 +254,8 @@
                         }
                     }
                 });
-            }, 1000);
+            }, 400);
+
         },
 
         // initialize_trend: function() {
@@ -344,47 +347,6 @@
         //     }
         // },
 
-        // remove_ok: function(e) {
-        //     if (Meteor.status().connected) {
-        //         var _this = this;
-
-        //         Meteor.call("remove_project", _this.$.remove_prompt.dataset.id, function(error, response) {
-        //             if (error) {
-        //                 document.querySelector("#polymer-toast").toast(error.reason);
-        //             } else {
-        //                 document.querySelector("#polymer-toast").toast(response);
-
-        //                 _this.$.main_toolbar.className = _this.$.main_toolbar.className.replace(/ ?[a-z\-]+\-500/g, "");
-
-        //                 _this.menu_selected = "";
-        //             }
-        //         });
-        //     } else {
-        //         document.querySelector("#polymer-toast").toast("server connection required");
-        //     }
-
-        //     this.$.remove_prompt.close();
-        // },
-
-        // remove_project: function(e) {
-        //     this.$.remove_prompt.dataset.id = Polymer.dom(e).localTarget.dataset.id;
-        //     this.$.remove_prompt.open();
-        // },
-
-        // remove_torrent: function() {
-        //     $("inbox-item.iron-selected").addClass("undo");
-
-        //     document.querySelector("#polymer-toast").undo = {
-        //         torrent: _.map(this.torrent_selected, function(A) {
-        //             return A._id;
-        //         })
-        //     };
-
-        //     document.querySelector("#polymer-toast").toast(this.torrent_selected.length + " torrent removed");
-
-        //     this.clear_torrent_selection();
-        // },
-
         // return_class: function(text) {
         //     return polymer_color(text ? text : "#");
         // },
@@ -420,37 +382,6 @@
         return_time_s: function(time) {
             return (moment(time).isValid() ? moment(time).format("MMM DD ddd hh:mm A") : "#");
         },
-
-        // return_torrent_description: function(item) {
-        //     return (item.size ? item.size : "#") + " | " + (item.leech ? item.leech + "L" : "#") + " / " + (item.seed ? item.seed + "S" : "#");
-        // },
-
-        // schedule: function(e) {
-        //     this.$.schedule_prompt.dataset.id = Polymer.dom(e).localTarget.dataset.id;
-        //     this.$.schedule_prompt.open();
-        // },
-
-        // schedule_ok: function(e) {
-        //     if (Meteor.status().connected) {
-        //         var _this = this;
-
-        //         Meteor.call("schedule_project", _this.$.schedule_prompt.dataset.id, function(error, response) {
-        //             if (error) {
-        //                 document.querySelector("#polymer-toast").toast(error.reason);
-        //             } else {
-        //                 document.querySelector("#polymer-toast").toast(response);
-
-        //                 _this.$.main_toolbar.className = _this.$.main_toolbar.className.replace(/ ?[a-z\-]+\-500/g, "");
-
-        //                 _this.menu_selected = "";
-        //             }
-        //         });
-        //     } else {
-        //         document.querySelector("#polymer-toast").toast("server connection required");
-        //     }
-
-        //     this.$.schedule_prompt.close();
-        // },
 
         // share: function() {
         //     var body = "";
@@ -496,7 +427,7 @@
             this.debounce("_inbox_view", function() {
                 this.$["inbox-view"].item = (change.base[index] ? change.base[index] : {});
                 this.$["inbox-view"]._vis_network();
-            }, 1000);
+            }, 400);
         }
 
     });
