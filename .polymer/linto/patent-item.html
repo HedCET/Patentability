@@ -18,13 +18,6 @@
     <script>
     Polymer({
 
-        click: function(e) {
-            if (Polymer.dom(e).localTarget.id != "selectable-icon") {
-                e.stopPropagation();
-
-            }
-        },
-
         is: "patent-item",
 
         properties: {
