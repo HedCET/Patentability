@@ -45,7 +45,7 @@ Meteor.methods({
             if (Object.prototype.toString.call(JSON.parse(http_proxy_response.content)) === "[object Object]") {
                 var response = JSON.parse(http_proxy_response.content);
 
-                if (_.has(response, "d")) {
+                if (response.d) {
                     for (var A = 0; A < response.d.length; A++) {
                         response.d[A].p_no = response.d[A].pubnum;
                         delete response.d[A].pubnum; // pubnum => p_no
@@ -74,6 +74,39 @@ Meteor.methods({
             }
         } else {
             throw new Meteor.Error(422, "patent.php?" + query + " status-code != 200");
+        }
+    },
+
+    remove_patent: function(input) {
+        this.unblock();
+
+        var user = Meteor.user();
+        if (!user) throw new Meteor.Error(422, "userNotFound");
+
+        check(input, {
+            patent: [String],
+            project: String
+        });
+
+        var project = _project.findOne({
+            _id: input.project
+        });
+
+        if (project) {
+            var patent = _.intersection(project.patent, input.patent);
+
+            _patent.update({
+                _id: {
+                    $in: patent
+                },
+                user: user._id
+            }, {
+                $pull: {
+                    project: project._id
+                }
+            }, {
+                multi: true
+            });
         }
     }
 

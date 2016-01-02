@@ -27,23 +27,28 @@ Meteor.publish("project", function(project_id) {
     }
 });
 
-Meteor.publish("patent", function(patent_id) {
-    check(patent_id, [String]);
+Meteor.publish("patent", function(input) {
+    check(input, {
+        patent: [String],
+        project: String
+    });
 
     return _patent.find({
         _id: {
-            $in: patent_id
+            $in: input.patent
         },
+        project: input.project,
         user: this.userId,
         user_removed: {
             $ne: this.userId
         }
     }, {
         fields: {
+            project: false,
             user: false,
             user_removed: false
         },
-        limit: 500,
+        limit: 250,
         sort: {
             time: -1
         }

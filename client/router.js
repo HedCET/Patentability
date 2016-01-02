@@ -7,7 +7,7 @@ document.addEventListener("WebComponentsReady", function() {
 
     Meteor.setTimeout(function() {
         document.querySelector("#load-awesome").active = false;
-    }, 1000 * (Meteor.isCordova ? 10 : 1));
+    }, 400 * (Meteor.isCordova ? 32 : 8));
 });
 
 FlowRouter.route("/", {
@@ -72,13 +72,12 @@ inbox.route("/", {
         });
 
         switch (FlowRouter.getQueryParam("route")) {
-            case "project":
-                document.querySelector("#main-page").selected = 1;
-                document.querySelector("#inbox-view paper-scroll-header-panel").fire("iron-resize");
+            case "patent":
+                document.querySelector("layout-inbox")._patent();
+                break;
 
-                if (FlowRouter.getQueryParam("project_id")) {
-                    document.querySelector("#inbox-view").subscribe_project(FlowRouter.getQueryParam("project_id"));
-                }
+            case "project":
+                document.querySelector("layout-inbox")._project();
                 break;
 
             case "search":

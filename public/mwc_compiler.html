@@ -14981,6 +14981,83 @@ The `aria-labelledby` attribute will be set to the header element, if one exists
 
 
 
+<script>
+
+  /** @polymerBehavior */
+  Polymer.PaperSpinnerBehavior = {
+
+    listeners: {
+      'animationend': '__reset',
+      'webkitAnimationEnd': '__reset'
+    },
+
+    properties: {
+      /**
+       * Displays the spinner.
+       */
+      active: {
+        type: Boolean,
+        value: false,
+        reflectToAttribute: true,
+        observer: '__activeChanged'
+      },
+
+      /**
+       * Alternative text content for accessibility support.
+       * If alt is present, it will add an aria-label whose content matches alt when active.
+       * If alt is not present, it will default to 'loading' as the alt value.
+       */
+      alt: {
+        type: String,
+        value: 'loading',
+        observer: '__altChanged'
+      },
+
+      __coolingDown: {
+        type: Boolean,
+        value: false
+      }
+    },
+
+    __computeContainerClasses: function(active, coolingDown) {
+      return [
+        active || coolingDown ? 'active' : '',
+        coolingDown ? 'cooldown' : ''
+      ].join(' ');
+    },
+
+    __activeChanged: function(active, old) {
+      this.__setAriaHidden(!active);
+      this.__coolingDown = !active && old;
+    },
+
+    __altChanged: function(alt) {
+      // user-provided `aria-label` takes precedence over prototype default
+      if (alt === this.getPropertyInfo('alt').value) {
+        this.alt = this.getAttribute('aria-label') || alt;
+      } else {
+        this.__setAriaHidden(alt==='');
+        this.setAttribute('aria-label', alt);
+      }
+    },
+
+    __setAriaHidden: function(hidden) {
+      var attr = 'aria-hidden';
+      if (hidden) {
+        this.setAttribute(attr, 'true');
+      } else {
+        this.removeAttribute(attr);
+      }
+    },
+
+    __reset: function() {
+      this.active = false;
+      this.__coolingDown = false;
+    }
+  };
+</script>
+
+
 
 
 
@@ -20719,6 +20796,399 @@ mwcLayout = new PolymerLayout();
 })();
 
 </script>
+<dom-module id="paper-spinner-styles" assetpath="/bower_components/paper-spinner/">
+  <template>
+    <style>
+      /*
+      /**************************/
+      /* STYLES FOR THE SPINNER */
+      /**************************/
+
+      /*
+       * Constants:
+       *      STROKEWIDTH = 3px
+       *      ARCSIZE     = 270 degrees (amount of circle the arc takes up)
+       *      ARCTIME     = 1333ms (time it takes to expand and contract arc)
+       *      ARCSTARTROT = 216 degrees (how much the start location of the arc
+       *                                should rotate each time, 216 gives us a
+       *                                5 pointed star shape (it's 360/5 * 3).
+       *                                For a 7 pointed star, we might do
+       *                                360/7 * 3 = 154.286)
+       *      CONTAINERWIDTH = 28px
+       *      SHRINK_TIME = 400ms
+       */
+
+      :host {
+        display: inline-block;
+        position: relative;
+        width: 28px; /* CONTAINERWIDTH */
+        height: 28px; /* CONTAINERWIDTH */
+      }
+
+      #spinnerContainer {
+        width: 100%;
+        height: 100%;
+
+        /* The spinner does not have any contents that would have to be
+         * flipped if the direction changes. Always use ltr so that the
+         * style works out correctly in both cases. */
+        direction: ltr;
+      }
+
+      #spinnerContainer.active {
+        /* duration: 360 * ARCTIME / (ARCSTARTROT + (360-ARCSIZE)) */
+        -webkit-animation: container-rotate 1568ms linear infinite;
+        animation: container-rotate 1568ms linear infinite;
+      }
+
+      @-webkit-keyframes container-rotate {
+        to { -webkit-transform: rotate(360deg) }
+      }
+
+      @keyframes container-rotate {
+        to { transform: rotate(360deg) }
+      }
+
+      .spinner-layer {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        opacity: 0;
+        white-space: nowrap;
+        border-color: var(--paper-spinner-color, --google-blue-500);
+      }
+
+      .layer-1 {
+        border-color: var(--paper-spinner-layer-1-color, --google-blue-500);
+      }
+
+      .layer-2 {
+        border-color: var(--paper-spinner-layer-2-color, --google-red-500);
+      }
+
+      .layer-3 {
+        border-color: var(--paper-spinner-layer-3-color, --google-yellow-500);
+      }
+
+      .layer-4 {
+        border-color: var(--paper-spinner-layer-4-color, --google-green-500);
+      }
+
+      /**
+       * IMPORTANT NOTE ABOUT CSS ANIMATION PROPERTIES (keanulee):
+       *
+       * iOS Safari (tested on iOS 8.1) does not handle animation-delay very well - it doesn't
+       * guarantee that the animation will start _exactly_ after that value. So we avoid using
+       * animation-delay and instead set custom keyframes for each color (as layer-2undant as it
+       * seems).
+       *
+       * We write out each animation in full (instead of separating animation-name,
+       * animation-duration, etc.) because under the polyfill, Safari does not recognize those
+       * specific properties properly, treats them as -webkit-animation, and overrides the
+       * other animation rules. See https://github.com/Polymer/platform/issues/53.
+       */
+      .active .spinner-layer {
+        /* durations: 4 * ARCTIME */
+        -webkit-animation: fill-unfill-rotate 5332ms cubic-bezier(0.4, 0.0, 0.2, 1) infinite both;
+        animation: fill-unfill-rotate 5332ms cubic-bezier(0.4, 0.0, 0.2, 1) infinite both;
+        opacity: 1;
+      }
+
+      .active .spinner-layer.layer-1 {
+        /* durations: 4 * ARCTIME */
+        -webkit-animation: fill-unfill-rotate 5332ms cubic-bezier(0.4, 0.0, 0.2, 1) infinite both, layer-1-fade-in-out 5332ms cubic-bezier(0.4, 0.0, 0.2, 1) infinite both;
+        animation: fill-unfill-rotate 5332ms cubic-bezier(0.4, 0.0, 0.2, 1) infinite both, layer-1-fade-in-out 5332ms cubic-bezier(0.4, 0.0, 0.2, 1) infinite both;
+      }
+
+      .active .spinner-layer.layer-2 {
+        /* durations: 4 * ARCTIME */
+        -webkit-animation: fill-unfill-rotate 5332ms cubic-bezier(0.4, 0.0, 0.2, 1) infinite both, layer-2-fade-in-out 5332ms cubic-bezier(0.4, 0.0, 0.2, 1) infinite both;
+        animation: fill-unfill-rotate 5332ms cubic-bezier(0.4, 0.0, 0.2, 1) infinite both, layer-2-fade-in-out 5332ms cubic-bezier(0.4, 0.0, 0.2, 1) infinite both;
+      }
+
+      .active .spinner-layer.layer-3 {
+        /* durations: 4 * ARCTIME */
+        -webkit-animation: fill-unfill-rotate 5332ms cubic-bezier(0.4, 0.0, 0.2, 1) infinite both, layer-3-fade-in-out 5332ms cubic-bezier(0.4, 0.0, 0.2, 1) infinite both;
+        animation: fill-unfill-rotate 5332ms cubic-bezier(0.4, 0.0, 0.2, 1) infinite both, layer-3-fade-in-out 5332ms cubic-bezier(0.4, 0.0, 0.2, 1) infinite both;
+      }
+
+      .active .spinner-layer.layer-4 {
+        /* durations: 4 * ARCTIME */
+        -webkit-animation: fill-unfill-rotate 5332ms cubic-bezier(0.4, 0.0, 0.2, 1) infinite both, layer-4-fade-in-out 5332ms cubic-bezier(0.4, 0.0, 0.2, 1) infinite both;
+        animation: fill-unfill-rotate 5332ms cubic-bezier(0.4, 0.0, 0.2, 1) infinite both, layer-4-fade-in-out 5332ms cubic-bezier(0.4, 0.0, 0.2, 1) infinite both;
+      }
+
+      @-webkit-keyframes fill-unfill-rotate {
+        12.5% { -webkit-transform: rotate(135deg);  } /* 0.5 * ARCSIZE */
+        25%   { -webkit-transform: rotate(270deg);  } /* 1   * ARCSIZE */
+        37.5% { -webkit-transform: rotate(405deg);  } /* 1.5 * ARCSIZE */
+        50%   { -webkit-transform: rotate(540deg);  } /* 2   * ARCSIZE */
+        62.5% { -webkit-transform: rotate(675deg);  } /* 2.5 * ARCSIZE */
+        75%   { -webkit-transform: rotate(810deg);  } /* 3   * ARCSIZE */
+        87.5% { -webkit-transform: rotate(945deg);  } /* 3.5 * ARCSIZE */
+        to    { -webkit-transform: rotate(1080deg); } /* 4   * ARCSIZE */
+      }
+
+      @keyframes fill-unfill-rotate {
+        12.5% { transform: rotate(135deg);  } /* 0.5 * ARCSIZE */
+        25%   { transform: rotate(270deg);  } /* 1   * ARCSIZE */
+        37.5% { transform: rotate(405deg);  } /* 1.5 * ARCSIZE */
+        50%   { transform: rotate(540deg);  } /* 2   * ARCSIZE */
+        62.5% { transform: rotate(675deg);  } /* 2.5 * ARCSIZE */
+        75%   { transform: rotate(810deg);  } /* 3   * ARCSIZE */
+        87.5% { transform: rotate(945deg);  } /* 3.5 * ARCSIZE */
+        to    { transform: rotate(1080deg); } /* 4   * ARCSIZE */
+      }
+
+      /**
+       * HACK: Even though the intention is to have the current .spinner-layer at
+       * `opacity: 1`, we set it to `opacity: 0.99` instead since this forces Chrome
+       * to do proper subpixel rendering for the elements being animated. This is
+       * especially visible in Chrome 39 on Ubuntu 14.04. See:
+       *
+       * - https://github.com/Polymer/paper-spinner/issues/9
+       * - https://code.google.com/p/chromium/issues/detail?id=436255
+       */
+      @-webkit-keyframes layer-1-fade-in-out {
+        from { opacity: 0.99; }
+        25% { opacity: 0.99; }
+        26% { opacity: 0; }
+        89% { opacity: 0; }
+        90% { opacity: 0.99; }
+        100% { opacity: 0.99; }
+      }
+
+      @keyframes layer-1-fade-in-out {
+        from { opacity: 0.99; }
+        25% { opacity: 0.99; }
+        26% { opacity: 0; }
+        89% { opacity: 0; }
+        90% { opacity: 0.99; }
+        100% { opacity: 0.99; }
+      }
+
+      @-webkit-keyframes layer-2-fade-in-out {
+        from { opacity: 0; }
+        15% { opacity: 0; }
+        25% { opacity: 0.99; }
+        50% { opacity: 0.99; }
+        51% { opacity: 0; }
+      }
+
+      @keyframes layer-2-fade-in-out {
+        from { opacity: 0; }
+        15% { opacity: 0; }
+        25% { opacity: 0.99; }
+        50% { opacity: 0.99; }
+        51% { opacity: 0; }
+      }
+
+      @-webkit-keyframes layer-3-fade-in-out {
+        from { opacity: 0; }
+        40% { opacity: 0; }
+        50% { opacity: 0.99; }
+        75% { opacity: 0.99; }
+        76% { opacity: 0; }
+      }
+
+      @keyframes layer-3-fade-in-out {
+        from { opacity: 0; }
+        40% { opacity: 0; }
+        50% { opacity: 0.99; }
+        75% { opacity: 0.99; }
+        76% { opacity: 0; }
+      }
+
+      @-webkit-keyframes layer-4-fade-in-out {
+        from { opacity: 0; }
+        65% { opacity: 0; }
+        75% { opacity: 0.99; }
+        90% { opacity: 0.99; }
+        100% { opacity: 0; }
+      }
+
+      @keyframes layer-4-fade-in-out {
+        from { opacity: 0; }
+        65% { opacity: 0; }
+        75% { opacity: 0.99; }
+        90% { opacity: 0.99; }
+        100% { opacity: 0; }
+      }
+
+      /**
+       * Patch the gap that appear between the two adjacent div.circle-clipper while the
+       * spinner is rotating (appears on Chrome 38, Safari 7.1, and IE 11).
+       *
+       * Update: the gap no longer appears on Chrome when .spinner-layer's opacity is 0.99,
+       * but still does on Safari and IE.
+       */
+      .gap-patch {
+        position: absolute;
+        box-sizing: border-box;
+        top: 0;
+        left: 45%;
+        width: 10%;
+        height: 100%;
+        overflow: hidden;
+        border-color: inherit;
+      }
+
+      .gap-patch .circle {
+        width: 1000%;
+        left: -450%;
+      }
+
+      .circle-clipper {
+        display: inline-block;
+        position: relative;
+        width: 50%;
+        height: 100%;
+        overflow: hidden;
+        border-color: inherit;
+      }
+
+      .circle-clipper .circle {
+        width: 200%;
+      }
+
+      .circle {
+        box-sizing: border-box;
+        height: 100%;
+        border-width: 3px; /* STROKEWIDTH */
+        border-style: solid;
+        border-color: inherit;
+        border-bottom-color: transparent !important;
+        border-radius: 50%;
+        -webkit-animation: none;
+        animation: none;
+
+        @apply(--layout-fit);
+      }
+
+      .circle-clipper.left .circle {
+        border-right-color: transparent !important;
+        -webkit-transform: rotate(129deg);
+        transform: rotate(129deg);
+      }
+
+      .circle-clipper.right .circle {
+        left: -100%;
+        border-left-color: transparent !important;
+        -webkit-transform: rotate(-129deg);
+        transform: rotate(-129deg);
+      }
+
+      .active .circle-clipper.left .circle {
+        /* duration: ARCTIME */
+        -webkit-animation: left-spin 1333ms cubic-bezier(0.4, 0.0, 0.2, 1) infinite both;
+        animation: left-spin 1333ms cubic-bezier(0.4, 0.0, 0.2, 1) infinite both;
+      }
+
+      .active .circle-clipper.right .circle {
+        /* duration: ARCTIME */
+        -webkit-animation: right-spin 1333ms cubic-bezier(0.4, 0.0, 0.2, 1) infinite both;
+        animation: right-spin 1333ms cubic-bezier(0.4, 0.0, 0.2, 1) infinite both;
+      }
+
+      @-webkit-keyframes left-spin {
+        from { -webkit-transform: rotate(130deg); }
+        50% { -webkit-transform: rotate(-5deg); }
+        to { -webkit-transform: rotate(130deg); }
+      }
+
+      @keyframes left-spin {
+        from { transform: rotate(130deg); }
+        50% { transform: rotate(-5deg); }
+        to { transform: rotate(130deg); }
+      }
+
+      @-webkit-keyframes right-spin {
+        from { -webkit-transform: rotate(-130deg); }
+        50% { -webkit-transform: rotate(5deg); }
+        to { -webkit-transform: rotate(-130deg); }
+      }
+
+      @keyframes right-spin {
+        from { transform: rotate(-130deg); }
+        50% { transform: rotate(5deg); }
+        to { transform: rotate(-130deg); }
+      }
+
+      #spinnerContainer.cooldown {
+        /* duration: SHRINK_TIME */
+        -webkit-animation: container-rotate 1568ms linear infinite, fade-out 400ms cubic-bezier(0.4, 0.0, 0.2, 1);
+        animation: container-rotate 1568ms linear infinite, fade-out 400ms cubic-bezier(0.4, 0.0, 0.2, 1);
+      }
+
+      @-webkit-keyframes fade-out {
+        from { opacity: 0.99; }
+        to { opacity: 0; }
+      }
+
+      @keyframes fade-out {
+        from { opacity: 0.99; }
+        to { opacity: 0; }
+      }
+    </style>
+  </template>
+</dom-module>
+<dom-module id="paper-spinner" assetpath="/bower_components/paper-spinner/">
+  <template>
+    <style include="paper-spinner-styles"></style>
+
+    <div id="spinnerContainer" class-name="[[__computeContainerClasses(active, __coolingDown)]]">
+      <div class="spinner-layer layer-1">
+        <div class="circle-clipper left">
+          <div class="circle"></div>
+        </div><div class="gap-patch">
+          <div class="circle"></div>
+        </div><div class="circle-clipper right">
+          <div class="circle"></div>
+        </div>
+      </div>
+
+      <div class="spinner-layer layer-2">
+        <div class="circle-clipper left">
+          <div class="circle"></div>
+        </div><div class="gap-patch">
+          <div class="circle"></div>
+        </div><div class="circle-clipper right">
+          <div class="circle"></div>
+        </div>
+      </div>
+
+      <div class="spinner-layer layer-3">
+        <div class="circle-clipper left">
+          <div class="circle"></div>
+        </div><div class="gap-patch">
+          <div class="circle"></div>
+        </div><div class="circle-clipper right">
+          <div class="circle"></div>
+        </div>
+      </div>
+
+      <div class="spinner-layer layer-4">
+        <div class="circle-clipper left">
+          <div class="circle"></div>
+        </div><div class="gap-patch">
+          <div class="circle"></div>
+        </div><div class="circle-clipper right">
+          <div class="circle"></div>
+        </div>
+      </div>
+    </div>
+  </template>
+
+  <script>
+    Polymer({
+      is: 'paper-spinner',
+
+      behaviors: [
+        Polymer.PaperSpinnerBehavior
+      ]
+    });
+  </script>
+</dom-module>
 <dom-module id="iron-a11y-announcer" assetpath="/bower_components/iron-a11y-announcer/">
   <style>
     :host {
@@ -21425,9 +21895,19 @@ mwcLayout = new PolymerLayout();
             if (Polymer.dom(e).localTarget.id != "selectable-icon") {
                 e.stopPropagation();
 
-                document.querySelector("#patent-view").item = this.item;
-                document.querySelector("#main-page").selected = 2;
-                document.querySelector("#patent-view paper-scroll-header-panel").fire("iron-resize");
+                FlowRouter.setQueryParams({
+                    "route": "patent",
+                    "patent": this.item._id
+                });
+
+                if (FlowRouter.getQueryParam("patent") && FlowRouter.getQueryParam("project")) {
+                    if (FlowRouter.getQueryParam("patent") == this.item._id && FlowRouter.getQueryParam("project") == this.item.project._id) {
+                        document.querySelector("#patent-view").item = this.item;
+
+                        document.querySelector("#main-page").selected = 2;
+                        document.querySelector("#patent-view paper-scroll-header-panel").fire("iron-resize");
+                    }
+                }
             }
         },
 
@@ -21541,48 +22021,43 @@ mwcLayout = new PolymerLayout();
                 <div class="title" id="toolbar-title">Patentability</div>
 
                 <paper-icon-button class="selection-visible" icon="delete" on-click="remove_patent"></paper-icon-button>
-                <paper-icon-button class="selection-visible" icon="social:share" on-click="share"></paper-icon-button>
                 <paper-icon-button class="selection-hidden" icon="search" on-click="searchbar"></paper-icon-button>
             </paper-toolbar>
 
-            <div class="blue-700" id="vis-patent-taxonomy" style="cursor: pointer; height: 256px"></div>
+            <div class="blue-700" id="vis-network" style="cursor: pointer; height: 256px"></div>
 
-            <iron-selector activate-event="click" attr-for-selected="item" multi="" selectable="inbox-item" selected-attribute="selected" selected-values="{{patent_selected}}">
+            <iron-selector activate-event="click" attr-for-selected="item" multi="" on-iron-deselect="patent_selection_changed" on-iron-select="patent_selection_changed" selectable="inbox-item" selected-attribute="selected" selected-values="{{patent_selected}}">
                 <div class="blue-700 center-justified horizontal layout">
                     <div class="blue-500 center horizontal layout li">
-                        <div class="cursor-d flex" style="font-size: 16px; line-height: 24px; padding: 16px;">[[item.keyword]] <span hidden="[[!item.cluster_keyword]]">/ <span>[[item.cluster_keyword]]</span></span>
-                        </div>
+                        <div class="cursor-d flex lowercase" style="font-size: 16px; line-height: 24px; padding: 16px;">[[return_title_text(item)]]</div>
 
-                        <paper-icon-button icon="sort" on-click="sort"></paper-icon-button>
-                        <paper-icon-button icon="close" onclick="document.querySelector('#remove-prompt').open();" style="margin-right: 8px;"></paper-icon-button>
+                        <paper-icon-button icon="close" onclick="document.querySelector('#remove-project-prompt').open();" style="margin-right: 8px;"></paper-icon-button>
                     </div>
                 </div>
 
-                <div class="center-justified horizontal layout">
-                    <div class="li">
-                        <paper-progress class="project-progress" data-id$="[[item._id]]" hidden="" style="width: 100%;"></paper-progress>
-                    </div>
-                </div>
-
-                <template as="patent" is="dom-repeat" items="[[item.patent]]">
+                <template as="patent" is="dom-repeat" items="[[item.patent]]" filter="filter_p_no">
                     <inbox-item item$="[[patent]]"></inbox-item>
                 </template>
-            </iron-selector>
 
-            <div style="min-height: 80px;"></div>
+                <div class="center-justified horizontal layout" style="height: 88px;">
+                    <div class="center-center vertical layout li">
+                        <paper-spinner active="" data-id$="[[item._id]]" hidden="" id="project-progress"></paper-spinner>
+                    </div>
+                </div>
+            </iron-selector>
         </paper-scroll-header-panel>
 
         <paper-fab class="menu-b" id="fab" icon="add" on-click="add_project"></paper-fab>
 
-        <paper-dialog id="remove-prompt" style="width: 320px;" with-backdrop="">
+        <paper-dialog id="remove-project-prompt" style="width: 320px;" with-backdrop="">
             <div style="font-size: 16px; line-height: 24px;">Are you sure to delete this project ?</div>
 
             <div class="buttons">
-                <paper-button onclick="document.querySelector('#remove-prompt').close();">
+                <paper-button onclick="document.querySelector('#remove-project-prompt').close();">
                     <iron-icon icon="close"></iron-icon>
                     cancel
                 </paper-button>
-                <paper-button on-click="remove_ok">
+                <paper-button on-click="remove_project_ok">
                     <iron-icon icon="check"></iron-icon>
                     ok
                 </paper-button>
@@ -21593,188 +22068,17 @@ mwcLayout = new PolymerLayout();
     <script>
     Polymer({
 
-        is: "inbox-view",
-
-        menu_toggle: function() {
-            document.querySelector("layout-inbox").menu_toggle();
-        },
-
-        properties: {
-            item: {
-                type: Object,
-                value: function() {
-                    return {};
-                }
-            },
-
-            patent_selected: {
-                type: Array,
-                value: function() {
-                    return [];
-                }
-            }
-        },
-
-        remove_ok: function(e) {
-            if (Meteor.status().connected) {
-                var _this = this;
-
-                Meteor.call("remove_project", _this.item._id, function(error, response) {
-                    if (error) {
-                        document.querySelector("#polymer-toast").toast(error.reason);
-                    } else {
-                        document.querySelector("#polymer-toast").toast(response);
-
-                        // home page
-                    }
-                });
-            } else {
-                document.querySelector("#polymer-toast").toast("server connection required");
-            }
-
-            this.$["remove-prompt"].close();
-        },
-
-        searchbar: function() {
-            FlowRouter.setQueryParams({
-                "route": "search"
-            });
-        },
-
-        sort: function(e) {
-            this.set("item.patent", _.sortBy(this.item.patent, "app_date"));
-
-            document.querySelector("#polymer-toast").toast("sorted by app_date");
-        },
-
-        subscribe_patent: function(project_id) {
-            var _this = this,
-                project = _project.findOne({
-                    _id: project_id
-                });
-
-            if (project) {
-                var patent_id = _.map(project.patent, function(value) {
-                    return (_patent.findOne({
-                        _id: value
-                    }) ? null : value);
-                }).filter(Boolean);
-
-                if (patent_id.length) {
-                    Meteor.subscribe("patent", patent_id, {
-                        onReady: function() {
-                            for (var A = 0; A < project.patent.length; A++) {
-                                var item = _patent.findOne({
-                                    _id: project.patent[A]
-                                });
-
-                                project.patent[A] = (item ? item : {
-                                    _id: project.patent[A]
-                                });
-
-                                project.patent[A].project = {
-                                    _id: project._id
-                                };
-                            }
-
-                            _this.item = project;
-
-                            _this.vis_patent_taxonomy();
-                        }
-                    });
-                } else {
-                    for (var A = 0; A < project.patent.length; A++) {
-                        var item = _patent.findOne({
-                            _id: project.patent[A]
-                        });
-
-                        project.patent[A] = (item ? item : {
-                            _id: project.patent[A]
-                        });
-
-                        project.patent[A].project = {
-                            _id: project._id
-                        };
-                    }
-
-                    _this.item = project;
-
-                    _this.vis_patent_taxonomy();
-                }
-
-                // observer
-            }
-        },
-
-        subscribe_project: function(project_id) {
-            var _this = this,
-                project = _project.findOne({
-                    _id: project_id
-                });
-
-            if (project) {
-                _this.subscribe_patent(project_id);
-            } else {
-                Meteor.subscribe("project", (project_id ? project_id : "#"), {
-                    onReady: function() {
-                        _this.subscribe_patent(project_id);
-                    }
-                });
-            }
-
-            // observer
-        },
-
-        vis_patent_taxonomy: function() {
-            var edges = [],
-                nodes = [],
-                taxonomyA = {},
-                taxonomyZ = {};
-
-            this.item.patent.forEach(function(A) {
-                if (_.has(A, "concept") && A.concept) {
-                    var B = A.concept.split(/;/).filter(Boolean);
-
-                    B.forEach(function(C) {
-                        _key(taxonomyA, [C, A.p_no]);
-                    });
-                }
-            });
-
-            Object.keys(taxonomyA).sort(function(keyA, keyZ) {
-                return (_.size(taxonomyA[keyZ]) - _.size(taxonomyA[keyZ]));
-            }).forEach(function(index) {
-                if (_.size(taxonomyZ) < 10 && 1 < _.size(taxonomyA[index])) {
-                    taxonomyZ[index] = taxonomyA[index];
-                }
-            });
-
-            _.each(taxonomyZ, function(valueA, keyA, list) {
-                var idA = Random.id();
-
-                nodes.push({
-                    color: {
-                        background: "#2196F3",
-                        border: "#FFFFFF",
-                        highlight: {
-                            background: "#64B5F6",
-                            border: "#FFFFFF"
-                        },
-                        hover: {
-                            background: "#64B5F6",
-                            border: "#FFFFFF"
-                        }
-                    },
-                    group: "taxonomy",
-                    id: idA,
-                    label: keyA,
-                    // size: _.size(valueA)
-                });
-
-                _.each(valueA, function(valueZ, keyZ, list) {
-                    var idZ = Random.id();
-
-                    nodes.push({
+        attached: function() {
+            var network = new vis.Network(document.querySelector("#vis-network"), {
+                edges: _edges,
+                nodes: _nodes
+            }, {
+                edges: {
+                    shadow: true,
+                    width: 2
+                },
+                groups: {
+                    patent: {
                         color: {
                             background: "#BBDEFB",
                             border: "#FFFFFF",
@@ -21787,32 +22091,21 @@ mwcLayout = new PolymerLayout();
                                 border: "#FFFFFF"
                             }
                         },
-                        group: "patent",
-                        id: idZ,
-                        label: keyZ,
-                        // size: valueZ
-                    });
-
-                    edges.push({
-                        from: idZ,
-                        to: idA
-                    })
-                });
-            });
-
-            network = new vis.Network(document.querySelector("#vis-patent-taxonomy"), {
-                nodes: new vis.DataSet(nodes),
-                edges: new vis.DataSet(edges)
-            }, {
-                edges: {
-                    shadow: true,
-                    width: 2
-                },
-                groups: {
-                    patent: {
                         shape: "diamond"
                     },
                     taxonomy: {
+                        color: {
+                            background: "#2196F3",
+                            border: "#FFFFFF",
+                            highlight: {
+                                background: "#64B5F6",
+                                border: "#FFFFFF"
+                            },
+                            hover: {
+                                background: "#64B5F6",
+                                border: "#FFFFFF"
+                            }
+                        },
                         shape: "dot"
                     }
                 },
@@ -21834,6 +22127,185 @@ mwcLayout = new PolymerLayout();
                     scale: .5
                 });
             });
+        },
+
+        clear_patent_selected: function() {
+            this.patent_selected = [];
+        },
+
+        filter_p_no: function(item) {
+            return (item.p_no);
+        },
+
+        is: "inbox-view",
+
+        listeners: {
+            "content-scroll": "_scroll"
+        },
+
+        menu_toggle: function() {
+            document.querySelector("layout-inbox").menu_toggle();
+        },
+
+        patent_selection_changed: function() {
+            this.$.fab.toggleClass("move-down", this.patent_selected.length);
+            this.$.toolbar.toggleClass("selection", this.patent_selected.length);
+            this.$["toolbar-title"].textContent = (this.patent_selected.length ? this.patent_selected.length : "Patentability");
+        },
+
+        properties: {
+            item: {
+                type: Object,
+                value: function() {
+                    return {};
+                }
+            },
+            patent_selected: {
+                type: Array,
+                value: function() {
+                    return [];
+                }
+            }
+        },
+
+        remove_patent: function() {
+            $("inbox-item.iron-selected").addClass("undo");
+
+            document.querySelector("#polymer-toast").undo = {
+                patent: _.map(this.patent_selected, function(item) {
+                    return item._id;
+                }),
+                project: this.item._id
+            };
+
+            document.querySelector("#polymer-toast").toast(this.patent_selected.length + " patent removed");
+
+            this.clear_patent_selected();
+        },
+
+        remove_project_ok: function() {
+            if (Meteor.status().connected) {
+                Meteor.call("remove_project", this.item._id, function(error, response) {
+                    if (error) {
+                        document.querySelector("#polymer-toast").toast(error.reason);
+                    } else {
+                        document.querySelector("#polymer-toast").toast(response);
+
+                        // home page
+                    }
+                });
+            } else {
+                document.querySelector("#polymer-toast").toast("server connection required");
+            }
+
+            this.$["remove-project-prompt"].close();
+        },
+
+        return_title_text: function(item) {
+            return (item.projectName ? item.projectName : ((item.keyword ? item.keyword : "#") + (item.cluster_keyword ? " / " + item.cluster_keyword : "")));
+        },
+
+        searchbar: function() {
+            FlowRouter.setQueryParams({
+                "route": "search"
+            });
+        },
+
+        _scroll: function(e, d) {
+            if (d.target.scrollHeight - (d.target.clientHeight * 1.5) < d.target.scrollTop) {
+                if (this.item.match && this.item.position && this.item.position < this.item.match) {
+                    this.$["project-progress"].hidden = false;
+
+                    Meteor.call("update_project", this.item._id, function(error, response) {
+                        if (error) {
+                            document.querySelector("#polymer-toast").toast(error.reason);
+                        }
+                    });
+                }
+            }
+        },
+
+        _vis_network: function() {
+            this.debounce("_vis_network", function() {
+                if (this.item.patent) {
+                    listA = {};
+                    listZ = {};
+
+                    this.item.patent.forEach(function(A) {
+                        if (A.concept) {
+                            var B = A.concept.split(/;/).filter(Boolean);
+
+                            B.forEach(function(C) {
+                                _key(listA, [C, A.p_no]);
+                            });
+                        }
+
+                        A.project.tag.forEach(function(tag) {
+                            _key(listA, [tag, A.p_no]);
+                        });
+                    });
+
+                    Object.keys(listA).sort(function(keyA, keyZ) {
+                        return (_.size(listA[keyZ]) - _.size(listA[keyA]));
+                    }).forEach(function(index) {
+                        if (_.size(listZ) < 10 && 1 < _.size(listA[index])) {
+                            listZ[index] = listA[index];
+                        }
+                    });
+
+                    var edges = _.map(_edges.get(), function(item) {
+                            return item.id;
+                        }),
+                        nodes = _.map(_nodes.get(), function(item) {
+                            return item.id;
+                        });
+
+                    _.each(listZ, function(valueA, keyA, list) {
+                        var A = nodes.indexOf(keyA);
+
+                        if (-1 < A) {
+                            nodes.splice(A, 1);
+                        } else {
+                            _nodes.update({
+                                group: "taxonomy",
+                                id: keyA,
+                                label: keyA,
+                                // size: _.size(valueA)
+                            });
+                        }
+
+                        _.each(valueA, function(valueZ, keyZ, list) {
+                            var Z = nodes.indexOf(keyZ);
+
+                            if (-1 < Z) {
+                                nodes.splice(Z, 1);
+                            } else {
+                                _nodes.update({
+                                    group: "patent",
+                                    id: keyZ,
+                                    label: keyZ,
+                                    // size: _.size(valueA)
+                                });
+                            }
+
+                            var index = edges.indexOf(keyZ + " | " + keyA);
+
+                            if (-1 < index) {
+                                edges.splice(index, 1);
+                            } else {
+                                _edges.update({
+                                    from: keyZ,
+                                    id: keyZ + " | " + keyA,
+                                    to: keyA
+                                });
+                            }
+                        });
+                    });
+
+                    _edges.remove(edges);
+                    _nodes.remove(nodes);
+                }
+            }, 400);
         }
 
     });
@@ -21882,8 +22354,8 @@ mwcLayout = new PolymerLayout();
                             <template is="dom-repeat" items="[[project]]">
                                 <div class="cursor-p horizontal hover justified layout relative" data-id$="[[item._id]]" style="border-bottom: 1px solid #EEE;">
                                     <div class="flex horizontal justified layout" style="padding: 12px 16px;">
-                                        <div class="etc flex self-center" style="font-size: 16px; line-height: 24px;">[[return_menu_text(item)]]</div>
-                                        <div class="self-start" style="color: #757575; font-size: 14px; line-height: 20px; padding-left: 8px;">[[return_text(item.patent.length)]]</div>
+                                        <div class="etc flex lowercase self-center" style="font-size: 16px; line-height: 24px;">[[return_menu_text(item)]]</div>
+                                        <div class="self-start" style="color: #757575; font-size: 14px; line-height: 20px; padding-left: 8px;">[[return_patent_count(item.patent)]]</div>
                                     </div>
 
                                     <paper-ripple></paper-ripple>
@@ -21940,149 +22412,143 @@ mwcLayout = new PolymerLayout();
                 _this.user = (Meteor.user() ? Meteor.user() : {});
             });
 
-            Tracker.autorun(function() {
-                _this.project = _project.find().fetch();
-            });
+            Meteor.setTimeout(function() {
+                _project.find().observe({
+                    added: function(row) {
+                        for (var A = 0; A < row.patent.length; A++) {
+                            var item = _patent.findOne({
+                                _id: row.patent[A]
+                            });
 
-            //     Meteor.setTimeout(function() {
-            //         if (6 < moment.duration(moment().diff(moment(_this.trend.time))).asHours() || !_this.trend.keyword.length) {
-            //             Meteor.call("trend", function(error, response) {
-            //                 if (error) {
-            //                     document.querySelector("#polymer-toast").toast(error.reason);
-            //                 } else {
-            //                     if (response.length) {
-            //                         _this.trend = {
-            //                             keyword: response,
-            //                             time: moment().format()
-            //                         };
-            //                     }
-            //                 }
-            //             });
-            //         }
-            //     }, 1000);
+                            row.patent[A] = (item ? item : {
+                                _id: row.patent[A]
+                            });
 
-            //     Meteor.setTimeout(function() {
-            //         _project.find().observe({
-            //             added: function(row) {
-            //                 for (var A = 0; A < row.torrent.length; A++) {
-            //                     var item = _torrent.findOne({
-            //                         _id: row.torrent[A]
-            //                     });
+                            row.patent[A].project = {
+                                _id: row._id,
+                                tag: (row.tag ? (row.tag[row.patent[A]._id] ? row.tag[row.patent[A]._id] : []) : [])
+                            };
+                        }
 
-            //                     row.torrent[A] = (item ? item : {
-            //                         _id: row.torrent[A]
-            //                     });
+                        var patent = _.map(row.patent, function(item) {
+                            return (_patent.findOne({
+                                _id: item._id
+                            }) ? null : item._id);
+                        }).filter(Boolean);
 
-            //                     row.torrent[A].project = {
-            //                         _id: row._id
-            //                     };
-            //                 }
+                        if (patent.length) {
+                            Meteor.subscribe("patent", {
+                                patent: patent,
+                                project: row._id
+                            });
+                        }
 
-            //                 var index = _.map(_this.project, function(A) {
-            //                     return A._id;
-            //                 }).indexOf(row._id);
+                        var index = _.map(_this.project, function(A) {
+                            return A._id;
+                        }).indexOf(row._id);
 
-            //                 if (index == -1) {
-            //                     _this.project.unshift(row);
-            //                 } else {
-            //                     // _this.project[index] = row;
-            //                     // _this.project[index] = _.clone(_this.project[index]);
-            //                 }
+                        if (index == -1) {
+                            _this.unshift("project", row);
 
-            //                 _this.project = _.clone(_this.project);
-            //             },
+                            _this._project();
+                        } else {
+                            _this.splice("project", index, 1, row);
+                        }
+                    },
 
-            //             changed: function(row, old) {
-            //                 for (var A = 0; A < row.torrent.length; A++) {
-            //                     var item = _torrent.findOne({
-            //                         _id: row.torrent[A]
-            //                     });
+                    changed: function(row, old_row) {
+                        for (var A = 0; A < row.patent.length; A++) {
+                            var item = _patent.findOne({
+                                _id: row.patent[A]
+                            });
 
-            //                     row.torrent[A] = (item ? item : {
-            //                         _id: row.torrent[A]
-            //                     });
+                            row.patent[A] = (item ? item : {
+                                _id: row.patent[A]
+                            });
 
-            //                     row.torrent[A].project = {
-            //                         _id: row._id
-            //                     };
-            //                 }
+                            row.patent[A].project = {
+                                _id: row._id,
+                                tag: (row.tag ? (row.tag[row.patent[A]._id] ? row.tag[row.patent[A]._id] : []) : [])
+                            };
+                        }
 
-            //                 var index = _.map(_this.project, function(A) {
-            //                     return A._id;
-            //                 }).indexOf(row._id);
+                        var patent = _.map(row.patent, function(item) {
+                            return (_patent.findOne({
+                                _id: item._id
+                            }) ? null : item._id);
+                        }).filter(Boolean);
 
-            //                 if (-1 < index) {
-            //                     _this.project[index] = row;
-            //                     _this.project = _.clone(_this.project);
-            //                 }
-            //             },
+                        if (patent.length) {
+                            Meteor.subscribe("patent", {
+                                patent: patent,
+                                project: row._id
+                            });
+                        }
 
-            //             removed: function(old) {
-            //                 var index = _.map(_this.project, function(A) {
-            //                     return A._id;
-            //                 }).indexOf(old._id);
+                        var index = _.map(_this.project, function(A) {
+                            return A._id;
+                        }).indexOf(row._id);
 
-            //                 if (-1 < index) {
-            //                     _this.project.splice(index, 1);
-            //                     _this.project = _.clone(_this.project);
-            //                 }
-            //             }
-            //         });
-            //     }, 1000);
+                        if (-1 < index) {
+                            _this.splice("project", index, 1, row);
+                        }
+                    },
 
-            //     Meteor.setTimeout(function() {
-            //         _torrent.find().observe({
-            //             added: function(row) {
-            //                 for (var A = 0; A < _this.project.length; A++) {
-            //                     var index = _.map(_this.project[A].torrent, function(item) {
-            //                         return item._id;
-            //                     }).indexOf(row._id);
+                    removed: function(old_row) {
+                        var index = _.map(_this.project, function(A) {
+                            return A._id;
+                        }).indexOf(old_row._id);
 
-            //                     if (-1 < index) {
-            //                         _this.project[A].torrent[index] = _.clone($.extend(true, _this.project[A].torrent[index], row));
-            //                         _this.project[A].torrent = _.clone(_this.project[A].torrent);
-            //                         _this.project[A] = _.clone(_this.project[A]);
-            //                         _this.project = _.clone(_this.project);
-            //                     }
-            //                 }
-            //             },
+                        if (-1 < index) {
+                            _this.splice("project", index, 1);
+                        }
+                    }
+                });
+            }, 400);
 
-            //             changed: function(row, old) {
-            //                 for (var A = 0; A < _this.project.length; A++) {
-            //                     var index = _.map(_this.project[A].torrent, function(item) {
-            //                         return item._id;
-            //                     }).indexOf(row._id);
+            Meteor.setTimeout(function() {
+                _patent.find().observe({
+                    added: function(row) {
+                        for (var A = 0; A < _this.project.length; A++) {
+                            var index = _.map(_this.project[A].patent, function(item) {
+                                return item._id;
+                            }).indexOf(row._id);
 
-            //                     if (-1 < index) {
-            //                         _this.project[A].torrent[index] = _.clone($.extend(true, _this.project[A].torrent[index], row));
-            //                         _this.project[A].torrent = _.clone(_this.project[A].torrent);
-            //                         _this.project[A] = _.clone(_this.project[A]);
-            //                         _this.project = _.clone(_this.project);
-            //                     }
-            //                 }
-            //             },
+                            if (-1 < index) {
+                                _this.set("project." + A + ".patent." + index, $.extend(true, _this.project[A].patent[index], row));
 
-            //             removed: function(old) {
-            //                 for (var A = 0; A < _this.project.length; A++) {
-            //                     var index = _.map(_this.project[A].torrent, function(item) {
-            //                         return item._id;
-            //                     }).indexOf(old._id);
+                                _this._patent();
+                            }
+                        }
+                    },
 
-            //                     if (-1 < index) {
-            //                         _this.project[A].torrent.splice(index, 1);
-            //                         _this.project[A].torrent = _.clone(_this.project[A].torrent);
-            //                         _this.project[A] = _.clone(_this.project[A]);
-            //                         _this.project = _.clone(_this.project);
-            //                     }
-            //                 }
-            //             }
-            //         });
-            //     }, 1000 * 4);
+                    changed: function(row, old_row) {
+                        for (var A = 0; A < _this.project.length; A++) {
+                            var index = _.map(_this.project[A].patent, function(item) {
+                                return item._id;
+                            }).indexOf(row._id);
+
+                            if (-1 < index) {
+                                _this.set("project." + A + ".patent." + index, $.extend(true, _this.project[A].patent[index], row));
+                            }
+                        }
+                    },
+
+                    removed: function(old_row) {
+                        for (var A = 0; A < _this.project.length; A++) {
+                            var index = _.map(_this.project[A].patent, function(item) {
+                                return item._id;
+                            }).indexOf(old_row._id);
+
+                            if (-1 < index) {
+                                _this.splice("project." + A + ".patent", index, 1);
+                            }
+                        }
+                    }
+                });
+            }, 400);
+
         },
-
-        // clear_torrent_selection: function() {
-        //     this.torrent_selected = [];
-        // },
 
         // initialize_trend: function() {
         //     this.trend = {
@@ -22102,7 +22568,7 @@ mwcLayout = new PolymerLayout();
 
             FlowRouter.setQueryParams({
                 "route": "project",
-                "project_id": d.item.dataset.id
+                "project": d.item.dataset.id
             });
         },
 
@@ -22114,33 +22580,19 @@ mwcLayout = new PolymerLayout();
             }
         },
 
-        // observers: [
-        //     // "project_change(project.splices)",
-        //     "torrent_selected_change(torrent_selected.splices)"
-        // ],
-
-        // project_change: function(change) {
-        //     this.debounce("project_change", function() {
-        //         if (this.menu_selected != "trend") {
-        //             this.$.main_page.selected = (this.project.length ? 1 : 0);
-        //         }
-        //     }, 1000 * 4);
-        // },
-
-        // project_selected: function(menu_opt, project_opt) {
-        //     return (menu_opt == "" ? true : menu_opt == project_opt);
-        // },
+        observers: [
+            "_inbox_view(project.*, project_index)"
+        ],
 
         properties: {
-            menu_selected: {
-                type: String,
-                value: ""
-            },
             project: {
                 type: Array,
                 value: function() {
                     return [];
                 }
+            },
+            project_index: {
+                type: Number
             },
             user: {
                 type: Object,
@@ -22187,47 +22639,6 @@ mwcLayout = new PolymerLayout();
         //     }
         // },
 
-        // remove_ok: function(e) {
-        //     if (Meteor.status().connected) {
-        //         var _this = this;
-
-        //         Meteor.call("remove_project", _this.$.remove_prompt.dataset.id, function(error, response) {
-        //             if (error) {
-        //                 document.querySelector("#polymer-toast").toast(error.reason);
-        //             } else {
-        //                 document.querySelector("#polymer-toast").toast(response);
-
-        //                 _this.$.main_toolbar.className = _this.$.main_toolbar.className.replace(/ ?[a-z\-]+\-500/g, "");
-
-        //                 _this.menu_selected = "";
-        //             }
-        //         });
-        //     } else {
-        //         document.querySelector("#polymer-toast").toast("server connection required");
-        //     }
-
-        //     this.$.remove_prompt.close();
-        // },
-
-        // remove_project: function(e) {
-        //     this.$.remove_prompt.dataset.id = Polymer.dom(e).localTarget.dataset.id;
-        //     this.$.remove_prompt.open();
-        // },
-
-        // remove_torrent: function() {
-        //     $("inbox-item.iron-selected").addClass("undo");
-
-        //     document.querySelector("#polymer-toast").undo = {
-        //         torrent: _.map(this.torrent_selected, function(A) {
-        //             return A._id;
-        //         })
-        //     };
-
-        //     document.querySelector("#polymer-toast").toast(this.torrent_selected.length + " torrent removed");
-
-        //     this.clear_torrent_selection();
-        // },
-
         // return_class: function(text) {
         //     return polymer_color(text ? text : "#");
         // },
@@ -22244,6 +22655,14 @@ mwcLayout = new PolymerLayout();
             return (item.projectName ? item.projectName : ((item.keyword ? item.keyword : "#") + (item.cluster_keyword ? " / " + item.cluster_keyword : "")));
         },
 
+        return_patent_count: function(patent) {
+            var A = _.countBy(patent, function(item) {
+                return (item.p_no ? "yes" : "no");
+            });
+
+            return ((A.yes && A.no) ? A.yes + " / " : "") + (patent.length ? patent.length : "#");
+        },
+
         return_text: function(text) {
             return (text ? text : "#");
         },
@@ -22255,45 +22674,6 @@ mwcLayout = new PolymerLayout();
         return_time_s: function(time) {
             return (moment(time).isValid() ? moment(time).format("MMM DD ddd hh:mm A") : "#");
         },
-
-        // return_torrent_count: function(torrent) {
-        //     var A = _.countBy(torrent, function(item) {
-        //         return item.url ? "YES" : "NO";
-        //     });
-
-        //     return (A.YES && A.NO ? A.YES + " / " : "") + (torrent.length ? torrent.length : "#");
-        // },
-
-        // return_torrent_description: function(item) {
-        //     return (item.size ? item.size : "#") + " | " + (item.leech ? item.leech + "L" : "#") + " / " + (item.seed ? item.seed + "S" : "#");
-        // },
-
-        // schedule: function(e) {
-        //     this.$.schedule_prompt.dataset.id = Polymer.dom(e).localTarget.dataset.id;
-        //     this.$.schedule_prompt.open();
-        // },
-
-        // schedule_ok: function(e) {
-        //     if (Meteor.status().connected) {
-        //         var _this = this;
-
-        //         Meteor.call("schedule_project", _this.$.schedule_prompt.dataset.id, function(error, response) {
-        //             if (error) {
-        //                 document.querySelector("#polymer-toast").toast(error.reason);
-        //             } else {
-        //                 document.querySelector("#polymer-toast").toast(response);
-
-        //                 _this.$.main_toolbar.className = _this.$.main_toolbar.className.replace(/ ?[a-z\-]+\-500/g, "");
-
-        //                 _this.menu_selected = "";
-        //             }
-        //         });
-        //     } else {
-        //         document.querySelector("#polymer-toast").toast("server connection required");
-        //     }
-
-        //     this.$.schedule_prompt.close();
-        // },
 
         // share: function() {
         //     var body = "";
@@ -22331,67 +22711,63 @@ mwcLayout = new PolymerLayout();
             }
         },
 
-        // sort: function(e) {
-        //     var A = Polymer.dom(e).localTarget.dataset.index;
-
-        //     this.project[A].torrent = _.sortBy(this.project[A].torrent, "time").reverse();
-        //     this.project[A] = _.clone(this.project[A]);
-        //     this.project = _.clone(this.project);
-
-        //     document.querySelector("#polymer-toast").toast("sorted by time");
-        // },
-
-        // torrent_selected_change: function(change) {
-        //     this.$.main_toolbar_title.textContent = (this.torrent_selected.length ? this.torrent_selected.length : "Patentability");
-
-        //     this.$.main_toolbar.toggleClass("grey-500", this.torrent_selected.length);
-        //     this.$.main_toolbar.toggleClass("selection", this.torrent_selected.length);
-
-        //     this.$.fab.toggleClass("move-down", this.torrent_selected.length);
-        // },
-
-        // trend_opt: function(e) {
-        //     if (Meteor.status().connected) {
-        //         var keyword = Polymer.dom(e).localTarget.textContent.trim();
-
-        //         if (keyword.length) {
-        //             var _this = this,
-        //                 row = {
-        //                     keyword: keyword,
-        //                     leech: 1,
-        //                     seed: 1,
-        //                     url: "search",
-        //                     within: 6,
-        //                     worker: "search"
-        //                 };
-
-        //             Meteor.call("insert_project", row, function(error, response) {
-        //                 if (error) {
-        //                     document.querySelector("#polymer-toast").toast((error.reason == "userNotFound") ? "internet/user required" : error.reason);
-        //                 } else {
-        //                     if (response == "") {
-        //                         document.querySelector("#polymer-toast").toast("unknown issue");
-        //                     } else {
-        //                         document.querySelector("#polymer-toast").toast("i keyword added");
-
-        //                         _this.$.main_toolbar.className = _this.$.main_toolbar.className.replace(/ ?[a-z\-]+\-500/g, "") + " " + polymer_color(keyword);
-
-        //                         _this.menu_selected = response;
-        //                     }
-        //                 }
-        //             });
-
-        //             _this.$.main_page.selected = 1;
-        //         } else {
-        //             document.querySelector("#polymer-toast").toast("empty keyword");
-        //         }
-        //     } else {
-        //         document.querySelector("#polymer-toast").toast("server connection required");
-        //     }
-        // },
-
         user_prompt: function() {
             this.$["user-prompt"].open();
+        },
+
+        _inbox_view: function(change, index) {
+            this.debounce("_inbox_view", function() {
+                this.$["inbox-view"].item = (change.base[index] ? change.base[index] : {});
+                this.$["inbox-view"]._vis_network();
+            }, 400);
+        },
+
+        _patent: function() {
+            this.debounce("_patent", function() {
+                if (FlowRouter.getQueryParam("patent") && FlowRouter.getQueryParam("project")) {
+                    var project_index = _.map(this.project, function(item) {
+                        return item._id;
+                    }).indexOf(FlowRouter.getQueryParam("project"));
+
+                    if (-1 < project_index) {
+                        this.project_index = project_index;
+
+                        var patent_index = _.map(this.project[project_index].patent, function(item) {
+                            return item._id;
+                        }).indexOf(FlowRouter.getQueryParam("patent"));
+
+                        if (-1 < patent_index) {
+                            document.querySelector("#patent-view").item = this.project[project_index].patent[patent_index];
+                        } else {
+                            document.querySelector("#polymer-toast").toast("patent notFound");
+                        }
+                    } else {
+                        document.querySelector("#polymer-toast").toast("project notFound");
+                    }
+
+                    document.querySelector("#main-page").selected = 2;
+                    document.querySelector("#patent-view paper-scroll-header-panel").fire("iron-resize");
+                }
+            }, 400);
+        },
+
+        _project: function() {
+            this.debounce("_project", function() {
+                if (FlowRouter.getQueryParam("project")) {
+                    var project_index = _.map(this.project, function(item) {
+                        return item._id;
+                    }).indexOf(FlowRouter.getQueryParam("project"));
+
+                    if (-1 < project_index) {
+                        this.project_index = project_index;
+                    } else {
+                        document.querySelector("#polymer-toast").toast("project notFound");
+                    }
+
+                    document.querySelector("#main-page").selected = 1;
+                    document.querySelector("#inbox-view paper-scroll-header-panel").fire("iron-resize");
+                }
+            }, 400);
         }
 
     });
@@ -22500,6 +22876,15 @@ mwcLayout = new PolymerLayout();
 <dom-module id="patent-view" assetpath="/linto/">
 
     <style>
+    input {
+        background: transparent;
+        border: none;
+    }
+    
+    paper-badge {
+        --paper-badge-background: var(--paper-grey-500);
+    }
+    
     paper-menu-button {
         padding: 0;
     }
@@ -22527,22 +22912,26 @@ mwcLayout = new PolymerLayout();
 
                 <paper-icon-button data-id$="[[item._id]]" icon="delete" on-click="remove_patent"></paper-icon-button>
                 <paper-icon-button data-id$="[[item._id]]" icon="social:share" on-click="share"></paper-icon-button>
-
-                <paper-menu-button horizontal-align="right">
-                    <paper-icon-button class="dropdown-trigger" icon="more-vert"></paper-icon-button>
-
-                    <paper-menu class="dropdown-content" style="min-width: 200px;">
-                        <paper-item class="cursor-p">Manage Taxonomy</paper-item>
-                    </paper-menu>
-                </paper-menu-button>
             </paper-toolbar>
 
             <div class="blue-700">
                 <div class="center-justified horizontal layout">
                     <div class="horizontal layout li wrap" style="padding: 4px 12px;">
-                        <template as="concept" is="dom-repeat" items="[[return_concept_array(item.concept)]]">
-                            <div class="cursor-p lowercase" on-click="concept_opt" style="background: rgba(255, 255, 255, .95); border-radius: 24px; color: #1976D2; margin: 4px 8px 4px 0; padding: 4px 12px;">[[concept]]</div>
+                        <template as="concept" is="dom-repeat" items="[[return_concept(item.concept)]]">
+                            <div class="cursor-p lowercase" style="background: rgba(255, 255, 255, .95); border-radius: 24px; color: #1976D2; font-size: 16px; line-height: 24px; margin: 4px 8px 4px 0; padding: 4px 12px;">[[concept]]</div>
                         </template>
+
+                        <template as="tag" is="dom-repeat" items="[[item.project.tag]]">
+                            <div class="cursor-p lowercase" style="background: rgba(255, 255, 255, .95); border-radius: 24px; color: #1976D2; font-size: 16px; line-height: 24px; margin: 4px 8px 4px 0; padding: 4px 12px;"><span>[[tag]]</span>
+                                <iron-icon data-index$="[[index]]" icon="cancel" on-click="remove_tag" style="margin-left: 8px;"></iron-icon>
+                            </div>
+                        </template>
+
+                        <div class="cursor-p lowercase user-tag" style="background: rgba(255, 255, 255, .95); border-radius: 24px; color: #1976D2; font-size: 16px; line-height: 24px; margin: 4px 8px 4px 0; padding: 4px 12px;">
+                            <input bind-value="{{tag_input}}" class="editer" hidden="" is="iron-input" placeholder="private tag" style="color: #1976D2; font-size: 16px;">
+                            <iron-icon class="editer" hidden="" icon="check-circle" on-click="insert_tag" style="margin-left: 8px;"></iron-icon>
+                            <iron-icon class="controller" icon="add-circle" on-click="editer_open"></iron-icon>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -22599,15 +22988,45 @@ mwcLayout = new PolymerLayout();
     Polymer({
 
         back: function() {
-            document.querySelector("#main-page").selected = 1;
-            document.querySelector("#inbox-view paper-scroll-header-panel").fire("iron-resize");
+            window.history.back();
+        },
+
+        editer_open: function() {
+            $(".user-tag .controller").attr("hidden", true);
+            $(".user-tag .editer").attr("hidden", false);
+
+            this.async(function() {
+                $(".user-tag input.editer").focus();
+            }, 400);
         },
 
         is: "patent-view",
 
         properties: {
+            tag_input: {
+                type: String,
+                value: ""
+            },
             item: {
                 type: Object
+            }
+        },
+
+        remove_tag: function(e) {
+            if (Meteor.status().connected) {
+                this.splice("item.project.tag", Polymer.dom(e).localTarget.dataset.index, 1);
+
+                Meteor.call("remove_tag", {
+                    patent: this.item._id,
+                    project: this.item.project._id,
+                    tag_index: Polymer.dom(e).localTarget.dataset.index
+                }, function(error, response) {
+                    if (!error) {
+                        document.querySelector("#inbox-view")._vis_network();
+                    }
+                });
+            } else {
+                document.querySelector("#polymer-toast").toast("server connection required");
             }
         },
 
@@ -22619,8 +23038,34 @@ mwcLayout = new PolymerLayout();
             return (text ? text.replace(/;/g, ", ") : "#");
         },
 
-        return_concept_array: function(text) {
-            return (text ? text.split(/;/) : "#");
+        return_concept: function(text) {
+            return (text ? text.split(/;/).filter(Boolean) : "#");
+        },
+
+        insert_tag: function() {
+            $(".user-tag .editer").attr("hidden", true);
+            $(".user-tag .controller").attr("hidden", false);
+
+            if (Meteor.status().connected) {
+                this.tag_input = this.tag_input.trim();
+
+                if (this.tag_input) {
+                    this.push("item.project.tag", this.tag_input);
+
+                    Meteor.call("insert_tag", {
+                        patent: this.item._id,
+                        project: this.item.project._id,
+                        tag_input: this.tag_input
+                    }, function(error, response) {
+                        if (!error) {
+                            document.querySelector("#inbox-view")._vis_network();
+                        }
+                    });
+                }
+
+            } else {
+                document.querySelector("#polymer-toast").toast("server connection required");
+            }
         }
 
     });
@@ -22631,7 +23076,7 @@ mwcLayout = new PolymerLayout();
 
     <template>
         <paper-toast class="cursor-d horizontal justified layout" duration="4000" id="toast" on-transitionend="transition" style="font-size: 16px; margin-right: 12px; padding: 16px; z-index: 1000;" text="">
-            <div class="cursor-p self-start" hidden="[[!undo.torrent]]" on-click="clear_undo" style="color: #FFEB3B; margin-left: 8px;">UNDO</div>
+            <div class="cursor-p self-start" hidden$="[[!undo.patent]]" on-click="clear_undo" style="color: #FFEB3B; margin-left: 8px;">UNDO</div>
         </paper-toast>
     </template>
 
@@ -22687,20 +23132,20 @@ mwcLayout = new PolymerLayout();
                 if (this.$.toast.opened) {
                     document.querySelector(".menu-b").translate3d(0, "-" + ($("#toast #label").height() + 48) + "px", 0);
                 } else {
-                    if (this.undo.torrent) {
+                    if (this.undo.patent) {
                         if (Meteor.status().connected) {
-                            Meteor.call("remove_torrent", this.undo, function(error) {
+                            Meteor.call("remove_patent", this.undo, function(error) {
                                 if (error) {
                                     console.log(error);
                                 } else {
-                                    $("inbox-item.undo").removeClass("undo");
+                                    $("inbox-item.undo").remove();
                                 }
                             });
                         } else {
                             document.querySelector("#polymer-toast").toast("server connection required");
                         }
 
-                        this.undo = {};
+                        this.set("undo", {});
                     }
 
                     document.querySelector(".menu-b").translate3d(0, 0, 0);
@@ -22723,6 +23168,13 @@ mwcLayout = new PolymerLayout();
         display: block;
     }
     
+    input {
+        background: transparent;
+        border: none;
+        font-size: 18px;
+        padding: 0 12px;
+    }
+    
     paper-badge {
         --paper-badge-background: var(--paper-grey-500);
     }
@@ -22740,29 +23192,20 @@ mwcLayout = new PolymerLayout();
     paper-toolbar paper-icon-button {
         margin: 0!important;
     }
-    
-    input {
-        background: transparent;
-        border: none;
-        font-size: 18px;
-        padding: 0 12px;
-    }
     </style>
 
     <template>
-        <paper-scroll-header-panel fixed="" class="fit" style="background: rgba(238, 238, 238, .95); z-index: 10;">
+        <paper-scroll-header-panel class="fit" style="background: rgba(238, 238, 238, .95); z-index: 10;">
             <paper-toolbar>
                 <paper-icon-button icon="arrow-back" on-click="back"></paper-icon-button>
 
-                <input autofocus="" class="flex" is="iron-input" placeholder="search" bind-value="{{search_input}}">
+                <input autofocus="" bind-value="{{search_input}}" class="flex" is="iron-input" placeholder="search">
 
-                <paper-badge for="save" hidden="[[!return_boolean(patent_selected.length)]]" label="[[return_text(patent_selected.length)]]"></paper-badge>
+                <paper-badge for="save" hidden="[[!return_boolean(patent_selected.length)]]" label="[[return_text(patent_selected.length)]]" style="top: 8px!important;"></paper-badge>
                 <paper-icon-button hidden="[[!return_boolean(patent_selected.length)]]" icon="save" id="save" on-click="save"></paper-icon-button>
 
                 <paper-icon-button hidden="[[return_boolean(patent_selected.length)]]" icon="filter-list" id="filter" on-click="filter"></paper-icon-button>
             </paper-toolbar>
-
-            <paper-progress hidden="" id="search-progress" indeterminate="" style="left: 0; position: fixed; width: 100%; z-index: 1;"></paper-progress>
 
             <div class="center-justified horizontal layout" hidden="[[!return_boolean(cluster.length)]]">
                 <div class="horizontal layout li">
@@ -22800,7 +23243,11 @@ mwcLayout = new PolymerLayout();
                 </template>
             </iron-selector>
 
-            <div style="min-height: 80px;"></div>
+            <div class="center-justified horizontal layout" style="height: 88px;">
+                <div class="center-center vertical layout li">
+                    <paper-spinner active="" hidden="" id="search-progress"></paper-spinner>
+                </div>
+            </div>
         </paper-scroll-header-panel>
 
         <paper-dialog id="filter-prompt" style="width: 320px;" with-backdrop="">
@@ -22846,12 +23293,16 @@ mwcLayout = new PolymerLayout();
                     } else {
                         document.querySelector("#polymer-toast").toast("i cluster added / updated");
 
-                        FlowRouter.setQueryParams({
-                            "route": "project",
-                            "project_id": response._id
-                        });
+                        Meteor.subscribe("project", response, {
+                            onReady: function() {
+                                FlowRouter.setQueryParams({
+                                    "route": "project",
+                                    "project": response
+                                });
 
-                        _this.active = false;
+                                _this.active = false;
+                            }
+                        });
                     }
                 });
             } else {
@@ -22860,9 +23311,7 @@ mwcLayout = new PolymerLayout();
         },
 
         back: function() {
-            FlowRouter.setQueryParams({
-                "route": null
-            });
+            window.history.back();
         },
 
         filter: function() {
@@ -22924,11 +23373,13 @@ mwcLayout = new PolymerLayout();
             search_input: {
                 type: String,
                 value: function() {
+                    var search_input = (FlowRouter.getQueryParam("search_input") ? FlowRouter.getQueryParam("search_input") : "");
+
                     this.async(function() {
-                        this.search_input = (FlowRouter.getQueryParam("search_input") ? FlowRouter.getQueryParam("search_input") : "");
+                        this.search_input = search_input;
                     }, 400);
 
-                    return "";
+                    // return "";
                 }
             },
             search_type: {
@@ -22967,16 +23418,22 @@ mwcLayout = new PolymerLayout();
                     patent: _.map(_this.patent_selected, function(value) {
                         return value._id
                     }),
-                    projectName: _this.projectName
+                    projectName: (_this.projectName ? _this.projectName : Random.id(4))
                 }, function(error, response) {
                     if (error) {
                         document.querySelector("#polymer-toast").toast(error.reason);
                     } else {
                         document.querySelector("#polymer-toast").toast("i project added / updated");
 
-                        FlowRouter.setQueryParams({
-                            "route": "project",
-                            "project_id": response
+                        Meteor.subscribe("project", response, {
+                            onReady: function() {
+                                FlowRouter.setQueryParams({
+                                    "route": "project",
+                                    "project": response
+                                });
+
+                                _this.active = false;
+                            }
                         });
                     }
                 });
@@ -23014,7 +23471,7 @@ mwcLayout = new PolymerLayout();
                 } else {
                     this.$["search-progress"].hidden = true;
                 }
-            }, 1000 * 4);
+            }, 400 * 4);
         },
 
         search_cluster: function() {
@@ -23040,7 +23497,7 @@ mwcLayout = new PolymerLayout();
                 } else {
                     this.$["search-progress"].hidden = true;
                 }
-            }, 1000 * 4);
+            }, 400 * 4);
         },
 
         search_p_no: function() {
@@ -23076,7 +23533,7 @@ mwcLayout = new PolymerLayout();
                 } else {
                     this.$["search-progress"].hidden = true;
                 }
-            }, 1000 * 4);
+            }, 400 * 4);
         },
 
         search_seed: function() {
@@ -23110,7 +23567,7 @@ mwcLayout = new PolymerLayout();
                 } else {
                     this.$["search-progress"].hidden = true;
                 }
-            }, 1000 * 4);
+            }, 400 * 4);
         },
 
         search_text: function() {
@@ -23138,7 +23595,7 @@ mwcLayout = new PolymerLayout();
                 } else {
                     this.$["search-progress"].hidden = true;
                 }
-            }, 1000 * 4);
+            }, 400 * 4);
         },
 
         _input: function(value) {
@@ -23529,7 +23986,7 @@ mwcLayout = new PolymerLayout();
                         }
                     }
                 });
-            }, 1000);
+            }, 400 * 4);
         },
 
         back: function() {
@@ -23553,7 +24010,7 @@ mwcLayout = new PolymerLayout();
                     }, function(error) {
                         Meteor.setTimeout(function() {
                             document.querySelector("#load-awesome").active = false;
-                        }, 1000 * 4);
+                        }, 400 * 8);
 
                         if (error) {
                             document.querySelector("#polymer-toast").toast(error);

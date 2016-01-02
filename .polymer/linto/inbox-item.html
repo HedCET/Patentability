@@ -25,9 +25,19 @@
             if (Polymer.dom(e).localTarget.id != "selectable-icon") {
                 e.stopPropagation();
 
-                document.querySelector("#patent-view").item = this.item;
-                document.querySelector("#main-page").selected = 2;
-                document.querySelector("#patent-view paper-scroll-header-panel").fire("iron-resize");
+                FlowRouter.setQueryParams({
+                    "route": "patent",
+                    "patent": this.item._id
+                });
+
+                if (FlowRouter.getQueryParam("patent") && FlowRouter.getQueryParam("project")) {
+                    if (FlowRouter.getQueryParam("patent") == this.item._id && FlowRouter.getQueryParam("project") == this.item.project._id) {
+                        document.querySelector("#patent-view").item = this.item;
+
+                        document.querySelector("#main-page").selected = 2;
+                        document.querySelector("#patent-view paper-scroll-header-panel").fire("iron-resize");
+                    }
+                }
             }
         },
 

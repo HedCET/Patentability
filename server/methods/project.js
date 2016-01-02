@@ -11,36 +11,21 @@ Meteor.methods({
         var user = Meteor.user();
         if (!user) throw new Meteor.Error(422, "userNotFound");
 
-        var patent = _.uniq(_.map(input.patent, function(item) {
-
-            if (_patent.findOne({
-                    _id: item
-                })) {
-
-                _patent.update({
-                    _id: item
-                }, {
-                    $addToSet: {
-                        user: user._id
-                    }
-                });
-
-                return item;
-
-            } else {
-                return null;
-            }
-
-        }).filter(Boolean));
-
-        var row = _project.findOne({
+        var project = _project.findOne({
             projectName: input.projectName,
             user: user._id
         });
 
-        if (row) {
+        var patent = _.uniq(_.map(input.patent, function(item) {
+            return (_patent.findOne({
+                _id: item
+            }) ? item : null);
+        }).filter(Boolean));
+
+        if (project) {
+
             _project.update({
-                _id: row._id
+                _id: project._id
             }, {
                 $addToSet: {
                     patent: {
@@ -49,48 +34,74 @@ Meteor.methods({
                 }
             });
 
+            _patent.update({
+                _id: {
+                    $in: patent
+                }
+            }, {
+                $addToSet: {
+                    project: project._id,
+                    user: user._id
+                }
+            }, {
+                multi: true
+            });
+
             patent.forEach(function(item) {
 
                 if (!_worker.findOne({
                         patent: item,
-                        project: row._id,
+                        project: project._id,
                         status: "",
                         type: "patent"
                     })) {
 
                     _worker.insert({
                         patent: item,
-                        project: row._id,
+                        project: project._id,
                         status: "",
                         time_insert: moment().format(),
                         type: "patent",
-                        user: row.user
+                        user: project.user
                     });
 
                 }
 
             });
 
-            return row._id;
+            return project._id;
         } else {
-            var _id = _project.insert({
+            var project_id = _project.insert({
                 patent: patent,
                 projectName: input.projectName,
                 user: [user._id]
+            });
+
+            _patent.update({
+                _id: {
+                    $in: patent
+                }
+            }, {
+                $addToSet: {
+                    project: project_id,
+                    user: user._id
+                }
+            }, {
+                multi: true
             });
 
             patent.forEach(function(item) {
 
                 if (!_worker.findOne({
                         patent: item,
-                        project: _id,
+                        project: project_id,
                         status: "",
                         type: "patent"
                     })) {
 
                     _worker.insert({
                         patent: item,
-                        project: _id,
+                        project: project_id,
                         status: "",
                         time_insert: moment().format(),
                         type: "patent",
@@ -101,26 +112,26 @@ Meteor.methods({
 
             });
 
-            return _id;
+            return project_id;
         }
     },
 
-    remove_project: function(_id) {
+    remove_project: function(project_id) {
         this.unblock();
 
         var user = Meteor.user();
         if (!user) throw new Meteor.Error(422, "userNotFound");
 
-        check(_id, String);
+        check(project_id, String);
 
-        var row = _project.findOne({
-            _id: _id,
+        var project = _project.findOne({
+            _id: project_id,
             user: user._id
         });
 
-        if (row) {
+        if (project) {
             _project.update({
-                _id: row._id
+                _id: project._id
             }, {
                 $pull: {
                     user: user._id
@@ -128,6 +139,38 @@ Meteor.methods({
             });
 
             return "1 project removed";
+        } else return "notFound";
+    },
+
+    update_project: function(project_id) {
+        this.unblock();
+
+        var user = Meteor.user();
+        if (!user) throw new Meteor.Error(422, "userNotFound");
+
+        check(project_id, String);
+
+        var project = _project.findOne({
+            _id: project_id,
+            user: user._id
+        });
+
+        if (project) {
+            if (project.match && project.position && project.position < project.match && !_worker.findOne({
+                    project: project._id,
+                    status: "",
+                    type: "cluster"
+                })) {
+
+                _worker.insert({
+                    project: project._id,
+                    status: "",
+                    time_insert: moment().format(),
+                    type: "cluster",
+                    user: project.user
+                });
+
+            }
         } else return "notFound";
     }
 

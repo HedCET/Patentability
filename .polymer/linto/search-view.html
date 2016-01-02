@@ -9,6 +9,13 @@
         display: block;
     }
     
+    input {
+        background: transparent;
+        border: none;
+        font-size: 18px;
+        padding: 0 12px;
+    }
+    
     paper-badge {
         --paper-badge-background: var(--paper-grey-500);
     }
@@ -26,29 +33,20 @@
     paper-toolbar paper-icon-button {
         margin: 0!important;
     }
-    
-    input {
-        background: transparent;
-        border: none;
-        font-size: 18px;
-        padding: 0 12px;
-    }
     </style>
 
     <template>
-        <paper-scroll-header-panel fixed class="fit" style="background: rgba(238, 238, 238, .95); z-index: 10;">
+        <paper-scroll-header-panel class="fit" style="background: rgba(238, 238, 238, .95); z-index: 10;">
             <paper-toolbar>
                 <paper-icon-button icon="arrow-back" on-click="back"></paper-icon-button>
 
-                <input autofocus class="flex" is="iron-input" placeholder="search" bind-value="{{search_input}}">
+                <input autofocus bind-value="{{search_input}}" class="flex" is="iron-input" placeholder="search">
 
-                <paper-badge for="save" hidden="[[!return_boolean(patent_selected.length)]]" label="[[return_text(patent_selected.length)]]"></paper-badge>
+                <paper-badge for="save" hidden="[[!return_boolean(patent_selected.length)]]" label="[[return_text(patent_selected.length)]]" style="top: 8px!important;"></paper-badge>
                 <paper-icon-button hidden="[[!return_boolean(patent_selected.length)]]" icon="save" id="save" on-click="save"></paper-icon-button>
 
                 <paper-icon-button hidden="[[return_boolean(patent_selected.length)]]" icon="filter-list" id="filter" on-click="filter"></paper-icon-button>
             </paper-toolbar>
-
-            <paper-progress hidden id="search-progress" indeterminate style="left: 0; position: fixed; width: 100%; z-index: 1;"></paper-progress>
 
             <div class="center-justified horizontal layout" hidden="[[!return_boolean(cluster.length)]]">
                 <div class="horizontal layout li">
@@ -86,7 +84,11 @@
                 </template>
             </iron-selector>
 
-            <div style="min-height: 80px;"></div>
+            <div class="center-justified horizontal layout" style="height: 88px;">
+                <div class="center-center vertical layout li">
+                    <paper-spinner active hidden id="search-progress"></paper-spinner>
+                </div>
+            </div>
         </paper-scroll-header-panel>
 
         <paper-dialog id="filter-prompt" style="width: 320px;" with-backdrop>
@@ -132,12 +134,16 @@
                     } else {
                         document.querySelector("#polymer-toast").toast("i cluster added / updated");
 
-                        FlowRouter.setQueryParams({
-                            "route": "project",
-                            "project_id": response._id
-                        });
+                        Meteor.subscribe("project", response, {
+                            onReady: function() {
+                                FlowRouter.setQueryParams({
+                                    "route": "project",
+                                    "project": response
+                                });
 
-                        _this.active = false;
+                                _this.active = false;
+                            }
+                        });
                     }
                 });
             } else {
@@ -146,9 +152,7 @@
         },
 
         back: function() {
-            FlowRouter.setQueryParams({
-                "route": null
-            });
+            window.history.back();
         },
 
         filter: function() {
@@ -210,11 +214,13 @@
             search_input: {
                 type: String,
                 value: function() {
+                    var search_input = (FlowRouter.getQueryParam("search_input") ? FlowRouter.getQueryParam("search_input") : "");
+
                     this.async(function() {
-                        this.search_input = (FlowRouter.getQueryParam("search_input") ? FlowRouter.getQueryParam("search_input") : "");
+                        this.search_input = search_input;
                     }, 400);
 
-                    return "";
+                    // return "";
                 }
             },
             search_type: {
@@ -253,16 +259,22 @@
                     patent: _.map(_this.patent_selected, function(value) {
                         return value._id
                     }),
-                    projectName: _this.projectName
+                    projectName: (_this.projectName ? _this.projectName : Random.id(4))
                 }, function(error, response) {
                     if (error) {
                         document.querySelector("#polymer-toast").toast(error.reason);
                     } else {
                         document.querySelector("#polymer-toast").toast("i project added / updated");
 
-                        FlowRouter.setQueryParams({
-                            "route": "project",
-                            "project_id": response
+                        Meteor.subscribe("project", response, {
+                            onReady: function() {
+                                FlowRouter.setQueryParams({
+                                    "route": "project",
+                                    "project": response
+                                });
+
+                                _this.active = false;
+                            }
                         });
                     }
                 });
@@ -300,7 +312,7 @@
                 } else {
                     this.$["search-progress"].hidden = true;
                 }
-            }, 1000 * 4);
+            }, 400 * 4);
         },
 
         search_cluster: function() {
@@ -326,7 +338,7 @@
                 } else {
                     this.$["search-progress"].hidden = true;
                 }
-            }, 1000 * 4);
+            }, 400 * 4);
         },
 
         search_p_no: function() {
@@ -362,7 +374,7 @@
                 } else {
                     this.$["search-progress"].hidden = true;
                 }
-            }, 1000 * 4);
+            }, 400 * 4);
         },
 
         search_seed: function() {
@@ -396,7 +408,7 @@
                 } else {
                     this.$["search-progress"].hidden = true;
                 }
-            }, 1000 * 4);
+            }, 400 * 4);
         },
 
         search_text: function() {
@@ -424,7 +436,7 @@
                 } else {
                     this.$["search-progress"].hidden = true;
                 }
-            }, 1000 * 4);
+            }, 400 * 4);
         },
 
         _input: function(value) {

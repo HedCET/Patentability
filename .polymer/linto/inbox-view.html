@@ -74,48 +74,43 @@
                 <div class="title" id="toolbar-title">Patentability</div>
 
                 <paper-icon-button class="selection-visible" icon="delete" on-click="remove_patent"></paper-icon-button>
-                <paper-icon-button class="selection-visible" icon="social:share" on-click="share"></paper-icon-button>
                 <paper-icon-button class="selection-hidden" icon="search" on-click="searchbar"></paper-icon-button>
             </paper-toolbar>
 
-            <div class="blue-700" id="vis-patent-taxonomy" style="cursor: pointer; height: 256px"></div>
+            <div class="blue-700" id="vis-network" style="cursor: pointer; height: 256px"></div>
 
-            <iron-selector activate-event="click" attr-for-selected="item" multi selectable="inbox-item" selected-attribute="selected" selected-values="{{patent_selected}}">
+            <iron-selector activate-event="click" attr-for-selected="item" multi on-iron-deselect="patent_selection_changed" on-iron-select="patent_selection_changed" selectable="inbox-item" selected-attribute="selected" selected-values="{{patent_selected}}">
                 <div class="blue-700 center-justified horizontal layout">
                     <div class="blue-500 center horizontal layout li">
-                        <div class="cursor-d flex" style="font-size: 16px; line-height: 24px; padding: 16px;">[[item.keyword]] <span hidden="[[!item.cluster_keyword]]">/ <span>[[item.cluster_keyword]]</span></span>
-                        </div>
+                        <div class="cursor-d flex lowercase" style="font-size: 16px; line-height: 24px; padding: 16px;">[[return_title_text(item)]]</div>
 
-                        <paper-icon-button icon="sort" on-click="sort"></paper-icon-button>
-                        <paper-icon-button icon="close" onclick="document.querySelector('#remove-prompt').open();" style="margin-right: 8px;"></paper-icon-button>
+                        <paper-icon-button icon="close" onclick="document.querySelector('#remove-project-prompt').open();" style="margin-right: 8px;"></paper-icon-button>
                     </div>
                 </div>
 
-                <div class="center-justified horizontal layout">
-                    <div class="li">
-                        <paper-progress class="project-progress" data-id$="[[item._id]]" hidden style="width: 100%;"></paper-progress>
-                    </div>
-                </div>
-
-                <template as="patent" is="dom-repeat" items="[[item.patent]]">
+                <template as="patent" is="dom-repeat" items="[[item.patent]]" filter="filter_p_no">
                     <inbox-item item$="[[patent]]"></inbox-item>
                 </template>
-            </iron-selector>
 
-            <div style="min-height: 80px;"></div>
+                <div class="center-justified horizontal layout" style="height: 88px;">
+                    <div class="center-center vertical layout li">
+                        <paper-spinner active data-id$="[[item._id]]" hidden id="project-progress"></paper-spinner>
+                    </div>
+                </div>
+            </iron-selector>
         </paper-scroll-header-panel>
 
         <paper-fab class="menu-b" id="fab" icon="add" on-click="add_project"></paper-fab>
 
-        <paper-dialog id="remove-prompt" style="width: 320px;" with-backdrop>
+        <paper-dialog id="remove-project-prompt" style="width: 320px;" with-backdrop>
             <div style="font-size: 16px; line-height: 24px;">Are you sure to delete this project ?</div>
 
             <div class="buttons">
-                <paper-button onclick="document.querySelector('#remove-prompt').close();">
+                <paper-button onclick="document.querySelector('#remove-project-prompt').close();">
                     <iron-icon icon="close"></iron-icon>
                     cancel
                 </paper-button>
-                <paper-button on-click="remove_ok">
+                <paper-button on-click="remove_project_ok">
                     <iron-icon icon="check"></iron-icon>
                     ok
                 </paper-button>
@@ -126,188 +121,17 @@
     <script>
     Polymer({
 
-        is: "inbox-view",
-
-        menu_toggle: function() {
-            document.querySelector("layout-inbox").menu_toggle();
-        },
-
-        properties: {
-            item: {
-                type: Object,
-                value: function() {
-                    return {};
-                }
-            },
-
-            patent_selected: {
-                type: Array,
-                value: function() {
-                    return [];
-                }
-            }
-        },
-
-        remove_ok: function(e) {
-            if (Meteor.status().connected) {
-                var _this = this;
-
-                Meteor.call("remove_project", _this.item._id, function(error, response) {
-                    if (error) {
-                        document.querySelector("#polymer-toast").toast(error.reason);
-                    } else {
-                        document.querySelector("#polymer-toast").toast(response);
-
-                        // home page
-                    }
-                });
-            } else {
-                document.querySelector("#polymer-toast").toast("server connection required");
-            }
-
-            this.$["remove-prompt"].close();
-        },
-
-        searchbar: function() {
-            FlowRouter.setQueryParams({
-                "route": "search"
-            });
-        },
-
-        sort: function(e) {
-            this.set("item.patent", _.sortBy(this.item.patent, "app_date"));
-
-            document.querySelector("#polymer-toast").toast("sorted by app_date");
-        },
-
-        subscribe_patent: function(project_id) {
-            var _this = this,
-                project = _project.findOne({
-                    _id: project_id
-                });
-
-            if (project) {
-                var patent_id = _.map(project.patent, function(value) {
-                    return (_patent.findOne({
-                        _id: value
-                    }) ? null : value);
-                }).filter(Boolean);
-
-                if (patent_id.length) {
-                    Meteor.subscribe("patent", patent_id, {
-                        onReady: function() {
-                            for (var A = 0; A < project.patent.length; A++) {
-                                var item = _patent.findOne({
-                                    _id: project.patent[A]
-                                });
-
-                                project.patent[A] = (item ? item : {
-                                    _id: project.patent[A]
-                                });
-
-                                project.patent[A].project = {
-                                    _id: project._id
-                                };
-                            }
-
-                            _this.item = project;
-
-                            _this.vis_patent_taxonomy();
-                        }
-                    });
-                } else {
-                    for (var A = 0; A < project.patent.length; A++) {
-                        var item = _patent.findOne({
-                            _id: project.patent[A]
-                        });
-
-                        project.patent[A] = (item ? item : {
-                            _id: project.patent[A]
-                        });
-
-                        project.patent[A].project = {
-                            _id: project._id
-                        };
-                    }
-
-                    _this.item = project;
-
-                    _this.vis_patent_taxonomy();
-                }
-
-                // observer
-            }
-        },
-
-        subscribe_project: function(project_id) {
-            var _this = this,
-                project = _project.findOne({
-                    _id: project_id
-                });
-
-            if (project) {
-                _this.subscribe_patent(project_id);
-            } else {
-                Meteor.subscribe("project", (project_id ? project_id : "#"), {
-                    onReady: function() {
-                        _this.subscribe_patent(project_id);
-                    }
-                });
-            }
-
-            // observer
-        },
-
-        vis_patent_taxonomy: function() {
-            var edges = [],
-                nodes = [],
-                taxonomyA = {},
-                taxonomyZ = {};
-
-            this.item.patent.forEach(function(A) {
-                if (_.has(A, "concept") && A.concept) {
-                    var B = A.concept.split(/;/).filter(Boolean);
-
-                    B.forEach(function(C) {
-                        _key(taxonomyA, [C, A.p_no]);
-                    });
-                }
-            });
-
-            Object.keys(taxonomyA).sort(function(keyA, keyZ) {
-                return (_.size(taxonomyA[keyZ]) - _.size(taxonomyA[keyZ]));
-            }).forEach(function(index) {
-                if (_.size(taxonomyZ) < 10 && 1 < _.size(taxonomyA[index])) {
-                    taxonomyZ[index] = taxonomyA[index];
-                }
-            });
-
-            _.each(taxonomyZ, function(valueA, keyA, list) {
-                var idA = Random.id();
-
-                nodes.push({
-                    color: {
-                        background: "#2196F3",
-                        border: "#FFFFFF",
-                        highlight: {
-                            background: "#64B5F6",
-                            border: "#FFFFFF"
-                        },
-                        hover: {
-                            background: "#64B5F6",
-                            border: "#FFFFFF"
-                        }
-                    },
-                    group: "taxonomy",
-                    id: idA,
-                    label: keyA,
-                    // size: _.size(valueA)
-                });
-
-                _.each(valueA, function(valueZ, keyZ, list) {
-                    var idZ = Random.id();
-
-                    nodes.push({
+        attached: function() {
+            var network = new vis.Network(document.querySelector("#vis-network"), {
+                edges: _edges,
+                nodes: _nodes
+            }, {
+                edges: {
+                    shadow: true,
+                    width: 2
+                },
+                groups: {
+                    patent: {
                         color: {
                             background: "#BBDEFB",
                             border: "#FFFFFF",
@@ -320,32 +144,21 @@
                                 border: "#FFFFFF"
                             }
                         },
-                        group: "patent",
-                        id: idZ,
-                        label: keyZ,
-                        // size: valueZ
-                    });
-
-                    edges.push({
-                        from: idZ,
-                        to: idA
-                    })
-                });
-            });
-
-            network = new vis.Network(document.querySelector("#vis-patent-taxonomy"), {
-                nodes: new vis.DataSet(nodes),
-                edges: new vis.DataSet(edges)
-            }, {
-                edges: {
-                    shadow: true,
-                    width: 2
-                },
-                groups: {
-                    patent: {
                         shape: "diamond"
                     },
                     taxonomy: {
+                        color: {
+                            background: "#2196F3",
+                            border: "#FFFFFF",
+                            highlight: {
+                                background: "#64B5F6",
+                                border: "#FFFFFF"
+                            },
+                            hover: {
+                                background: "#64B5F6",
+                                border: "#FFFFFF"
+                            }
+                        },
                         shape: "dot"
                     }
                 },
@@ -367,6 +180,185 @@
                     scale: .5
                 });
             });
+        },
+
+        clear_patent_selected: function() {
+            this.patent_selected = [];
+        },
+
+        filter_p_no: function(item) {
+            return (item.p_no);
+        },
+
+        is: "inbox-view",
+
+        listeners: {
+            "content-scroll": "_scroll"
+        },
+
+        menu_toggle: function() {
+            document.querySelector("layout-inbox").menu_toggle();
+        },
+
+        patent_selection_changed: function() {
+            this.$.fab.toggleClass("move-down", this.patent_selected.length);
+            this.$.toolbar.toggleClass("selection", this.patent_selected.length);
+            this.$["toolbar-title"].textContent = (this.patent_selected.length ? this.patent_selected.length : "Patentability");
+        },
+
+        properties: {
+            item: {
+                type: Object,
+                value: function() {
+                    return {};
+                }
+            },
+            patent_selected: {
+                type: Array,
+                value: function() {
+                    return [];
+                }
+            }
+        },
+
+        remove_patent: function() {
+            $("inbox-item.iron-selected").addClass("undo");
+
+            document.querySelector("#polymer-toast").undo = {
+                patent: _.map(this.patent_selected, function(item) {
+                    return item._id;
+                }),
+                project: this.item._id
+            };
+
+            document.querySelector("#polymer-toast").toast(this.patent_selected.length + " patent removed");
+
+            this.clear_patent_selected();
+        },
+
+        remove_project_ok: function() {
+            if (Meteor.status().connected) {
+                Meteor.call("remove_project", this.item._id, function(error, response) {
+                    if (error) {
+                        document.querySelector("#polymer-toast").toast(error.reason);
+                    } else {
+                        document.querySelector("#polymer-toast").toast(response);
+
+                        // home page
+                    }
+                });
+            } else {
+                document.querySelector("#polymer-toast").toast("server connection required");
+            }
+
+            this.$["remove-project-prompt"].close();
+        },
+
+        return_title_text: function(item) {
+            return (item.projectName ? item.projectName : ((item.keyword ? item.keyword : "#") + (item.cluster_keyword ? " / " + item.cluster_keyword : "")));
+        },
+
+        searchbar: function() {
+            FlowRouter.setQueryParams({
+                "route": "search"
+            });
+        },
+
+        _scroll: function(e, d) {
+            if (d.target.scrollHeight - (d.target.clientHeight * 1.5) < d.target.scrollTop) {
+                if (this.item.match && this.item.position && this.item.position < this.item.match) {
+                    this.$["project-progress"].hidden = false;
+
+                    Meteor.call("update_project", this.item._id, function(error, response) {
+                        if (error) {
+                            document.querySelector("#polymer-toast").toast(error.reason);
+                        }
+                    });
+                }
+            }
+        },
+
+        _vis_network: function() {
+            this.debounce("_vis_network", function() {
+                if (this.item.patent) {
+                    listA = {};
+                    listZ = {};
+
+                    this.item.patent.forEach(function(A) {
+                        if (A.concept) {
+                            var B = A.concept.split(/;/).filter(Boolean);
+
+                            B.forEach(function(C) {
+                                _key(listA, [C, A.p_no]);
+                            });
+                        }
+
+                        A.project.tag.forEach(function(tag) {
+                            _key(listA, [tag, A.p_no]);
+                        });
+                    });
+
+                    Object.keys(listA).sort(function(keyA, keyZ) {
+                        return (_.size(listA[keyZ]) - _.size(listA[keyA]));
+                    }).forEach(function(index) {
+                        if (_.size(listZ) < 10 && 1 < _.size(listA[index])) {
+                            listZ[index] = listA[index];
+                        }
+                    });
+
+                    var edges = _.map(_edges.get(), function(item) {
+                            return item.id;
+                        }),
+                        nodes = _.map(_nodes.get(), function(item) {
+                            return item.id;
+                        });
+
+                    _.each(listZ, function(valueA, keyA, list) {
+                        var A = nodes.indexOf(keyA);
+
+                        if (-1 < A) {
+                            nodes.splice(A, 1);
+                        } else {
+                            _nodes.update({
+                                group: "taxonomy",
+                                id: keyA,
+                                label: keyA,
+                                // size: _.size(valueA)
+                            });
+                        }
+
+                        _.each(valueA, function(valueZ, keyZ, list) {
+                            var Z = nodes.indexOf(keyZ);
+
+                            if (-1 < Z) {
+                                nodes.splice(Z, 1);
+                            } else {
+                                _nodes.update({
+                                    group: "patent",
+                                    id: keyZ,
+                                    label: keyZ,
+                                    // size: _.size(valueA)
+                                });
+                            }
+
+                            var index = edges.indexOf(keyZ + " | " + keyA);
+
+                            if (-1 < index) {
+                                edges.splice(index, 1);
+                            } else {
+                                _edges.update({
+                                    from: keyZ,
+                                    id: keyZ + " | " + keyA,
+                                    to: keyA
+                                });
+                            }
+                        });
+                    });
+
+                    _edges.remove(edges);
+                    _nodes.remove(nodes);
+                }
+            }, 400);
         }
 
     });
