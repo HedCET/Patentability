@@ -21895,9 +21895,19 @@ mwcLayout = new PolymerLayout();
             if (Polymer.dom(e).localTarget.id != "selectable-icon") {
                 e.stopPropagation();
 
-                document.querySelector("#patent-view").item = this.item;
-                document.querySelector("#main-page").selected = 2;
-                document.querySelector("#patent-view paper-scroll-header-panel").fire("iron-resize");
+                FlowRouter.setQueryParams({
+                    "route": "patent",
+                    "patent": this.item._id
+                });
+
+                if (FlowRouter.getQueryParam("patent") && FlowRouter.getQueryParam("project")) {
+                    if (FlowRouter.getQueryParam("patent") == this.item._id && FlowRouter.getQueryParam("project") == this.item.project._id) {
+                        document.querySelector("#patent-view").item = this.item;
+
+                        document.querySelector("#main-page").selected = 2;
+                        document.querySelector("#patent-view paper-scroll-header-panel").fire("iron-resize");
+                    }
+                }
             }
         },
 
@@ -22342,7 +22352,7 @@ mwcLayout = new PolymerLayout();
                     <div class="flex" style="overflow: auto;">
                         <iron-selector activate-event="click" id="menu-opt" on-iron-select="menu_opt" selected-attribute="selected">
                             <template is="dom-repeat" items="[[project]]">
-                                <div class="cursor-p horizontal hover justified layout relative" data-index$="[[index]]" style="border-bottom: 1px solid #EEE;">
+                                <div class="cursor-p horizontal hover justified layout relative" data-id$="[[item._id]]" style="border-bottom: 1px solid #EEE;">
                                     <div class="flex horizontal justified layout" style="padding: 12px 16px;">
                                         <div class="etc flex lowercase self-center" style="font-size: 16px; line-height: 24px;">[[return_menu_text(item)]]</div>
                                         <div class="self-start" style="color: #757575; font-size: 14px; line-height: 20px; padding-left: 8px;">[[return_patent_count(item.patent)]]</div>
@@ -22439,6 +22449,8 @@ mwcLayout = new PolymerLayout();
 
                         if (index == -1) {
                             _this.unshift("project", row);
+
+                            _this._project();
                         } else {
                             _this.splice("project", index, 1, row);
                         }
@@ -22504,6 +22516,8 @@ mwcLayout = new PolymerLayout();
 
                             if (-1 < index) {
                                 _this.set("project." + A + ".patent." + index, $.extend(true, _this.project[A].patent[index], row));
+
+                                _this._patent();
                             }
                         }
                     },
@@ -22554,7 +22568,7 @@ mwcLayout = new PolymerLayout();
 
             FlowRouter.setQueryParams({
                 "route": "project",
-                "project_selected": d.item.dataset.index
+                "project": d.item.dataset.id
             });
         },
 
@@ -22567,7 +22581,7 @@ mwcLayout = new PolymerLayout();
         },
 
         observers: [
-            "_inbox_view(project.*, project_selected)"
+            "_inbox_view(project.*, project_index)"
         ],
 
         properties: {
@@ -22577,7 +22591,7 @@ mwcLayout = new PolymerLayout();
                     return [];
                 }
             },
-            project_selected: {
+            project_index: {
                 type: Number
             },
             user: {
@@ -22705,6 +22719,54 @@ mwcLayout = new PolymerLayout();
             this.debounce("_inbox_view", function() {
                 this.$["inbox-view"].item = (change.base[index] ? change.base[index] : {});
                 this.$["inbox-view"]._vis_network();
+            }, 400);
+        },
+
+        _patent: function() {
+            this.debounce("_patent", function() {
+                if (FlowRouter.getQueryParam("patent") && FlowRouter.getQueryParam("project")) {
+                    var project_index = _.map(this.project, function(item) {
+                        return item._id;
+                    }).indexOf(FlowRouter.getQueryParam("project"));
+
+                    if (-1 < project_index) {
+                        this.project_index = project_index;
+
+                        var patent_index = _.map(this.project[project_index].patent, function(item) {
+                            return item._id;
+                        }).indexOf(FlowRouter.getQueryParam("patent"));
+
+                        if (-1 < patent_index) {
+                            document.querySelector("#patent-view").item = this.project[project_index].patent[patent_index];
+                        } else {
+                            document.querySelector("#polymer-toast").toast("patent notFound");
+                        }
+                    } else {
+                        document.querySelector("#polymer-toast").toast("project notFound");
+                    }
+
+                    document.querySelector("#main-page").selected = 2;
+                    document.querySelector("#patent-view paper-scroll-header-panel").fire("iron-resize");
+                }
+            }, 400);
+        },
+
+        _project: function() {
+            this.debounce("_project", function() {
+                if (FlowRouter.getQueryParam("project")) {
+                    var project_index = _.map(this.project, function(item) {
+                        return item._id;
+                    }).indexOf(FlowRouter.getQueryParam("project"));
+
+                    if (-1 < project_index) {
+                        this.project_index = project_index;
+                    } else {
+                        document.querySelector("#polymer-toast").toast("project notFound");
+                    }
+
+                    document.querySelector("#main-page").selected = 1;
+                    document.querySelector("#inbox-view paper-scroll-header-panel").fire("iron-resize");
+                }
             }, 400);
         }
 
@@ -22926,8 +22988,7 @@ mwcLayout = new PolymerLayout();
     Polymer({
 
         back: function() {
-            document.querySelector("#main-page").selected = 1;
-            document.querySelector("#inbox-view paper-scroll-header-panel").fire("iron-resize");
+            window.history.back();
         },
 
         editer_open: function() {
@@ -23236,9 +23297,7 @@ mwcLayout = new PolymerLayout();
                             onReady: function() {
                                 FlowRouter.setQueryParams({
                                     "route": "project",
-                                    "project_selected": _.map(document.querySelector("layout-inbox").project, function(item) {
-                                        return item._id;
-                                    }).indexOf(response)
+                                    "project": response
                                 });
 
                                 _this.active = false;
@@ -23252,9 +23311,7 @@ mwcLayout = new PolymerLayout();
         },
 
         back: function() {
-            FlowRouter.setQueryParams({
-                "route": null
-            });
+            window.history.back();
         },
 
         filter: function() {
@@ -23372,9 +23429,7 @@ mwcLayout = new PolymerLayout();
                             onReady: function() {
                                 FlowRouter.setQueryParams({
                                     "route": "project",
-                                    "project_selected": _.map(document.querySelector("layout-inbox").project, function(item) {
-                                        return item._id;
-                                    }).indexOf(response)
+                                    "project": response
                                 });
 
                                 _this.active = false;

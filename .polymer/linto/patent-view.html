@@ -113,8 +113,7 @@
     Polymer({
 
         back: function() {
-            document.querySelector("#main-page").selected = 1;
-            document.querySelector("#inbox-view paper-scroll-header-panel").fire("iron-resize");
+            window.history.back();
         },
 
         editer_open: function() {

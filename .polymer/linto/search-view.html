@@ -138,9 +138,7 @@
                             onReady: function() {
                                 FlowRouter.setQueryParams({
                                     "route": "project",
-                                    "project_selected": _.map(document.querySelector("layout-inbox").project, function(item) {
-                                        return item._id;
-                                    }).indexOf(response)
+                                    "project": response
                                 });
 
                                 _this.active = false;
@@ -154,9 +152,7 @@
         },
 
         back: function() {
-            FlowRouter.setQueryParams({
-                "route": null
-            });
+            window.history.back();
         },
 
         filter: function() {
@@ -274,9 +270,7 @@
                             onReady: function() {
                                 FlowRouter.setQueryParams({
                                     "route": "project",
-                                    "project_selected": _.map(document.querySelector("layout-inbox").project, function(item) {
-                                        return item._id;
-                                    }).indexOf(response)
+                                    "project": response
                                 });
 
                                 _this.active = false;

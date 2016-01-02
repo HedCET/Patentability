@@ -72,11 +72,12 @@ inbox.route("/", {
         });
 
         switch (FlowRouter.getQueryParam("route")) {
-            case "project":
-                document.querySelector("#main-page").selected = 1;
-                document.querySelector("#inbox-view paper-scroll-header-panel").fire("iron-resize");
+            case "patent":
+                document.querySelector("layout-inbox")._patent();
+                break;
 
-                document.querySelector("layout-inbox").project_selected = (FlowRouter.getQueryParam("project_selected") ? FlowRouter.getQueryParam("project_selected") : 1000);
+            case "project":
+                document.querySelector("layout-inbox")._project();
                 break;
 
             case "search":
