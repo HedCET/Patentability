@@ -113,7 +113,10 @@
     Polymer({
 
         back: function() {
-            window.history.back();
+            FlowRouter.setQueryParams({
+                "route": "project",
+                "patent": null
+            });
         },
 
         editer_open: function() {

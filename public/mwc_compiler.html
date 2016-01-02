@@ -22988,7 +22988,10 @@ mwcLayout = new PolymerLayout();
     Polymer({
 
         back: function() {
-            window.history.back();
+            FlowRouter.setQueryParams({
+                "route": "project",
+                "patent": null
+            });
         },
 
         editer_open: function() {
@@ -23311,6 +23314,8 @@ mwcLayout = new PolymerLayout();
         },
 
         back: function() {
+            this.active = false;
+
             window.history.back();
         },
 
