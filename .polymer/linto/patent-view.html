@@ -124,7 +124,9 @@
             document.querySelector("search-view").search_type = "seed";
 
             FlowRouter.setQueryParams({
-                "route": "search"
+                "route": "search",
+                "search_input": Polymer.dom(e).localTarget.dataset.concept,
+                "search_type": "seed"
             });
         },
 

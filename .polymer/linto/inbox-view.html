@@ -6,11 +6,6 @@
         --paper-fab-keyboard-focus-background: var(--paper-red-700);
     }
     
-    paper-progress {
-        --paper-progress-active-color: var(--paper-red-500);
-        --paper-progress-secondary-color: var(--paper-red-100);
-    }
-    
     paper-toolbar {
         --paper-toolbar-background: var(--paper-blue-700);
         --paper-toolbar-color: white;
@@ -120,6 +115,10 @@
 
     <script>
     Polymer({
+
+        add_project: function() {
+            document.querySelector("project-upload paper-dialog").open();
+        },
 
         attached: function() {
             var network = new vis.Network(document.querySelector("#vis-network"), {

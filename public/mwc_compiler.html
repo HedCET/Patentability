@@ -21878,10 +21878,11 @@ mwcLayout = new PolymerLayout();
                 </div>
 
                 <div class="flex layout vertical" style="padding: 16px; padding-left: 8px;">
+                    <div class="center horizontal layout" style="color: #757575; font-size: 14px; line-height: 20px;">[[item.p_no]]</div>
                     <div class="lowercase" style="font-size: 16px; line-height: 24px;">[[item.title]]</div>
-                    <div class="center horizontal justified layout" style="color: #757575; font-size: 14px; line-height: 20px; width: 100%;">
+                    <div class="center horizontal justified layout" style="color: #757575; font-size: 14px; line-height: 20px;">
                         <div class="etc flex lowercase">[[return_assignee_text(item.assignee)]]</div>
-                        <div>[[return_time(item.app_date)]]</div>
+                        <div>[[item.app_date]]</div>
                     </div>
                 </div>
             </div>
@@ -21935,10 +21936,6 @@ mwcLayout = new PolymerLayout();
 
         return_p_no_text: function(text) {
             return (text.match(/^[A-Z]{2}/) ? text.substr(0, 2) : "#");
-        },
-
-        return_time: function(time) {
-            return (moment(time).isValid() ? moment(time).fromNow() : "#");
         }
 
     });
@@ -21951,11 +21948,6 @@ mwcLayout = new PolymerLayout();
     paper-fab {
         --paper-fab-background: var(--paper-red-500);
         --paper-fab-keyboard-focus-background: var(--paper-red-700);
-    }
-    
-    paper-progress {
-        --paper-progress-active-color: var(--paper-red-500);
-        --paper-progress-secondary-color: var(--paper-red-100);
     }
     
     paper-toolbar {
@@ -22067,6 +22059,10 @@ mwcLayout = new PolymerLayout();
 
     <script>
     Polymer({
+
+        add_project: function() {
+            document.querySelector("project-upload paper-dialog").open();
+        },
 
         attached: function() {
             var network = new vis.Network(document.querySelector("#vis-network"), {
@@ -22992,7 +22988,9 @@ mwcLayout = new PolymerLayout();
             document.querySelector("search-view").search_type = "seed";
 
             FlowRouter.setQueryParams({
-                "route": "search"
+                "route": "search",
+                "search_input": Polymer.dom(e).localTarget.dataset.concept,
+                "search_type": "seed"
             });
         },
 
@@ -23155,6 +23153,134 @@ mwcLayout = new PolymerLayout();
 
                     document.querySelector(".menu-b").translate3d(0, 0, 0);
                 }
+            }
+        }
+
+    });
+    </script>
+
+</dom-module>
+<dom-module id="project-upload" assetpath="/linto/">
+
+    <style>
+    paper-progress {
+        --paper-progress-active-color: var(--paper-red-500);
+        --paper-progress-secondary-color: var(--paper-red-100);
+    }
+    </style>
+
+    <template>
+        <paper-dialog style="width: 320px;" with-backdrop="">
+            <div class="layout vertical">
+                <div class="layout vertical" hidden="[[status]]">
+                    <div style="border-bottom: 2px solid #888; font-size: 16px; line-height: 24px; margin: 8px 0; padding: 4px 0;">upload</div>
+
+                    <input accept="text/*" id="file" on-change="project_upload" style="margin: 8px 0;" type="file">
+
+                    <div style="color: #757575; font-size: 14px; line-height: 20px; margin: 8px 0;">it will extract patentNo, publicationNo, etc (<a href="#" onclick="window.open('http://vcompile.com/patentability/projectName.txt', '_system');">uploadFormat</a>) &amp; fileName will be projectName</div>
+                </div>
+
+                <div class="layout vertical" hidden="[[!status]]">
+                    <div class="layout vertical" style="margin: 8px 0;">
+                        <div style="font-size: 16px; line-height: 24px; padding: 4px 0;">uploading</div>
+                        <paper-progress indeterminate="" style="width: 100%;"></paper-progress>
+                    </div>
+
+                    <div style="color: #757575; font-size: 14px; line-height: 20px; margin: 8px 0;"><span>[[status]]</span> <a hidden="[[status]]" href="#" id="clear" on-click="clear">clear</a></div>
+                </div>
+            </div>
+        </paper-dialog>
+    </template>
+
+    <script>
+    Polymer({
+
+        clear: function() {
+            this.set("patent", []);
+        },
+
+        is: "project-upload",
+
+        project_upload: function(e, d) {
+            var _this = this;
+
+            if (Meteor.status().connected) {
+                var files = e.target.files || e.dataTransfer.files;
+
+                for (var A = 0; A < files.length; A++) {
+                    var projectId = "",
+                        projectName = (files[A].name ? files[A].name : Random.id(4)),
+                        reader = new FileReader();
+
+                    reader.onload = function() {
+                        var patent = reader.result.match(/[a-z]{2,}[0-9]{4,}[a-z]?[0-9]?/gi);
+
+                        if (patent) {
+                            patent = _.uniq(patent.filter(Boolean));
+
+                            for (var Z = 0; Z < patent.length; Z++) {
+                                _this.status = "normalizing " + patent[Z];
+
+                                Meteor.call("normalize", patent[Z], function(error, response) {
+                                    if (!error) {
+                                        if (response.length) {
+                                            _this.status = patent[Z] + " normalized to " + response[0];
+
+                                            patent[Z] = response[0];
+
+                                            Meteor.call("patent", "q=pn:" + patent[Z], function(error, response) {
+                                                if (!error) {
+                                                    if (response.patent[0]._id) {
+                                                        _this.status = patent[Z] + " added to project";
+
+                                                        Meteor.call("insert_project", {
+                                                            patent: [response.patent[0]._id],
+                                                            projectName: projectName
+                                                        }, function(error, response) {
+                                                            _this.status = "";
+
+                                                            if (!error && projectId == "") {
+                                                                projectId = response;
+
+                                                                Meteor.subscribe("project", projectId, {
+                                                                    onReady: function() {
+                                                                        _this.$.file.value = "";
+
+                                                                        FlowRouter.setQueryParams({
+                                                                            "route": "project",
+                                                                            "project": projectId
+                                                                        });
+                                                                    }
+                                                                });
+                                                            }
+                                                        });
+                                                    } else {
+                                                        _this.status = patent[Z] + " notFound in db";
+                                                    }
+                                                }
+                                            });
+                                        } else {
+                                            _this.status = patent[Z] + " notFound in db";
+                                        }
+                                    }
+                                });
+                            }
+                        } else {
+                            document.querySelector("#polymer-toast").toast("invalid fileContent");
+                        }
+                    };
+
+                    reader.readAsText(files[A]);
+                }
+            } else {
+                document.querySelector("#polymer-toast").toast("server connection required");
+            }
+        },
+
+        properties: {
+            status: {
+                type: String,
+                value: ""
             }
         }
 

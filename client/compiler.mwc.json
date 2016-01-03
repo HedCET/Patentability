@@ -53,6 +53,7 @@
         "linto/patent-item.html",
         "linto/patent-view.html",
         "linto/polymer-toast.html",
+        "linto/project-upload.html",
         "linto/search-view.html",
         "linto/selectable-icon.html",
         "linto/set-password.html",

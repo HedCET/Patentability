@@ -8,10 +8,11 @@
                 </div>
 
                 <div class="flex layout vertical" style="padding: 16px; padding-left: 8px;">
+                    <div class="center horizontal layout" style="color: #757575; font-size: 14px; line-height: 20px;">[[item.p_no]]</div>
                     <div class="lowercase" style="font-size: 16px; line-height: 24px;">[[item.title]]</div>
-                    <div class="center horizontal justified layout" style="color: #757575; font-size: 14px; line-height: 20px; width: 100%;">
+                    <div class="center horizontal justified layout" style="color: #757575; font-size: 14px; line-height: 20px;">
                         <div class="etc flex lowercase">[[return_assignee_text(item.assignee)]]</div>
-                        <div>[[return_time(item.app_date)]]</div>
+                        <div>[[item.app_date]]</div>
                     </div>
                 </div>
             </div>
@@ -65,10 +66,6 @@
 
         return_p_no_text: function(text) {
             return (text.match(/^[A-Z]{2}/) ? text.substr(0, 2) : "#");
-        },
-
-        return_time: function(time) {
-            return (moment(time).isValid() ? moment(time).fromNow() : "#");
         }
 
     });

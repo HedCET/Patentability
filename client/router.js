@@ -68,6 +68,7 @@ inbox.route("/", {
     action: function(p, q) {
         mwcLayout.render("inbox", {
             "layout-inbox": "layout-inbox",
+            "project-upload": "project-upload",
             "search-view": "search-view"
         });
 
