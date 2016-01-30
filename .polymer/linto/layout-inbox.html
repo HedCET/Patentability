@@ -430,7 +430,7 @@
         _inbox_view: function(change, index) {
             this.debounce("_inbox_view", function() {
                 this.$["inbox-view"].item = (change.base[index] ? change.base[index] : {});
-                this.$["inbox-view"]._vis_network();
+                this.$["inbox-view"]._echarts();
             }, 400);
         },
 

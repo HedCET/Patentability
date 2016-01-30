@@ -72,7 +72,7 @@
         <paper-icon-button class="selection-hidden" icon="search" on-click="searchbar"></paper-icon-button>
       </paper-toolbar>
 
-      <div class="blue-700" id="vis-network" style="cursor: pointer; height: 256px"></div>
+      <div class="blue-700" id="echarts" style="cursor: pointer; height: 256px"></div>
 
       <iron-selector activate-event="click" attr-for-selected="item" multi on-iron-deselect="patent_selection_changed" on-iron-select="patent_selection_changed" selectable="inbox-item" selected-attribute="selected" selected-values="{{patent_selected}}">
         <div class="blue-700 center-justified horizontal layout">
@@ -263,6 +263,114 @@
       });
     },
 
+    _echarts: function() {
+      this.debounce("_echarts", function() {
+        var graph = echarts.init(document.querySelector("#echarts")),
+          option = {
+            legend: {
+              data: [{
+                icon: "circle",
+                name: "Filed"
+              }, {
+                icon: "circle",
+                name: "Priority"
+              }, {
+                icon: "circle",
+                name: "Published"
+              }],
+              textStyle: {
+                color: "#FFF"
+              }
+            },
+            series: [{
+              data: [10, 20, 30, 30, 20, 10],
+              itemStyle: {
+                normal: {
+                  color: "#FF9100"
+                }
+              },
+              name: "Filed",
+              type: "line"
+            }, {
+              data: [30, 20, 10, 10, 20, 30],
+              itemStyle: {
+                normal: {
+                  color: "#FFEA00"
+                }
+              },
+              name: "Priority",
+              type: "line"
+            }, {
+              data: [10, 10, 30, 10, 10, 30],
+              itemStyle: {
+                normal: {
+                  color: "#00E676"
+                }
+              },
+              name: "Published",
+              type: "line"
+            }],
+            toolbox: {
+              feature: {
+                magicType: {
+                  title: {
+                    bar: "switch to bar",
+                    line: "switch to line"
+                  },
+                  type: ["bar", "line"]
+                },
+                // saveAsImage: {
+                //   show: true,
+                //   title: "save"
+                // }
+              },
+              iconStyle: {
+                normal: {
+                  color: "#FFF"
+                }
+              },
+              show: true
+            },
+            tooltip: {
+              formatter: "{c0} patent <b>{a0}</b> in {b0}<br>{c1} <b>{a1}</b> patent in {b1}<br>{c2} patent <b>{a2}</b> in {b2}",
+              trigger: "axis"
+            },
+            xAxis: [{
+              axisLabel: {
+                textStyle: {
+                  color: "#FFF"
+                }
+              },
+              axisLine: {
+                show: false
+              },
+              data: [1990, 1995, 2000, 2005, 2010, 2015],
+              splitLine: {
+                show: false
+              },
+              type: "category"
+            }],
+            yAxis: [{
+              axisLabel: {
+                show: false
+              },
+              axisLine: {
+                show: false
+              },
+              min: "dataMin",
+              splitLine: {
+                show: false
+              },
+              type: "value"
+            }]
+          };
+
+        graph.setOption({
+          option: option
+        });
+      }, 400);
+    },
+
     _scroll: function(e, d) {
       if (d.target.scrollHeight - (d.target.clientHeight * 1.5) < d.target.scrollTop) {
         if (this.item.match && this.item.position && this.item.position < this.item.match) {
@@ -277,154 +385,88 @@
       }
     },
 
-    _vis_network: function() {
-      this.debounce("_vis_network", function() {
-        this._echarts();
+    // _vis_network: function() {
+    //   this.debounce("_vis_network", function() {
+    //     if (this.item.patent) {
+    //       listA = {};
+    //       listZ = {};
 
-        // if (this.item.patent) {
-        //     listA = {};
-        //     listZ = {};
+    //       this.item.patent.forEach(function(A) {
+    //         if (A.concept) {
+    //           var B = A.concept.split(/;/).filter(Boolean);
 
-        //     this.item.patent.forEach(function(A) {
-        //         if (A.concept) {
-        //             var B = A.concept.split(/;/).filter(Boolean);
+    //           B.forEach(function(C) {
+    //             _key(listA, [C, A.p_no]);
+    //           });
+    //         }
 
-        //             B.forEach(function(C) {
-        //                 _key(listA, [C, A.p_no]);
-        //             });
-        //         }
+    //         A.project.tag.forEach(function(tag) {
+    //           _key(listA, [tag, A.p_no]);
+    //         });
+    //       });
 
-        //         A.project.tag.forEach(function(tag) {
-        //             _key(listA, [tag, A.p_no]);
-        //         });
-        //     });
+    //       Object.keys(listA).sort(function(keyA, keyZ) {
+    //         return (_.size(listA[keyZ]) - _.size(listA[keyA]));
+    //       }).forEach(function(index) {
+    //         if (_.size(listZ) < 10 && 1 < _.size(listA[index])) {
+    //           listZ[index] = listA[index];
+    //         }
+    //       });
 
-        //     Object.keys(listA).sort(function(keyA, keyZ) {
-        //         return (_.size(listA[keyZ]) - _.size(listA[keyA]));
-        //     }).forEach(function(index) {
-        //         if (_.size(listZ) < 10 && 1 < _.size(listA[index])) {
-        //             listZ[index] = listA[index];
-        //         }
-        //     });
+    //       var edges = _.map(_edges.get(), function(item) {
+    //           return item.id;
+    //         }),
+    //         nodes = _.map(_nodes.get(), function(item) {
+    //           return item.id;
+    //         });
 
-        //     var edges = _.map(_edges.get(), function(item) {
-        //             return item.id;
-        //         }),
-        //         nodes = _.map(_nodes.get(), function(item) {
-        //             return item.id;
-        //         });
+    //       _.each(listZ, function(valueA, keyA, list) {
+    //         var A = nodes.indexOf(keyA);
 
-        //     _.each(listZ, function(valueA, keyA, list) {
-        //         var A = nodes.indexOf(keyA);
+    //         if (-1 < A) {
+    //           nodes.splice(A, 1);
+    //         } else {
+    //           _nodes.update({
+    //             group: "taxonomy",
+    //             id: keyA,
+    //             label: keyA,
+    //             // size: _.size(valueA)
+    //           });
+    //         }
 
-        //         if (-1 < A) {
-        //             nodes.splice(A, 1);
-        //         } else {
-        //             _nodes.update({
-        //                 group: "taxonomy",
-        //                 id: keyA,
-        //                 label: keyA,
-        //                 // size: _.size(valueA)
-        //             });
-        //         }
+    //         _.each(valueA, function(valueZ, keyZ, list) {
+    //           var Z = nodes.indexOf(keyZ);
 
-        //         _.each(valueA, function(valueZ, keyZ, list) {
-        //             var Z = nodes.indexOf(keyZ);
+    //           if (-1 < Z) {
+    //             nodes.splice(Z, 1);
+    //           } else {
+    //             _nodes.update({
+    //               group: "patent",
+    //               id: keyZ,
+    //               label: keyZ,
+    //               // size: _.size(valueA)
+    //             });
+    //           }
 
-        //             if (-1 < Z) {
-        //                 nodes.splice(Z, 1);
-        //             } else {
-        //                 _nodes.update({
-        //                     group: "patent",
-        //                     id: keyZ,
-        //                     label: keyZ,
-        //                     // size: _.size(valueA)
-        //                 });
-        //             }
+    //           var index = edges.indexOf(keyZ + " | " + keyA);
 
-        //             var index = edges.indexOf(keyZ + " | " + keyA);
+    //           if (-1 < index) {
+    //             edges.splice(index, 1);
+    //           } else {
+    //             _edges.update({
+    //               from: keyZ,
+    //               id: keyZ + " | " + keyA,
+    //               to: keyA
+    //             });
+    //           }
+    //         });
+    //       });
 
-        //             if (-1 < index) {
-        //                 edges.splice(index, 1);
-        //             } else {
-        //                 _edges.update({
-        //                     from: keyZ,
-        //                     id: keyZ + " | " + keyA,
-        //                     to: keyA
-        //                 });
-        //             }
-        //         });
-        //     });
-
-        //     _edges.remove(edges);
-        //     _nodes.remove(nodes);
-        // }
-      }, 400);
-    },
-
-    _echarts: function() {
-      // based ready dom, initialization echarts instance 
-      var myChart = echarts.init(document.querySelector("#vis-network"));
-
-      // Specify configurations and data graphs 
-      var option = {
-        backgroundColor: '#2c343c',
-        visualMap: {
-          show: false,
-          min: 80,
-          max: 600,
-          inRange: {
-            colorLightness: [0, 1]
-          }
-        },
-        series: [{
-          name: '访问来源',
-          type: 'pie',
-          radius: '55%',
-          data: [{
-            value: 235,
-            name: '视频广告'
-          }, {
-            value: 274,
-            name: '联盟广告'
-          }, {
-            value: 310,
-            name: '邮件营销'
-          }, {
-            value: 335,
-            name: '直接访问'
-          }, {
-            value: 400,
-            name: '搜索引擎'
-          }],
-          roseType: 'angle',
-          label: {
-            normal: {
-              textStyle: {
-                color: 'rgba(255, 255, 255, 0.3)'
-              }
-            }
-          },
-          labelLine: {
-            normal: {
-              lineStyle: {
-                color: 'rgba(255, 255, 255, 0.3)'
-              }
-            }
-          },
-          itemStyle: {
-            normal: {
-              color: '#c23531',
-              shadowBlur: 200,
-              shadowColor: 'rgba(0, 0, 0, 0.5)'
-            }
-          }
-        }]
-      };
-
-      // Just use the specified configurations and data graphs. 
-      myChart.setOption(option);
-    }
+    //       _edges.remove(edges);
+    //       _nodes.remove(nodes);
+    //     }
+    //   }, 400);
+    // }
 
   });
   </script>
