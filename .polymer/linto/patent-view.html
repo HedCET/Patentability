@@ -13,9 +13,14 @@
   paper-dropdown-menu {
     --paper-dropdown-menu-icon: {
       color: white;
+      padding: 4px 8px;
     }
     --paper-input-container-input: {
       color: white;
+      padding: 4px 8px;
+    }
+    --paper-input-container-underline: {
+      background: white;
     }
     --paper-input-container-label: {
       color: white;
@@ -75,9 +80,9 @@
 
       <div class="blue-700 center-justified horizontal layout">
         <div class="blue-500 center horizontal layout li">
-          <div class="cursor-d" style="font-size: 16px; line-height: 24px; padding: 16px;">[[item.p_no]]</div>
+          <!-- <div class="cursor-d" style="font-size: 16px; line-height: 24px; padding: 16px;">[[item.p_no]]</div> -->
 
-          <paper-dropdown-menu class="flex" label="option" no-label-float noink style="margin-right: 16px;">
+          <paper-dropdown-menu class="flex" label="option" no-label-float noink style="margin: 4px 12px;">
             <paper-menu attr-for-selected="data-id" class="dropdown-content" selected="Details" style="min-width: 200px;">
               <paper-item class="cursor-p" data-id="Details">Details</paper-item>
               <paper-item class="cursor-p" data-id="Technologies">Technologies</paper-item>
