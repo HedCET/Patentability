@@ -22725,7 +22725,7 @@ mwcLayout = new PolymerLayout();
 
                   params.forEach(function(item) {
                     if (item.value) {
-                      tooltip += item.value + " patent <b>" + item.seriesName + "</b> in " + item.name + "<br>";
+                      tooltip += "<b>" + item.value + "</b> <b>" + item.seriesName + "</b> patent in <B>" + item.name + "</b><br>";
                     }
                   });
 
@@ -23460,7 +23460,7 @@ mwcLayout = new PolymerLayout();
 
         <div class="title">[[item.p_no]]</div>
 
-        <paper-icon-button data-id$="[[item._id]]" icon="delete" on-click="remove_patent"></paper-icon-button>
+        <paper-icon-button data-id$="[[item._id]]" icon="delete" onclick="document.querySelector('#remove-patent-prompt').open();"></paper-icon-button>
         <paper-icon-button data-id$="[[item._id]]" icon="social:share" on-click="share"></paper-icon-button>
       </paper-toolbar>
 
@@ -23530,8 +23530,23 @@ mwcLayout = new PolymerLayout();
         </div>
       </div>
 
-      <div style="min-height: 80px;"></div>
+      <div style="min-height: 88px;"></div>
     </paper-scroll-header-panel>
+
+    <paper-dialog id="remove-patent-prompt" style="width: 320px;" with-backdrop="">
+      <div style="font-size: 16px; line-height: 24px;">Are you sure to delete this patent ?</div>
+
+      <div class="buttons">
+        <paper-button onclick="document.querySelector('#remove-patent-prompt').close();">
+          <iron-icon icon="close"></iron-icon>
+          cancel
+        </paper-button>
+        <paper-button on-click="remove_patent_ok">
+          <iron-icon icon="check"></iron-icon>
+          ok
+        </paper-button>
+      </div>
+    </paper-dialog>
   </template>
 
   <script>
@@ -23574,6 +23589,29 @@ mwcLayout = new PolymerLayout();
       item: {
         type: Object
       }
+    },
+
+    remove_patent_ok: function() {
+      if (Meteor.status().connected) {
+        var _this = this;
+        Meteor.call("remove_patent", {
+          patent: [_this.item._id],
+          project: _this.item.project._id
+        }, function(error, response) {
+          if (error) {
+            document.querySelector("#polymer-toast").toast(error.reason);
+          } else {
+            FlowRouter.setQueryParams({
+              "patent": null,
+              "route": "project"
+            });
+          }
+        });
+      } else {
+        document.querySelector("#polymer-toast").toast("server connection required");
+      }
+
+      this.$["remove-patent-prompt"].close();
     },
 
     remove_tag: function(e) {
