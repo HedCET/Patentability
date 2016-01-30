@@ -10,6 +10,18 @@
     --paper-badge-background: var(--paper-grey-500);
   }
   
+  paper-dropdown-menu {
+    --paper-dropdown-menu-icon: {
+      color: white;
+    }
+    --paper-input-container-input: {
+      color: white;
+    }
+    --paper-input-container-label: {
+      color: white;
+    }
+  }
+  
   paper-menu-button {
     padding: 0;
   }
@@ -63,16 +75,14 @@
 
       <div class="blue-700 center-justified horizontal layout">
         <div class="blue-500 center horizontal layout li">
-          <div class="cursor-d flex" style="font-size: 16px; line-height: 24px; padding: 16px;"><span>[[item.p_no]]</span> / Details</div>
+          <div class="cursor-d" style="font-size: 16px; line-height: 24px; padding: 16px;">[[item.p_no]]</div>
 
-          <paper-menu-button horizontal-align="right" style="margin-right: 8px;">
-            <paper-icon-button class="dropdown-trigger" icon="arrow-drop-down"></paper-icon-button>
-
+          <paper-dropdown-menu class="flex" label="option" no-label-float noink style="margin-right: 16px;">
             <paper-menu attr-for-selected="data-id" class="dropdown-content" selected="Details" style="min-width: 200px;">
               <paper-item class="cursor-p" data-id="Details">Details</paper-item>
               <paper-item class="cursor-p" data-id="Technologies">Technologies</paper-item>
             </paper-menu>
-          </paper-menu-button>
+          </paper-dropdown-menu>
         </div>
       </div>
 

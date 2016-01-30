@@ -26,6 +26,7 @@
         "bower_components/paper-button/paper-button.html",
         "bower_components/paper-dialog/paper-dialog.html",
         "bower_components/paper-drawer-panel/paper-drawer-panel.html",
+        "bower_components/paper-dropdown-menu/paper-dropdown-menu.html",
         "bower_components/paper-fab/paper-fab.html",
         "bower_components/paper-icon-button/paper-icon-button.html",
         "bower_components/paper-input/paper-input.html",

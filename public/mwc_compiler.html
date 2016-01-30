@@ -14413,6 +14413,325 @@ The `aria-labelledby` attribute will be set to the header element, if one exists
 
 
 
+
+
+<script>
+  (function() {
+    'use strict';
+
+    /**
+     * The IronDropdownScrollManager is intended to provide a central source
+     * of authority and control over which elements in a document are currently
+     * allowed to scroll.
+     */
+
+    Polymer.IronDropdownScrollManager = {
+
+      /**
+       * The current element that defines the DOM boundaries of the
+       * scroll lock. This is always the most recently locking element.
+       */
+      get currentLockingElement() {
+        return this._lockingElements[this._lockingElements.length - 1];
+      },
+
+
+      /**
+       * Returns true if the provided element is "scroll locked," which is to
+       * say that it cannot be scrolled via pointer or keyboard interactions.
+       *
+       * @param {HTMLElement} element An HTML element instance which may or may
+       * not be scroll locked.
+       */
+      elementIsScrollLocked: function(element) {
+        var currentLockingElement = this.currentLockingElement;
+
+        if (currentLockingElement === undefined)
+          return false;
+
+        var scrollLocked;
+
+        if (this._hasCachedLockedElement(element)) {
+          return true;
+        }
+
+        if (this._hasCachedUnlockedElement(element)) {
+          return false;
+        }
+
+        scrollLocked = !!currentLockingElement &&
+          currentLockingElement !== element &&
+          !this._composedTreeContains(currentLockingElement, element);
+
+        if (scrollLocked) {
+          this._lockedElementCache.push(element);
+        } else {
+          this._unlockedElementCache.push(element);
+        }
+
+        return scrollLocked;
+      },
+
+      /**
+       * Push an element onto the current scroll lock stack. The most recently
+       * pushed element and its children will be considered scrollable. All
+       * other elements will not be scrollable.
+       *
+       * Scroll locking is implemented as a stack so that cases such as
+       * dropdowns within dropdowns are handled well.
+       *
+       * @param {HTMLElement} element The element that should lock scroll.
+       */
+      pushScrollLock: function(element) {
+        if (this._lockingElements.length === 0) {
+          this._lockScrollInteractions();
+        }
+
+        this._lockingElements.push(element);
+
+        this._lockedElementCache = [];
+        this._unlockedElementCache = [];
+      },
+
+      /**
+       * Remove an element from the scroll lock stack. The element being
+       * removed does not need to be the most recently pushed element. However,
+       * the scroll lock constraints only change when the most recently pushed
+       * element is removed.
+       *
+       * @param {HTMLElement} element The element to remove from the scroll
+       * lock stack.
+       */
+      removeScrollLock: function(element) {
+        var index = this._lockingElements.indexOf(element);
+
+        if (index === -1) {
+          return;
+        }
+
+        this._lockingElements.splice(index, 1);
+
+        this._lockedElementCache = [];
+        this._unlockedElementCache = [];
+
+        if (this._lockingElements.length === 0) {
+          this._unlockScrollInteractions();
+        }
+      },
+
+      _lockingElements: [],
+
+      _lockedElementCache: null,
+
+      _unlockedElementCache: null,
+
+      _originalBodyStyles: {},
+
+      _isScrollingKeypress: function(event) {
+        return Polymer.IronA11yKeysBehavior.keyboardEventMatchesKeys(
+          event, 'pageup pagedown home end up left down right');
+      },
+
+      _hasCachedLockedElement: function(element) {
+        return this._lockedElementCache.indexOf(element) > -1;
+      },
+
+      _hasCachedUnlockedElement: function(element) {
+        return this._unlockedElementCache.indexOf(element) > -1;
+      },
+
+      _composedTreeContains: function(element, child) {
+        // NOTE(cdata): This method iterates over content elements and their
+        // corresponding distributed nodes to implement a contains-like method
+        // that pierces through the composed tree of the ShadowDOM. Results of
+        // this operation are cached (elsewhere) on a per-scroll-lock basis, to
+        // guard against potentially expensive lookups happening repeatedly as
+        // a user scrolls / touchmoves.
+        var contentElements;
+        var distributedNodes;
+        var contentIndex;
+        var nodeIndex;
+
+        if (element.contains(child)) {
+          return true;
+        }
+
+        contentElements = Polymer.dom(element).querySelectorAll('content');
+
+        for (contentIndex = 0; contentIndex < contentElements.length; ++contentIndex) {
+
+          distributedNodes = Polymer.dom(contentElements[contentIndex]).getDistributedNodes();
+
+          for (nodeIndex = 0; nodeIndex < distributedNodes.length; ++nodeIndex) {
+
+            if (this._composedTreeContains(distributedNodes[nodeIndex], child)) {
+              return true;
+            }
+          }
+        }
+
+        return false;
+      },
+
+      _scrollInteractionHandler: function(event) {
+        if (Polymer
+              .IronDropdownScrollManager
+              .elementIsScrollLocked(event.target)) {
+          if (event.type === 'keydown' &&
+              !Polymer.IronDropdownScrollManager._isScrollingKeypress(event)) {
+            return;
+          }
+
+          event.preventDefault();
+        }
+      },
+
+      _lockScrollInteractions: function() {
+        // Memoize body inline styles:
+        this._originalBodyStyles.overflow = document.body.style.overflow;
+        this._originalBodyStyles.overflowX = document.body.style.overflowX;
+        this._originalBodyStyles.overflowY = document.body.style.overflowY;
+
+        // Disable overflow scrolling on body:
+        // TODO(cdata): It is technically not sufficient to hide overflow on
+        // body alone. A better solution might be to traverse all ancestors of
+        // the current scroll locking element and hide overflow on them. This
+        // becomes expensive, though, as it would have to be redone every time
+        // a new scroll locking element is added.
+        document.body.style.overflow = 'hidden';
+        document.body.style.overflowX = 'hidden';
+        document.body.style.overflowY = 'hidden';
+
+        // Modern `wheel` event for mouse wheel scrolling:
+        window.addEventListener('wheel', this._scrollInteractionHandler, true);
+        // Older, non-standard `mousewheel` event for some FF:
+        window.addEventListener('mousewheel', this._scrollInteractionHandler, true);
+        // IE:
+        window.addEventListener('DOMMouseScroll', this._scrollInteractionHandler, true);
+        // Mobile devices can scroll on touch move:
+        window.addEventListener('touchmove', this._scrollInteractionHandler, true);
+        // Capture keydown to prevent scrolling keys (pageup, pagedown etc.)
+        document.addEventListener('keydown', this._scrollInteractionHandler, true);
+      },
+
+      _unlockScrollInteractions: function() {
+        document.body.style.overflow = this._originalBodyStyles.overflow;
+        document.body.style.overflowX = this._originalBodyStyles.overflowX;
+        document.body.style.overflowY = this._originalBodyStyles.overflowY;
+
+        window.removeEventListener('wheel', this._scrollInteractionHandler, true);
+        window.removeEventListener('mousewheel', this._scrollInteractionHandler, true);
+        window.removeEventListener('DOMMouseScroll', this._scrollInteractionHandler, true);
+        window.removeEventListener('touchmove', this._scrollInteractionHandler, true);
+        document.removeEventListener('keydown', this._scrollInteractionHandler, true);
+      }
+    };
+  })();
+</script>
+
+
+<script>
+  Polymer({
+    is: 'paper-menu-grow-height-animation',
+
+    behaviors: [
+      Polymer.NeonAnimationBehavior
+    ],
+
+    configure: function(config) {
+      var node = config.node;
+      var rect = node.getBoundingClientRect();
+      var height = rect.height;
+
+      this._effect = new KeyframeEffect(node, [{
+        height: (height / 2) + 'px'
+      }, {
+        height: height + 'px'
+      }], this.timingFromConfig(config));
+
+      return this._effect;
+    }
+  });
+
+  Polymer({
+    is: 'paper-menu-grow-width-animation',
+
+    behaviors: [
+      Polymer.NeonAnimationBehavior
+    ],
+
+    configure: function(config) {
+      var node = config.node;
+      var rect = node.getBoundingClientRect();
+      var width = rect.width;
+
+      this._effect = new KeyframeEffect(node, [{
+        width: (width / 2) + 'px'
+      }, {
+        width: width + 'px'
+      }], this.timingFromConfig(config));
+
+      return this._effect;
+    }
+  });
+
+  Polymer({
+    is: 'paper-menu-shrink-width-animation',
+
+    behaviors: [
+      Polymer.NeonAnimationBehavior
+    ],
+
+    configure: function(config) {
+      var node = config.node;
+      var rect = node.getBoundingClientRect();
+      var width = rect.width;
+
+      this._effect = new KeyframeEffect(node, [{
+        width: width + 'px'
+      }, {
+        width: width - (width / 20) + 'px'
+      }], this.timingFromConfig(config));
+
+      return this._effect;
+    }
+  });
+
+  Polymer({
+    is: 'paper-menu-shrink-height-animation',
+
+    behaviors: [
+      Polymer.NeonAnimationBehavior
+    ],
+
+    configure: function(config) {
+      var node = config.node;
+      var rect = node.getBoundingClientRect();
+      var height = rect.height;
+      var top = rect.top;
+
+      this.setPrefixedProperty(node, 'transformOrigin', '0 0');
+
+      this._effect = new KeyframeEffect(node, [{
+        height: height + 'px',
+        transform: 'translateY(0)'
+      }, {
+        height: height / 2 + 'px',
+        transform: 'translateY(-20px)'
+      }], this.timingFromConfig(config));
+
+      return this._effect;
+    }
+  });
+</script>
+
+
+
+
+
+
+
+
 <script>
 
   /**
@@ -14454,10 +14773,6 @@ The `aria-labelledby` attribute will be set to the header element, if one exists
   ];
 
 </script>
-
-
-
-
 
 
 
@@ -14785,319 +15100,6 @@ The `aria-labelledby` attribute will be set to the header element, if one exists
   ];
 
 </script>
-
-
-<script>
-  (function() {
-    'use strict';
-
-    /**
-     * The IronDropdownScrollManager is intended to provide a central source
-     * of authority and control over which elements in a document are currently
-     * allowed to scroll.
-     */
-
-    Polymer.IronDropdownScrollManager = {
-
-      /**
-       * The current element that defines the DOM boundaries of the
-       * scroll lock. This is always the most recently locking element.
-       */
-      get currentLockingElement() {
-        return this._lockingElements[this._lockingElements.length - 1];
-      },
-
-
-      /**
-       * Returns true if the provided element is "scroll locked," which is to
-       * say that it cannot be scrolled via pointer or keyboard interactions.
-       *
-       * @param {HTMLElement} element An HTML element instance which may or may
-       * not be scroll locked.
-       */
-      elementIsScrollLocked: function(element) {
-        var currentLockingElement = this.currentLockingElement;
-
-        if (currentLockingElement === undefined)
-          return false;
-
-        var scrollLocked;
-
-        if (this._hasCachedLockedElement(element)) {
-          return true;
-        }
-
-        if (this._hasCachedUnlockedElement(element)) {
-          return false;
-        }
-
-        scrollLocked = !!currentLockingElement &&
-          currentLockingElement !== element &&
-          !this._composedTreeContains(currentLockingElement, element);
-
-        if (scrollLocked) {
-          this._lockedElementCache.push(element);
-        } else {
-          this._unlockedElementCache.push(element);
-        }
-
-        return scrollLocked;
-      },
-
-      /**
-       * Push an element onto the current scroll lock stack. The most recently
-       * pushed element and its children will be considered scrollable. All
-       * other elements will not be scrollable.
-       *
-       * Scroll locking is implemented as a stack so that cases such as
-       * dropdowns within dropdowns are handled well.
-       *
-       * @param {HTMLElement} element The element that should lock scroll.
-       */
-      pushScrollLock: function(element) {
-        if (this._lockingElements.length === 0) {
-          this._lockScrollInteractions();
-        }
-
-        this._lockingElements.push(element);
-
-        this._lockedElementCache = [];
-        this._unlockedElementCache = [];
-      },
-
-      /**
-       * Remove an element from the scroll lock stack. The element being
-       * removed does not need to be the most recently pushed element. However,
-       * the scroll lock constraints only change when the most recently pushed
-       * element is removed.
-       *
-       * @param {HTMLElement} element The element to remove from the scroll
-       * lock stack.
-       */
-      removeScrollLock: function(element) {
-        var index = this._lockingElements.indexOf(element);
-
-        if (index === -1) {
-          return;
-        }
-
-        this._lockingElements.splice(index, 1);
-
-        this._lockedElementCache = [];
-        this._unlockedElementCache = [];
-
-        if (this._lockingElements.length === 0) {
-          this._unlockScrollInteractions();
-        }
-      },
-
-      _lockingElements: [],
-
-      _lockedElementCache: null,
-
-      _unlockedElementCache: null,
-
-      _originalBodyStyles: {},
-
-      _isScrollingKeypress: function(event) {
-        return Polymer.IronA11yKeysBehavior.keyboardEventMatchesKeys(
-          event, 'pageup pagedown home end up left down right');
-      },
-
-      _hasCachedLockedElement: function(element) {
-        return this._lockedElementCache.indexOf(element) > -1;
-      },
-
-      _hasCachedUnlockedElement: function(element) {
-        return this._unlockedElementCache.indexOf(element) > -1;
-      },
-
-      _composedTreeContains: function(element, child) {
-        // NOTE(cdata): This method iterates over content elements and their
-        // corresponding distributed nodes to implement a contains-like method
-        // that pierces through the composed tree of the ShadowDOM. Results of
-        // this operation are cached (elsewhere) on a per-scroll-lock basis, to
-        // guard against potentially expensive lookups happening repeatedly as
-        // a user scrolls / touchmoves.
-        var contentElements;
-        var distributedNodes;
-        var contentIndex;
-        var nodeIndex;
-
-        if (element.contains(child)) {
-          return true;
-        }
-
-        contentElements = Polymer.dom(element).querySelectorAll('content');
-
-        for (contentIndex = 0; contentIndex < contentElements.length; ++contentIndex) {
-
-          distributedNodes = Polymer.dom(contentElements[contentIndex]).getDistributedNodes();
-
-          for (nodeIndex = 0; nodeIndex < distributedNodes.length; ++nodeIndex) {
-
-            if (this._composedTreeContains(distributedNodes[nodeIndex], child)) {
-              return true;
-            }
-          }
-        }
-
-        return false;
-      },
-
-      _scrollInteractionHandler: function(event) {
-        if (Polymer
-              .IronDropdownScrollManager
-              .elementIsScrollLocked(event.target)) {
-          if (event.type === 'keydown' &&
-              !Polymer.IronDropdownScrollManager._isScrollingKeypress(event)) {
-            return;
-          }
-
-          event.preventDefault();
-        }
-      },
-
-      _lockScrollInteractions: function() {
-        // Memoize body inline styles:
-        this._originalBodyStyles.overflow = document.body.style.overflow;
-        this._originalBodyStyles.overflowX = document.body.style.overflowX;
-        this._originalBodyStyles.overflowY = document.body.style.overflowY;
-
-        // Disable overflow scrolling on body:
-        // TODO(cdata): It is technically not sufficient to hide overflow on
-        // body alone. A better solution might be to traverse all ancestors of
-        // the current scroll locking element and hide overflow on them. This
-        // becomes expensive, though, as it would have to be redone every time
-        // a new scroll locking element is added.
-        document.body.style.overflow = 'hidden';
-        document.body.style.overflowX = 'hidden';
-        document.body.style.overflowY = 'hidden';
-
-        // Modern `wheel` event for mouse wheel scrolling:
-        window.addEventListener('wheel', this._scrollInteractionHandler, true);
-        // Older, non-standard `mousewheel` event for some FF:
-        window.addEventListener('mousewheel', this._scrollInteractionHandler, true);
-        // IE:
-        window.addEventListener('DOMMouseScroll', this._scrollInteractionHandler, true);
-        // Mobile devices can scroll on touch move:
-        window.addEventListener('touchmove', this._scrollInteractionHandler, true);
-        // Capture keydown to prevent scrolling keys (pageup, pagedown etc.)
-        document.addEventListener('keydown', this._scrollInteractionHandler, true);
-      },
-
-      _unlockScrollInteractions: function() {
-        document.body.style.overflow = this._originalBodyStyles.overflow;
-        document.body.style.overflowX = this._originalBodyStyles.overflowX;
-        document.body.style.overflowY = this._originalBodyStyles.overflowY;
-
-        window.removeEventListener('wheel', this._scrollInteractionHandler, true);
-        window.removeEventListener('mousewheel', this._scrollInteractionHandler, true);
-        window.removeEventListener('DOMMouseScroll', this._scrollInteractionHandler, true);
-        window.removeEventListener('touchmove', this._scrollInteractionHandler, true);
-        document.removeEventListener('keydown', this._scrollInteractionHandler, true);
-      }
-    };
-  })();
-</script>
-
-
-<script>
-  Polymer({
-    is: 'paper-menu-grow-height-animation',
-
-    behaviors: [
-      Polymer.NeonAnimationBehavior
-    ],
-
-    configure: function(config) {
-      var node = config.node;
-      var rect = node.getBoundingClientRect();
-      var height = rect.height;
-
-      this._effect = new KeyframeEffect(node, [{
-        height: (height / 2) + 'px'
-      }, {
-        height: height + 'px'
-      }], this.timingFromConfig(config));
-
-      return this._effect;
-    }
-  });
-
-  Polymer({
-    is: 'paper-menu-grow-width-animation',
-
-    behaviors: [
-      Polymer.NeonAnimationBehavior
-    ],
-
-    configure: function(config) {
-      var node = config.node;
-      var rect = node.getBoundingClientRect();
-      var width = rect.width;
-
-      this._effect = new KeyframeEffect(node, [{
-        width: (width / 2) + 'px'
-      }, {
-        width: width + 'px'
-      }], this.timingFromConfig(config));
-
-      return this._effect;
-    }
-  });
-
-  Polymer({
-    is: 'paper-menu-shrink-width-animation',
-
-    behaviors: [
-      Polymer.NeonAnimationBehavior
-    ],
-
-    configure: function(config) {
-      var node = config.node;
-      var rect = node.getBoundingClientRect();
-      var width = rect.width;
-
-      this._effect = new KeyframeEffect(node, [{
-        width: width + 'px'
-      }, {
-        width: width - (width / 20) + 'px'
-      }], this.timingFromConfig(config));
-
-      return this._effect;
-    }
-  });
-
-  Polymer({
-    is: 'paper-menu-shrink-height-animation',
-
-    behaviors: [
-      Polymer.NeonAnimationBehavior
-    ],
-
-    configure: function(config) {
-      var node = config.node;
-      var rect = node.getBoundingClientRect();
-      var height = rect.height;
-      var top = rect.top;
-
-      this.setPrefixedProperty(node, 'transformOrigin', '0 0');
-
-      this._effect = new KeyframeEffect(node, [{
-        height: height + 'px',
-        transform: 'translateY(0)'
-      }, {
-        height: height / 2 + 'px',
-        transform: 'translateY(-20px)'
-      }], this.timingFromConfig(config));
-
-      return this._effect;
-    }
-  });
-</script>
-
-
 
 
 <script>
@@ -18960,214 +18962,6 @@ mwcLayout = new PolymerLayout();
     }());
   </script>
 </dom-module>
-<dom-module id="paper-fab" assetpath="/bower_components/paper-fab/">
-  <template strip-whitespace="">
-    <style include="paper-material-shared-styles">
-      :host {
-        display: inline-block;
-        position: relative;
-        outline: none;
-        -moz-user-select: none;
-        -ms-user-select: none;
-        -webkit-user-select: none;
-        -webkit-tap-highlight-color: rgba(0,0,0,0);
-        user-select: none;
-        cursor: pointer;
-
-        box-sizing: border-box;
-        min-width: 0;
-        width: 56px;
-        height: 56px;
-        background: var(--paper-fab-background, --accent-color);
-        color: var(--text-primary-color);
-        border-radius: 50%;
-        padding: 16px;
-
-        z-index: 0;
-
-        @apply(--layout-vertical);
-        @apply(--layout-center-center);
-        @apply(--paper-fab);
-      }
-
-      :host([mini]) {
-        width: 40px;
-        height: 40px;
-        padding: 8px;
-
-        @apply(--paper-fab-mini);
-      }
-
-      :host([disabled]) {
-        color: var(--paper-fab-disabled-text, --paper-grey-500);
-        background: var(--paper-fab-disabled-background, --paper-grey-300);
-        @apply(--paper-fab-disabled);
-      }
-
-      iron-icon {
-        @apply(--paper-fab-iron-icon);
-      }
-
-      :host(.keyboard-focus) {
-        background: var(--paper-fab-keyboard-focus-background, --paper-pink-900);
-      }
-    </style>
-
-    <iron-icon id="icon" src="[[src]]" icon="[[icon]]"></iron-icon>
-  </template>
-</dom-module>
-
-<script>
-  Polymer({
-    is: 'paper-fab',
-
-    behaviors: [
-      Polymer.PaperButtonBehavior
-    ],
-
-    properties: {
-      /**
-       * The URL of an image for the icon. If the src property is specified,
-       * the icon property should not be.
-       *
-       * @attribute src
-       * @type string
-       * @default ''
-       */
-      src: {
-        type: String,
-        value: ''
-      },
-
-      /**
-       * Specifies the icon name or index in the set of icons available in
-       * the icon's icon set. If the icon property is specified,
-       * the src property should not be.
-       *
-       * @attribute icon
-       * @type string
-       * @default ''
-       */
-      icon: {
-        type: String,
-        value: ''
-      },
-
-      /**
-       * Set this to true to style this is a "mini" FAB.
-       *
-       * @attribute mini
-       * @type boolean
-       * @default false
-       */
-      mini: {
-        type: Boolean,
-        value: false,
-        reflectToAttribute: true
-      }
-    }
-  });
-</script>
-<dom-module id="paper-icon-button" assetpath="/bower_components/paper-icon-button/">
-  <template strip-whitespace="">
-    <style>
-      :host {
-        display: inline-block;
-        position: relative;
-        padding: 8px;
-        outline: none;
-        -webkit-tap-highlight-color: rgba(0,0,0,0);
-        -webkit-user-select: none;
-        -moz-user-select: none;
-        -ms-user-select: none;
-        user-select: none;
-        cursor: pointer;
-        z-index: 0;
-        line-height: 1;
-        
-        width: 40px;
-        height: 40px;
-
-        /* Because of polymer/2558, this style has lower specificity than * */
-        box-sizing: border-box !important;
-        @apply(--paper-icon-button);
-      }
-
-      :host #ink {
-        color: var(--paper-icon-button-ink-color, --primary-text-color);
-        opacity: 0.6;
-      }
-
-      :host([disabled]) {
-        color: var(--paper-icon-button-disabled-text, --disabled-text-color);
-        pointer-events: none;
-        cursor: auto;
-        @apply(--paper-icon-button-disabled);
-      }
-      
-      :host(:hover) { 
-        @apply(--paper-icon-button-hover);
-      }
-
-      iron-icon {
-        --iron-icon-width: 100%;
-        --iron-icon-height: 100%;
-      }
-    </style>
-    <iron-icon id="icon" src="[[src]]" icon="[[icon]]" alt$="[[alt]]"></iron-icon>
-  </template>
-
-  <script>
-    Polymer({
-      is: 'paper-icon-button',
-
-      hostAttributes: {
-        role: 'button',
-        tabindex: '0'
-      },
-
-      behaviors: [
-        Polymer.PaperInkyFocusBehavior
-      ],
-
-      properties: {
-        /**
-         * The URL of an image for the icon. If the src property is specified,
-         * the icon property should not be.
-         */
-        src: {
-          type: String
-        },
-
-        /**
-         * Specifies the icon name or index in the set of icons available in
-         * the icon's icon set. If the icon property is specified,
-         * the src property should not be.
-         */
-        icon: {
-          type: String
-        },
-
-        /**
-         * Specifies the alternate text for the button, for accessibility.
-         */
-        alt: {
-          type: String,
-          observer: "_altChanged"
-        }
-      },
-
-      _altChanged: function(newValue, oldValue) {
-        var label = this.getAttribute('aria-label');
-
-        // Don't stomp over a user-set aria-label.
-        if (!label || oldValue == label) {
-          this.setAttribute('aria-label', newValue);
-        }
-      }
-    });
-  </script>
-</dom-module>
 <dom-module id="paper-input-char-counter" assetpath="/bower_components/paper-input/">
   <template>
     <style>
@@ -19276,147 +19070,6 @@ mwcLayout = new PolymerLayout();
     ]
   });
 </script>
-<dom-module id="paper-item-shared-styles" assetpath="/bower_components/paper-item/">
-  <template>
-    <style>
-      :host {
-        display: block;
-        position: relative;
-        min-height: var(--paper-item-min-height, 48px);
-        padding: 0px 16px;
-      }
-
-      :host([hidden]) {
-        display: none !important;
-      }
-
-      :host(.iron-selected) {
-        font-weight: var(--paper-item-selected-weight, bold);
-
-        @apply(--paper-item-selected);
-      }
-
-      :host([disabled]) {
-        color: var(--paper-item-disabled-color, --disabled-text-color);
-
-        @apply(--paper-item-disabled);
-      }
-
-      :host(:focus) {
-        position: relative;
-        outline: 0;
-
-        @apply(--paper-item-focused);
-      }
-
-      :host(:focus):before {
-        @apply(--layout-fit);
-
-        background: currentColor;
-        content: '';
-        opacity: var(--dark-divider-opacity);
-        pointer-events: none;
-
-        @apply(--paper-item-focused-before);
-      }
-    </style>
-  </template>
-</dom-module>
-<dom-module id="paper-item" assetpath="/bower_components/paper-item/">
-  <template>
-    <style include="paper-item-shared-styles"></style>
-    <style>
-      :host {
-        @apply(--layout-horizontal);
-        @apply(--layout-center);
-        @apply(--paper-font-subhead);
-
-        @apply(--paper-item);
-      }
-    </style>
-
-    <content></content>
-  </template>
-
-  <script>
-    Polymer({
-      is: 'paper-item',
-
-      behaviors: [
-        Polymer.PaperItemBehavior
-      ]
-    });
-  </script>
-</dom-module>
-<dom-module id="paper-menu-shared-styles" assetpath="/bower_components/paper-menu/">
-  <template>
-    <style>
-      /* need a wrapper element to make this higher specificity than the :host rule in paper-item */
-      .selectable-content > ::content > .iron-selected {
-        font-weight: bold;
-
-        @apply(--paper-menu-selected-item);
-      }
-
-      .selectable-content > ::content > [disabled] {
-        color: var(--paper-menu-disabled-color, --disabled-text-color);
-      }
-
-      .selectable-content > ::content > *:focus {
-        position: relative;
-        outline: 0;
-
-        @apply(--paper-menu-focused-item);
-      }
-
-      .selectable-content > ::content > *:focus:after {
-        @apply(--layout-fit);
-        background: currentColor;
-        opacity: var(--dark-divider-opacity);
-        content: '';
-        pointer-events: none;
-
-        @apply(--paper-menu-focused-item-after);
-      }
-
-      .selectable-content > ::content > *[colored]:focus:after {
-        opacity: 0.26;
-      }
-    </style>
-  </template>
-</dom-module>
-<dom-module id="paper-menu" assetpath="/bower_components/paper-menu/">
-  <template>
-    <style include="paper-menu-shared-styles"></style>
-    <style>
-      :host {
-        display: block;
-        padding: 8px 0;
-
-        background: var(--paper-menu-background-color, --primary-background-color);
-        color: var(--paper-menu-color, --primary-text-color);
-
-        @apply(--paper-menu);
-      }
-    </style>
-
-    <div class="selectable-content">
-      <content></content>
-    </div>
-  </template>
-
-  <script>
-    (function() {
-      Polymer({
-        is: 'paper-menu',
-
-        behaviors: [
-          Polymer.IronMenuBehavior
-        ]
-      });
-    })();
-  </script>
-</dom-module>
 <dom-module id="iron-dropdown" assetpath="/bower_components/iron-dropdown/">
   <style>
     :host {
@@ -20171,6 +19824,710 @@ mwcLayout = new PolymerLayout();
     Polymer.PaperMenuButton = PaperMenuButton;
   })();
 </script>
+<dom-module id="paper-dropdown-menu" assetpath="/bower_components/paper-dropdown-menu/">
+  <template>
+    <style>
+      :host {
+        display: inline-block;
+        position: relative;
+        text-align: left;
+        cursor: pointer;
+
+        /* NOTE(cdata): Both values are needed, since some phones require the
+         * value to be `transparent`.
+         */
+        -webkit-tap-highlight-color: rgba(0,0,0,0);
+        -webkit-tap-highlight-color: transparent;
+
+        --paper-input-container-input: {
+          overflow: hidden;
+          white-space: nowrap;
+          text-overflow: ellipsis;
+          max-width: 100%;
+          box-sizing: border-box;
+          cursor: pointer;
+        };
+
+        @apply(--paper-dropdown-menu);
+      }
+
+      :host([disabled]) {
+        @apply(--paper-dropdown-menu-disabled);
+      }
+
+      :host([noink]) paper-ripple {
+        display: none;
+      }
+
+      :host([no-label-float]) paper-ripple {
+        top: 8px;
+      }
+
+      paper-ripple {
+        top: 12px;
+        left: 0px;
+        bottom: 8px;
+        right: 0px;
+
+        @apply(--paper-dropdown-menu-ripple);
+      }
+
+      paper-menu-button {
+        display: block;
+        padding: 0;
+
+        @apply(--paper-dropdown-menu-button);
+      }
+
+      paper-input {
+        @apply(--paper-dropdown-menu-input);
+      }
+
+      iron-icon {
+        color: var(--disabled-text-color);
+
+        @apply(--paper-dropdown-menu-icon);
+      }
+    </style>
+
+    
+    <div role="button"></div>
+    <paper-menu-button id="menuButton" vertical-align="[[verticalAlign]]" horizontal-align="[[horizontalAlign]]" vertical-offset="[[_computeMenuVerticalOffset(noLabelFloat)]]" disabled="[[disabled]]" no-animations="[[noAnimations]]" on-iron-select="_onIronSelect" on-iron-deselect="_onIronDeselect" opened="{{opened}}">
+      <div class="dropdown-trigger">
+        <paper-ripple></paper-ripple>
+        
+        <paper-input type="text" invalid="[[invalid]]" readonly="" disabled="[[disabled]]" value="[[selectedItemLabel]]" placeholder="[[placeholder]]" error-message="[[errorMessage]]" always-float-label="[[alwaysFloatLabel]]" no-label-float="[[noLabelFloat]]" label="[[label]]">
+          <iron-icon icon="arrow-drop-down" suffix=""></iron-icon>
+        </paper-input>
+      </div>
+      <content id="content" select=".dropdown-content"></content>
+    </paper-menu-button>
+  </template>
+
+  <script>
+    (function() {
+      'use strict';
+
+      Polymer({
+        is: 'paper-dropdown-menu',
+
+        /**
+         * Fired when the dropdown opens.
+         *
+         * @event paper-dropdown-open
+         */
+
+        /**
+         * Fired when the dropdown closes.
+         *
+         * @event paper-dropdown-close
+         */
+
+        behaviors: [
+          Polymer.IronButtonState,
+          Polymer.IronControlState,
+          Polymer.IronFormElementBehavior,
+          Polymer.IronValidatableBehavior
+        ],
+
+        properties: {
+          /**
+           * The derived "label" of the currently selected item. This value
+           * is the `label` property on the selected item if set, or else the
+           * trimmed text content of the selected item.
+           */
+          selectedItemLabel: {
+            type: String,
+            notify: true,
+            readOnly: true
+          },
+
+          /**
+           * The last selected item. An item is selected if the dropdown menu has
+           * a child with class `dropdown-content`, and that child triggers an
+           * `iron-select` event with the selected `item` in the `detail`.
+           *
+           * @type {?Object}
+           */
+          selectedItem: {
+            type: Object,
+            notify: true,
+            readOnly: true
+          },
+
+          /**
+           * The value for this element that will be used when submitting in
+           * a form. It is read only, and will always have the same value
+           * as `selectedItemLabel`.
+           */
+          value: {
+            type: String,
+            notify: true,
+            readOnly: true
+          },
+
+          /**
+           * The label for the dropdown.
+           */
+          label: {
+            type: String
+          },
+
+          /**
+           * The placeholder for the dropdown.
+           */
+          placeholder: {
+            type: String
+          },
+
+          /**
+           * The error message to display when invalid.
+           */
+          errorMessage: {
+              type: String
+          },
+
+          /**
+           * True if the dropdown is open. Otherwise, false.
+           */
+          opened: {
+            type: Boolean,
+            notify: true,
+            value: false,
+            observer: '_openedChanged'
+          },
+
+          /**
+           * Set to true to disable the floating label. Bind this to the
+           * `<paper-input-container>`'s `noLabelFloat` property.
+           */
+          noLabelFloat: {
+              type: Boolean,
+              value: false,
+              reflectToAttribute: true
+          },
+
+          /**
+           * Set to true to always float the label. Bind this to the
+           * `<paper-input-container>`'s `alwaysFloatLabel` property.
+           */
+          alwaysFloatLabel: {
+            type: Boolean,
+            value: false
+          },
+
+          /**
+           * Set to true to disable animations when opening and closing the
+           * dropdown.
+           */
+          noAnimations: {
+            type: Boolean,
+            value: false
+          },
+
+          /**
+           * The orientation against which to align the menu dropdown
+           * horizontally relative to the dropdown trigger.
+           */
+          horizontalAlign: {
+            type: String,
+            value: 'right'
+          },
+
+          /**
+           * The orientation against which to align the menu dropdown
+           * vertically relative to the dropdown trigger.
+           */
+          verticalAlign: {
+            type: String,
+            value: 'top'
+          }
+        },
+
+        listeners: {
+          'tap': '_onTap'
+        },
+
+        keyBindings: {
+          'up down': 'open',
+          'esc': 'close'
+        },
+
+        hostAttributes: {
+          role: 'combobox',
+          'aria-autocomplete': 'none',
+          'aria-haspopup': 'true'
+        },
+
+        observers: [
+          '_selectedItemChanged(selectedItem)'
+        ],
+
+        attached: function() {
+          // NOTE(cdata): Due to timing, a preselected value in a `IronSelectable`
+          // child will cause an `iron-select` event to fire while the element is
+          // still in a `DocumentFragment`. This has the effect of causing
+          // handlers not to fire. So, we double check this value on attached:
+          var contentElement = this.contentElement;
+          if (contentElement && contentElement.selectedItem) {
+            this._setSelectedItem(contentElement.selectedItem);
+          }
+        },
+
+        /**
+         * The content element that is contained by the dropdown menu, if any.
+         */
+        get contentElement() {
+          return Polymer.dom(this.$.content).getDistributedNodes()[0];
+        },
+
+        /**
+         * Show the dropdown content.
+         */
+        open: function() {
+          this.$.menuButton.open();
+        },
+
+        /**
+         * Hide the dropdown content.
+         */
+        close: function() {
+          this.$.menuButton.close();
+        },
+
+        /**
+         * A handler that is called when `iron-select` is fired.
+         *
+         * @param {CustomEvent} event An `iron-select` event.
+         */
+        _onIronSelect: function(event) {
+          this._setSelectedItem(event.detail.item);
+        },
+
+        /**
+         * A handler that is called when `iron-deselect` is fired.
+         *
+         * @param {CustomEvent} event An `iron-deselect` event.
+         */
+        _onIronDeselect: function(event) {
+          this._setSelectedItem(null);
+        },
+
+        /**
+         * A handler that is called when the dropdown is tapped.
+         *
+         * @param {CustomEvent} event A tap event.
+         */
+        _onTap: function(event) {
+          if (Polymer.Gestures.findOriginalTarget(event) === this) {
+            this.open();
+          }
+        },
+
+        /**
+         * Compute the label for the dropdown given a selected item.
+         *
+         * @param {Element} selectedItem A selected Element item, with an
+         * optional `label` property.
+         */
+        _selectedItemChanged: function(selectedItem) {
+          var value = '';
+          if (!selectedItem) {
+            value = '';
+          } else {
+            value = selectedItem.label || selectedItem.textContent.trim();
+          }
+
+          this._setValue(value);
+          this._setSelectedItemLabel(value);
+        },
+
+        /**
+         * Compute the vertical offset of the menu based on the value of
+         * `noLabelFloat`.
+         *
+         * @param {boolean} noLabelFloat True if the label should not float
+         * above the input, otherwise false.
+         */
+        _computeMenuVerticalOffset: function(noLabelFloat) {
+          // NOTE(cdata): These numbers are somewhat magical because they are
+          // derived from the metrics of elements internal to `paper-input`'s
+          // template. The metrics will change depending on whether or not the
+          // input has a floating label.
+          return noLabelFloat ? -4 : 8;
+        },
+
+        /**
+         * Returns false if the element is required and does not have a selection,
+         * and true otherwise.
+         * @param {*=} _value Ignored.
+         * @return {boolean} true if `required` is false, or if `required` is true
+         * and the element has a valid selection.
+         */
+        _getValidity: function(_value) {
+          return this.disabled || !this.required || (this.required && !!this.value);
+        },
+
+        _openedChanged: function() {
+          var openState = this.opened ? 'true' : 'false';
+          var e = this.contentElement;
+          if (e) {
+            e.setAttribute('aria-expanded', openState);
+          }
+        }
+      });
+    })();
+  </script>
+</dom-module>
+<dom-module id="paper-fab" assetpath="/bower_components/paper-fab/">
+  <template strip-whitespace="">
+    <style include="paper-material-shared-styles">
+      :host {
+        display: inline-block;
+        position: relative;
+        outline: none;
+        -moz-user-select: none;
+        -ms-user-select: none;
+        -webkit-user-select: none;
+        -webkit-tap-highlight-color: rgba(0,0,0,0);
+        user-select: none;
+        cursor: pointer;
+
+        box-sizing: border-box;
+        min-width: 0;
+        width: 56px;
+        height: 56px;
+        background: var(--paper-fab-background, --accent-color);
+        color: var(--text-primary-color);
+        border-radius: 50%;
+        padding: 16px;
+
+        z-index: 0;
+
+        @apply(--layout-vertical);
+        @apply(--layout-center-center);
+        @apply(--paper-fab);
+      }
+
+      :host([mini]) {
+        width: 40px;
+        height: 40px;
+        padding: 8px;
+
+        @apply(--paper-fab-mini);
+      }
+
+      :host([disabled]) {
+        color: var(--paper-fab-disabled-text, --paper-grey-500);
+        background: var(--paper-fab-disabled-background, --paper-grey-300);
+        @apply(--paper-fab-disabled);
+      }
+
+      iron-icon {
+        @apply(--paper-fab-iron-icon);
+      }
+
+      :host(.keyboard-focus) {
+        background: var(--paper-fab-keyboard-focus-background, --paper-pink-900);
+      }
+    </style>
+
+    <iron-icon id="icon" src="[[src]]" icon="[[icon]]"></iron-icon>
+  </template>
+</dom-module>
+
+<script>
+  Polymer({
+    is: 'paper-fab',
+
+    behaviors: [
+      Polymer.PaperButtonBehavior
+    ],
+
+    properties: {
+      /**
+       * The URL of an image for the icon. If the src property is specified,
+       * the icon property should not be.
+       *
+       * @attribute src
+       * @type string
+       * @default ''
+       */
+      src: {
+        type: String,
+        value: ''
+      },
+
+      /**
+       * Specifies the icon name or index in the set of icons available in
+       * the icon's icon set. If the icon property is specified,
+       * the src property should not be.
+       *
+       * @attribute icon
+       * @type string
+       * @default ''
+       */
+      icon: {
+        type: String,
+        value: ''
+      },
+
+      /**
+       * Set this to true to style this is a "mini" FAB.
+       *
+       * @attribute mini
+       * @type boolean
+       * @default false
+       */
+      mini: {
+        type: Boolean,
+        value: false,
+        reflectToAttribute: true
+      }
+    }
+  });
+</script>
+<dom-module id="paper-icon-button" assetpath="/bower_components/paper-icon-button/">
+  <template strip-whitespace="">
+    <style>
+      :host {
+        display: inline-block;
+        position: relative;
+        padding: 8px;
+        outline: none;
+        -webkit-tap-highlight-color: rgba(0,0,0,0);
+        -webkit-user-select: none;
+        -moz-user-select: none;
+        -ms-user-select: none;
+        user-select: none;
+        cursor: pointer;
+        z-index: 0;
+        line-height: 1;
+        
+        width: 40px;
+        height: 40px;
+
+        /* Because of polymer/2558, this style has lower specificity than * */
+        box-sizing: border-box !important;
+        @apply(--paper-icon-button);
+      }
+
+      :host #ink {
+        color: var(--paper-icon-button-ink-color, --primary-text-color);
+        opacity: 0.6;
+      }
+
+      :host([disabled]) {
+        color: var(--paper-icon-button-disabled-text, --disabled-text-color);
+        pointer-events: none;
+        cursor: auto;
+        @apply(--paper-icon-button-disabled);
+      }
+      
+      :host(:hover) { 
+        @apply(--paper-icon-button-hover);
+      }
+
+      iron-icon {
+        --iron-icon-width: 100%;
+        --iron-icon-height: 100%;
+      }
+    </style>
+    <iron-icon id="icon" src="[[src]]" icon="[[icon]]" alt$="[[alt]]"></iron-icon>
+  </template>
+
+  <script>
+    Polymer({
+      is: 'paper-icon-button',
+
+      hostAttributes: {
+        role: 'button',
+        tabindex: '0'
+      },
+
+      behaviors: [
+        Polymer.PaperInkyFocusBehavior
+      ],
+
+      properties: {
+        /**
+         * The URL of an image for the icon. If the src property is specified,
+         * the icon property should not be.
+         */
+        src: {
+          type: String
+        },
+
+        /**
+         * Specifies the icon name or index in the set of icons available in
+         * the icon's icon set. If the icon property is specified,
+         * the src property should not be.
+         */
+        icon: {
+          type: String
+        },
+
+        /**
+         * Specifies the alternate text for the button, for accessibility.
+         */
+        alt: {
+          type: String,
+          observer: "_altChanged"
+        }
+      },
+
+      _altChanged: function(newValue, oldValue) {
+        var label = this.getAttribute('aria-label');
+
+        // Don't stomp over a user-set aria-label.
+        if (!label || oldValue == label) {
+          this.setAttribute('aria-label', newValue);
+        }
+      }
+    });
+  </script>
+</dom-module>
+<dom-module id="paper-item-shared-styles" assetpath="/bower_components/paper-item/">
+  <template>
+    <style>
+      :host {
+        display: block;
+        position: relative;
+        min-height: var(--paper-item-min-height, 48px);
+        padding: 0px 16px;
+      }
+
+      :host([hidden]) {
+        display: none !important;
+      }
+
+      :host(.iron-selected) {
+        font-weight: var(--paper-item-selected-weight, bold);
+
+        @apply(--paper-item-selected);
+      }
+
+      :host([disabled]) {
+        color: var(--paper-item-disabled-color, --disabled-text-color);
+
+        @apply(--paper-item-disabled);
+      }
+
+      :host(:focus) {
+        position: relative;
+        outline: 0;
+
+        @apply(--paper-item-focused);
+      }
+
+      :host(:focus):before {
+        @apply(--layout-fit);
+
+        background: currentColor;
+        content: '';
+        opacity: var(--dark-divider-opacity);
+        pointer-events: none;
+
+        @apply(--paper-item-focused-before);
+      }
+    </style>
+  </template>
+</dom-module>
+<dom-module id="paper-item" assetpath="/bower_components/paper-item/">
+  <template>
+    <style include="paper-item-shared-styles"></style>
+    <style>
+      :host {
+        @apply(--layout-horizontal);
+        @apply(--layout-center);
+        @apply(--paper-font-subhead);
+
+        @apply(--paper-item);
+      }
+    </style>
+
+    <content></content>
+  </template>
+
+  <script>
+    Polymer({
+      is: 'paper-item',
+
+      behaviors: [
+        Polymer.PaperItemBehavior
+      ]
+    });
+  </script>
+</dom-module>
+<dom-module id="paper-menu-shared-styles" assetpath="/bower_components/paper-menu/">
+  <template>
+    <style>
+      /* need a wrapper element to make this higher specificity than the :host rule in paper-item */
+      .selectable-content > ::content > .iron-selected {
+        font-weight: bold;
+
+        @apply(--paper-menu-selected-item);
+      }
+
+      .selectable-content > ::content > [disabled] {
+        color: var(--paper-menu-disabled-color, --disabled-text-color);
+      }
+
+      .selectable-content > ::content > *:focus {
+        position: relative;
+        outline: 0;
+
+        @apply(--paper-menu-focused-item);
+      }
+
+      .selectable-content > ::content > *:focus:after {
+        @apply(--layout-fit);
+        background: currentColor;
+        opacity: var(--dark-divider-opacity);
+        content: '';
+        pointer-events: none;
+
+        @apply(--paper-menu-focused-item-after);
+      }
+
+      .selectable-content > ::content > *[colored]:focus:after {
+        opacity: 0.26;
+      }
+    </style>
+  </template>
+</dom-module>
+<dom-module id="paper-menu" assetpath="/bower_components/paper-menu/">
+  <template>
+    <style include="paper-menu-shared-styles"></style>
+    <style>
+      :host {
+        display: block;
+        padding: 8px 0;
+
+        background: var(--paper-menu-background-color, --primary-background-color);
+        color: var(--paper-menu-color, --primary-text-color);
+
+        @apply(--paper-menu);
+      }
+    </style>
+
+    <div class="selectable-content">
+      <content></content>
+    </div>
+  </template>
+
+  <script>
+    (function() {
+      Polymer({
+        is: 'paper-menu',
+
+        behaviors: [
+          Polymer.IronMenuBehavior
+        ]
+      });
+    })();
+  </script>
+</dom-module>
 <dom-module id="paper-progress" assetpath="/bower_components/paper-progress/">
   <template>
     <style>
@@ -23435,6 +23792,18 @@ mwcLayout = new PolymerLayout();
     --paper-badge-background: var(--paper-grey-500);
   }
   
+  paper-dropdown-menu {
+    --paper-dropdown-menu-icon: {
+      color: white;
+    }
+    --paper-input-container-input: {
+      color: white;
+    }
+    --paper-input-container-label: {
+      color: white;
+    }
+  }
+  
   paper-menu-button {
     padding: 0;
   }
@@ -23488,16 +23857,14 @@ mwcLayout = new PolymerLayout();
 
       <div class="blue-700 center-justified horizontal layout">
         <div class="blue-500 center horizontal layout li">
-          <div class="cursor-d flex" style="font-size: 16px; line-height: 24px; padding: 16px;"><span>[[item.p_no]]</span> / Details</div>
+          <div class="cursor-d" style="font-size: 16px; line-height: 24px; padding: 16px;">[[item.p_no]]</div>
 
-          <paper-menu-button horizontal-align="right" style="margin-right: 8px;">
-            <paper-icon-button class="dropdown-trigger" icon="arrow-drop-down"></paper-icon-button>
-
+          <paper-dropdown-menu class="flex" label="option" no-label-float="" noink="" style="margin-right: 16px;">
             <paper-menu attr-for-selected="data-id" class="dropdown-content" selected="Details" style="min-width: 200px;">
               <paper-item class="cursor-p" data-id="Details">Details</paper-item>
               <paper-item class="cursor-p" data-id="Technologies">Technologies</paper-item>
             </paper-menu>
-          </paper-menu-button>
+          </paper-dropdown-menu>
         </div>
       </div>
 
