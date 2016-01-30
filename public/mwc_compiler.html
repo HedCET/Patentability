@@ -22457,7 +22457,7 @@ mwcLayout = new PolymerLayout();
         <paper-icon-button class="selection-hidden" icon="search" on-click="searchbar"></paper-icon-button>
       </paper-toolbar>
 
-      <div class="blue-700" id="echarts" style="cursor: pointer; height: 256px"></div>
+      <div class="blue-700" id="echarts" style="cursor: default; height: 256px"></div>
 
       <iron-selector activate-event="click" attr-for-selected="item" multi="" on-iron-deselect="patent_selection_changed" on-iron-select="patent_selection_changed" selectable="inbox-item" selected-attribute="selected" selected-values="{{patent_selected}}">
         <div class="blue-700 center-justified horizontal layout">
@@ -22505,66 +22505,66 @@ mwcLayout = new PolymerLayout();
       document.querySelector("project-upload paper-dialog").open();
     },
 
-    attached: function() {
-      // var network = new vis.Network(document.querySelector("#vis-network"), {
-      //   edges: _edges,
-      //   nodes: _nodes
-      // }, {
-      //   edges: {
-      //     shadow: true,
-      //     width: 2
-      //   },
-      //   groups: {
-      //     patent: {
-      //       color: {
-      //         background: "#BBDEFB",
-      //         border: "#FFFFFF",
-      //         highlight: {
-      //           background: "#64B5F6",
-      //           border: "#FFFFFF"
-      //         },
-      //         hover: {
-      //           background: "#64B5F6",
-      //           border: "#FFFFFF"
-      //         }
-      //       },
-      //       shape: "diamond"
-      //     },
-      //     taxonomy: {
-      //       color: {
-      //         background: "#2196F3",
-      //         border: "#FFFFFF",
-      //         highlight: {
-      //           background: "#64B5F6",
-      //           border: "#FFFFFF"
-      //         },
-      //         hover: {
-      //           background: "#64B5F6",
-      //           border: "#FFFFFF"
-      //         }
-      //       },
-      //       shape: "dot"
-      //     }
-      //   },
-      //   interaction: {
-      //     hover: true
-      //   },
-      //   nodes: {
-      //     borderWidth: 2,
-      //     font: {
-      //       color: "#FFFFFF",
-      //       size: 16
-      //     },
-      //     shadow: true
-      //   }
-      // });
+    // attached: function() {
+    //   var network = new vis.Network(document.querySelector("#vis-network"), {
+    //     edges: _edges,
+    //     nodes: _nodes
+    //   }, {
+    //     edges: {
+    //       shadow: true,
+    //       width: 2
+    //     },
+    //     groups: {
+    //       patent: {
+    //         color: {
+    //           background: "#BBDEFB",
+    //           border: "#FFFFFF",
+    //           highlight: {
+    //             background: "#64B5F6",
+    //             border: "#FFFFFF"
+    //           },
+    //           hover: {
+    //             background: "#64B5F6",
+    //             border: "#FFFFFF"
+    //           }
+    //         },
+    //         shape: "diamond"
+    //       },
+    //       taxonomy: {
+    //         color: {
+    //           background: "#2196F3",
+    //           border: "#FFFFFF",
+    //           highlight: {
+    //             background: "#64B5F6",
+    //             border: "#FFFFFF"
+    //           },
+    //           hover: {
+    //             background: "#64B5F6",
+    //             border: "#FFFFFF"
+    //           }
+    //         },
+    //         shape: "dot"
+    //       }
+    //     },
+    //     interaction: {
+    //       hover: true
+    //     },
+    //     nodes: {
+    //       borderWidth: 2,
+    //       font: {
+    //         color: "#FFFFFF",
+    //         size: 16
+    //       },
+    //       shadow: true
+    //     }
+    //   });
 
-      // network.once("afterDrawing", function() {
-      //   network.moveTo({
-      //     scale: .5
-      //   });
-      // });
-    },
+    //   network.once("afterDrawing", function() {
+    //     network.moveTo({
+    //       scale: .5
+    //     });
+    //   });
+    // },
 
     clear_patent_selected: function() {
       this.patent_selected = [];
@@ -22649,110 +22649,122 @@ mwcLayout = new PolymerLayout();
     },
 
     _echarts: function() {
+      echarts.dispose(document.querySelector("#echarts"));
+
       this.debounce("_echarts", function() {
-        var graph = echarts.init(document.querySelector("#echarts")),
-          option = {
-            legend: {
-              data: [{
-                icon: "circle",
-                name: "Filed"
-              }, {
-                icon: "circle",
-                name: "Priority"
-              }, {
-                icon: "circle",
-                name: "Published"
-              }],
-              textStyle: {
-                color: "#FFF"
-              }
-            },
-            series: [{
-              data: [10, 20, 30, 30, 20, 10],
-              itemStyle: {
-                normal: {
-                  color: "#FF9100"
-                }
-              },
-              name: "Filed",
-              type: "line"
-            }, {
-              data: [30, 20, 10, 10, 20, 30],
-              itemStyle: {
-                normal: {
-                  color: "#FFEA00"
-                }
-              },
-              name: "Priority",
-              type: "line"
-            }, {
-              data: [10, 10, 30, 10, 10, 30],
-              itemStyle: {
-                normal: {
-                  color: "#00E676"
-                }
-              },
-              name: "Published",
-              type: "line"
-            }],
-            toolbox: {
-              feature: {
-                magicType: {
-                  title: {
-                    bar: "switch to bar",
-                    line: "switch to line"
-                  },
-                  type: ["bar", "line"]
-                },
-                // saveAsImage: {
-                //   show: true,
-                //   title: "save"
-                // }
-              },
-              iconStyle: {
-                normal: {
-                  color: "#FFF"
-                }
-              },
-              show: true
-            },
-            tooltip: {
-              formatter: "{c0} patent <b>{a0}</b> in {b0}<br>{c1} <b>{a1}</b> patent in {b1}<br>{c2} patent <b>{a2}</b> in {b2}",
-              trigger: "axis"
-            },
-            xAxis: [{
-              axisLabel: {
+        if (this.item.echarts) {
+          var graph = echarts.init(document.querySelector("#echarts")),
+            option = {
+              legend: {
+                data: [{
+                  icon: "circle",
+                  name: "Filed"
+                }, {
+                  icon: "circle",
+                  name: "Priority"
+                }, {
+                  icon: "circle",
+                  name: "Published"
+                }],
                 textStyle: {
                   color: "#FFF"
                 }
               },
-              axisLine: {
-                show: false
+              series: [{
+                data: this.item.echarts.series.Filed,
+                itemStyle: {
+                  normal: {
+                    color: "#FF9100"
+                  }
+                },
+                name: "Filed",
+                type: "line"
+              }, {
+                data: this.item.echarts.series.Priority,
+                itemStyle: {
+                  normal: {
+                    color: "#FFEA00"
+                  }
+                },
+                name: "Priority",
+                type: "line"
+              }, {
+                data: this.item.echarts.series.Published,
+                itemStyle: {
+                  normal: {
+                    color: "#00E676"
+                  }
+                },
+                name: "Published",
+                type: "line"
+              }],
+              toolbox: {
+                feature: {
+                  magicType: {
+                    title: {
+                      bar: "bar",
+                      line: "line"
+                    },
+                    type: ["bar", "line"]
+                  },
+                  // saveAsImage: {
+                  //   show: true,
+                  //   title: "save"
+                  // }
+                },
+                iconStyle: {
+                  normal: {
+                    color: "#FFF"
+                  }
+                },
+                show: true
               },
-              data: [1990, 1995, 2000, 2005, 2010, 2015],
-              splitLine: {
-                show: false
-              },
-              type: "category"
-            }],
-            yAxis: [{
-              axisLabel: {
-                show: false
-              },
-              axisLine: {
-                show: false
-              },
-              min: "dataMin",
-              splitLine: {
-                show: false
-              },
-              type: "value"
-            }]
-          };
+              tooltip: {
+                formatter: function(params) {
+                  var tooltip = "";
 
-        graph.setOption({
-          option: option
-        });
+                  params.forEach(function(item) {
+                    if (item.value) {
+                      tooltip += item.value + " patent <b>" + item.seriesName + "</b> in " + item.name + "<br>";
+                    }
+                  });
+
+                  return (tooltip ? tooltip : "empty");
+                }, // "{c0} patent <b>{a0}</b> in {b0}<br>{c1} <b>{a1}</b> patent in {b1}<br>{c2} patent <b>{a2}</b> in {b2}",
+                trigger: "axis"
+              },
+              xAxis: [{
+                axisLabel: {
+                  textStyle: {
+                    color: "#FFF"
+                  }
+                },
+                axisLine: {
+                  show: false
+                },
+                data: this.item.echarts.category,
+                splitLine: {
+                  show: false
+                },
+                type: "category"
+              }],
+              yAxis: [{
+                axisLabel: {
+                  show: false
+                },
+                axisLine: {
+                  show: false
+                },
+                min: "dataMin",
+                splitLine: {
+                  show: false
+                },
+                type: "value"
+              }]
+            };
+
+          graph.setOption(option);
+        }
       }, 400);
     },
 
@@ -23574,7 +23586,7 @@ mwcLayout = new PolymerLayout();
           tag_index: Polymer.dom(e).localTarget.dataset.index
         }, function(error, response) {
           if (!error) {
-            document.querySelector("#inbox-view")._echarts();
+            // document.querySelector("#inbox-view")._echarts();
           }
         });
       } else {
@@ -23610,7 +23622,7 @@ mwcLayout = new PolymerLayout();
             tag_input: this.tag_input
           }, function(error, response) {
             if (!error) {
-              document.querySelector("#inbox-view")._echarts();
+              // document.querySelector("#inbox-view")._echarts();
             }
           });
         }
