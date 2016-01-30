@@ -154,6 +154,31 @@
       }, 400);
     },
 
+    insert_tag: function() {
+      $(".user-tag .editer").attr("hidden", true);
+      $(".user-tag .controller").attr("hidden", false);
+
+      if (Meteor.status().connected) {
+        this.tag_input = this.tag_input.trim();
+
+        if (this.tag_input) {
+          this.push("item.project.tag", this.tag_input);
+
+          Meteor.call("insert_tag", {
+            patent: this.item._id,
+            project: this.item.project._id,
+            tag_input: this.tag_input
+          }, function(error, response) {
+            if (!error) {
+              // document.querySelector("#inbox-view")._echarts();
+            }
+          });
+        }
+      } else {
+        document.querySelector("#polymer-toast").toast("server connection required");
+      }
+    },
+
     is: "patent-view",
 
     properties: {
@@ -219,29 +244,8 @@
       return (text ? text.split(/;/).filter(Boolean) : "#");
     },
 
-    insert_tag: function() {
-      $(".user-tag .editer").attr("hidden", true);
-      $(".user-tag .controller").attr("hidden", false);
-
-      if (Meteor.status().connected) {
-        this.tag_input = this.tag_input.trim();
-
-        if (this.tag_input) {
-          this.push("item.project.tag", this.tag_input);
-
-          Meteor.call("insert_tag", {
-            patent: this.item._id,
-            project: this.item.project._id,
-            tag_input: this.tag_input
-          }, function(error, response) {
-            if (!error) {
-              // document.querySelector("#inbox-view")._echarts();
-            }
-          });
-        }
-      } else {
-        document.querySelector("#polymer-toast").toast("server connection required");
-      }
+    share: function() {
+      document.querySelector("#polymer-toast").toast("under development");
     }
 
   });
