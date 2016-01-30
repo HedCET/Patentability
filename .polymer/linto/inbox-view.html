@@ -1,366 +1,432 @@
 <dom-module id="inbox-view">
 
-    <style>
-    paper-fab {
-        --paper-fab-background: var(--paper-red-500);
-        --paper-fab-keyboard-focus-background: var(--paper-red-700);
-    }
-    
-    paper-toolbar {
-        --paper-toolbar-background: var(--paper-blue-700);
-        --paper-toolbar-color: white;
-    }
-    
-    paper-toolbar paper-icon-button {
-        margin: 0!important;
-    }
-    
-    paper-toolbar paper-icon-button[icon="arrow-back"] {
-        transform: translateX(-42px);
-    }
-    
-    paper-toolbar.selection paper-icon-button[icon="arrow-back"] {
-        transform: translateX(0);
-    }
-    
-    paper-toolbar.selection .selection-hidden {
-        display: none;
-    }
-    
-    paper-toolbar.selection .selection-visible {
-        padding: 8px;
-        transform: rotateX(0);
-        visibility: visible;
-        width: 40px;
-    }
-    
-    paper-toolbar .selection-visible {
-        padding: 0;
-        transform: rotateX(90deg);
-        transition: transform 400ms ease-in-out;
-        visibility: hidden;
-        width: 0;
-        will-change: transform;
-    }
-    
-    paper-toolbar .title {
-        padding: 0 12px;
-    }
-    
-    .menu-b {
-        bottom: 12px;
-        position: fixed;
-        right: 16px;
-        transition: transform 0.2s ease-in-out;
-        will-change: transform;
-    }
-    
-    .menu-b.move-down {
-        transform: translate3d(0, 80px, 0)!important;
-    }
-    </style>
+  <style>
+  paper-fab {
+    --paper-fab-background: var(--paper-red-500);
+    --paper-fab-keyboard-focus-background: var(--paper-red-700);
+  }
+  
+  paper-toolbar {
+    --paper-toolbar-background: var(--paper-blue-700);
+    --paper-toolbar-color: white;
+  }
+  
+  paper-toolbar paper-icon-button {
+    margin: 0!important;
+  }
+  
+  paper-toolbar paper-icon-button[icon="arrow-back"] {
+    transform: translateX(-42px);
+  }
+  
+  paper-toolbar.selection paper-icon-button[icon="arrow-back"] {
+    transform: translateX(0);
+  }
+  
+  paper-toolbar.selection .selection-hidden {
+    display: none;
+  }
+  
+  paper-toolbar.selection .selection-visible {
+    padding: 8px;
+    transform: rotateX(0);
+    visibility: visible;
+    width: 40px;
+  }
+  
+  paper-toolbar .selection-visible {
+    padding: 0;
+    transform: rotateX(90deg);
+    transition: transform 400ms ease-in-out;
+    visibility: hidden;
+    width: 0;
+    will-change: transform;
+  }
+  
+  paper-toolbar .title {
+    padding: 0 12px;
+  }
+  
+  .menu-b {
+    bottom: 12px;
+    position: fixed;
+    right: 16px;
+    transition: transform 0.2s ease-in-out;
+    will-change: transform;
+  }
+  
+  .menu-b.move-down {
+    transform: translate3d(0, 80px, 0)!important;
+  }
+  </style>
 
-    <template>
-        <paper-scroll-header-panel class="fit">
-            <paper-toolbar id="toolbar">
-                <paper-icon-button class="selection-visible" icon="arrow-back" on-click="clear_patent_selected"></paper-icon-button>
-                <paper-icon-button class="selection-hidden" icon="menu" on-click="menu_toggle" paper-drawer-toggle></paper-icon-button>
+  <template>
+    <paper-scroll-header-panel class="fit">
+      <paper-toolbar id="toolbar">
+        <paper-icon-button class="selection-visible" icon="arrow-back" on-click="clear_patent_selected"></paper-icon-button>
+        <paper-icon-button class="selection-hidden" icon="menu" on-click="menu_toggle" paper-drawer-toggle></paper-icon-button>
 
-                <div class="title" id="toolbar-title">Patentability</div>
+        <div class="title" id="toolbar-title">Patentability</div>
 
-                <paper-icon-button class="selection-visible" icon="delete" on-click="remove_patent"></paper-icon-button>
-                <paper-icon-button class="selection-hidden" icon="search" on-click="searchbar"></paper-icon-button>
-            </paper-toolbar>
+        <paper-icon-button class="selection-visible" icon="delete" on-click="remove_patent"></paper-icon-button>
+        <paper-icon-button class="selection-hidden" icon="search" on-click="searchbar"></paper-icon-button>
+      </paper-toolbar>
 
-            <div class="blue-700" id="vis-network" style="cursor: pointer; height: 256px"></div>
+      <div class="blue-700" id="vis-network" style="cursor: pointer; height: 256px"></div>
 
-            <iron-selector activate-event="click" attr-for-selected="item" multi on-iron-deselect="patent_selection_changed" on-iron-select="patent_selection_changed" selectable="inbox-item" selected-attribute="selected" selected-values="{{patent_selected}}">
-                <div class="blue-700 center-justified horizontal layout">
-                    <div class="blue-500 center horizontal layout li">
-                        <div class="cursor-d flex lowercase" style="font-size: 16px; line-height: 24px; padding: 16px;">[[return_title_text(item)]]</div>
+      <iron-selector activate-event="click" attr-for-selected="item" multi on-iron-deselect="patent_selection_changed" on-iron-select="patent_selection_changed" selectable="inbox-item" selected-attribute="selected" selected-values="{{patent_selected}}">
+        <div class="blue-700 center-justified horizontal layout">
+          <div class="blue-500 center horizontal layout li">
+            <div class="cursor-d flex lowercase" style="font-size: 16px; line-height: 24px; padding: 16px;">[[return_title_text(item)]]</div>
 
-                        <paper-icon-button icon="close" onclick="document.querySelector('#remove-project-prompt').open();" style="margin-right: 8px;"></paper-icon-button>
-                    </div>
-                </div>
+            <paper-icon-button icon="close" onclick="document.querySelector('#remove-project-prompt').open();" style="margin-right: 8px;"></paper-icon-button>
+          </div>
+        </div>
 
-                <template as="patent" is="dom-repeat" items="[[item.patent]]" filter="filter_p_no">
-                    <inbox-item item$="[[patent]]"></inbox-item>
-                </template>
+        <template as="patent" filter="filter_p_no" is="dom-repeat" items="[[item.patent]]">
+          <inbox-item item$="[[patent]]"></inbox-item>
+        </template>
 
-                <div class="center-justified horizontal layout" style="height: 88px;">
-                    <div class="center-center vertical layout li">
-                        <paper-spinner active data-id$="[[item._id]]" hidden id="project-progress"></paper-spinner>
-                    </div>
-                </div>
-            </iron-selector>
-        </paper-scroll-header-panel>
+        <div class="center-justified horizontal layout" style="height: 88px;">
+          <div class="center-center vertical layout li">
+            <paper-spinner active data-id$="[[item._id]]" hidden id="project-progress"></paper-spinner>
+          </div>
+        </div>
+      </iron-selector>
+    </paper-scroll-header-panel>
 
-        <paper-fab class="menu-b" id="fab" icon="add" on-click="add_project"></paper-fab>
+    <paper-fab class="menu-b" id="fab" icon="add" on-click="add_project"></paper-fab>
 
-        <paper-dialog id="remove-project-prompt" style="width: 320px;" with-backdrop>
-            <div style="font-size: 16px; line-height: 24px;">Are you sure to delete this project ?</div>
+    <paper-dialog id="remove-project-prompt" style="width: 320px;" with-backdrop>
+      <div style="font-size: 16px; line-height: 24px;">Are you sure to delete this project ?</div>
 
-            <div class="buttons">
-                <paper-button onclick="document.querySelector('#remove-project-prompt').close();">
-                    <iron-icon icon="close"></iron-icon>
-                    cancel
-                </paper-button>
-                <paper-button on-click="remove_project_ok">
-                    <iron-icon icon="check"></iron-icon>
-                    ok
-                </paper-button>
-            </div>
-        </paper-dialog>
-    </template>
+      <div class="buttons">
+        <paper-button onclick="document.querySelector('#remove-project-prompt').close();">
+          <iron-icon icon="close"></iron-icon>
+          cancel
+        </paper-button>
+        <paper-button on-click="remove_project_ok">
+          <iron-icon icon="check"></iron-icon>
+          ok
+        </paper-button>
+      </div>
+    </paper-dialog>
+  </template>
 
-    <script>
-    Polymer({
+  <script>
+  Polymer({
 
-        add_project: function() {
-            document.querySelector("project-upload paper-dialog").open();
-        },
+    add_project: function() {
+      document.querySelector("project-upload paper-dialog").open();
+    },
 
-        attached: function() {
-            var network = new vis.Network(document.querySelector("#vis-network"), {
-                edges: _edges,
-                nodes: _nodes
-            }, {
-                edges: {
-                    shadow: true,
-                    width: 2
-                },
-                groups: {
-                    patent: {
-                        color: {
-                            background: "#BBDEFB",
-                            border: "#FFFFFF",
-                            highlight: {
-                                background: "#64B5F6",
-                                border: "#FFFFFF"
-                            },
-                            hover: {
-                                background: "#64B5F6",
-                                border: "#FFFFFF"
-                            }
-                        },
-                        shape: "diamond"
-                    },
-                    taxonomy: {
-                        color: {
-                            background: "#2196F3",
-                            border: "#FFFFFF",
-                            highlight: {
-                                background: "#64B5F6",
-                                border: "#FFFFFF"
-                            },
-                            hover: {
-                                background: "#64B5F6",
-                                border: "#FFFFFF"
-                            }
-                        },
-                        shape: "dot"
-                    }
-                },
-                interaction: {
-                    hover: true
-                },
-                nodes: {
-                    borderWidth: 2,
-                    font: {
-                        color: "#FFFFFF",
-                        size: 16
-                    },
-                    shadow: true
-                }
-            });
+    attached: function() {
+      // var network = new vis.Network(document.querySelector("#vis-network"), {
+      //   edges: _edges,
+      //   nodes: _nodes
+      // }, {
+      //   edges: {
+      //     shadow: true,
+      //     width: 2
+      //   },
+      //   groups: {
+      //     patent: {
+      //       color: {
+      //         background: "#BBDEFB",
+      //         border: "#FFFFFF",
+      //         highlight: {
+      //           background: "#64B5F6",
+      //           border: "#FFFFFF"
+      //         },
+      //         hover: {
+      //           background: "#64B5F6",
+      //           border: "#FFFFFF"
+      //         }
+      //       },
+      //       shape: "diamond"
+      //     },
+      //     taxonomy: {
+      //       color: {
+      //         background: "#2196F3",
+      //         border: "#FFFFFF",
+      //         highlight: {
+      //           background: "#64B5F6",
+      //           border: "#FFFFFF"
+      //         },
+      //         hover: {
+      //           background: "#64B5F6",
+      //           border: "#FFFFFF"
+      //         }
+      //       },
+      //       shape: "dot"
+      //     }
+      //   },
+      //   interaction: {
+      //     hover: true
+      //   },
+      //   nodes: {
+      //     borderWidth: 2,
+      //     font: {
+      //       color: "#FFFFFF",
+      //       size: 16
+      //     },
+      //     shadow: true
+      //   }
+      // });
 
-            network.once("afterDrawing", function() {
-                network.moveTo({
-                    scale: .5
-                });
-            });
-        },
+      // network.once("afterDrawing", function() {
+      //   network.moveTo({
+      //     scale: .5
+      //   });
+      // });
+    },
 
-        clear_patent_selected: function() {
-            this.patent_selected = [];
-        },
+    clear_patent_selected: function() {
+      this.patent_selected = [];
+    },
 
-        filter_p_no: function(item) {
-            return (item.p_no);
-        },
+    filter_p_no: function(item) {
+      return (item.p_no);
+    },
 
-        is: "inbox-view",
+    is: "inbox-view",
 
-        listeners: {
-            "content-scroll": "_scroll"
-        },
+    listeners: {
+      "content-scroll": "_scroll"
+    },
 
-        menu_toggle: function() {
-            document.querySelector("layout-inbox").menu_toggle();
-        },
+    menu_toggle: function() {
+      document.querySelector("layout-inbox").menu_toggle();
+    },
 
-        patent_selection_changed: function() {
-            this.$.fab.toggleClass("move-down", this.patent_selected.length);
-            this.$.toolbar.toggleClass("selection", this.patent_selected.length);
-            this.$["toolbar-title"].textContent = (this.patent_selected.length ? this.patent_selected.length : "Patentability");
-        },
+    patent_selection_changed: function() {
+      this.$.fab.toggleClass("move-down", this.patent_selected.length);
+      this.$.toolbar.toggleClass("selection", this.patent_selected.length);
+      this.$["toolbar-title"].textContent = (this.patent_selected.length ? this.patent_selected.length : "Patentability");
+    },
 
-        properties: {
-            item: {
-                type: Object,
-                value: function() {
-                    return {};
-                }
-            },
-            patent_selected: {
-                type: Array,
-                value: function() {
-                    return [];
-                }
-            }
-        },
-
-        remove_patent: function() {
-            $("inbox-item.iron-selected").addClass("undo");
-
-            document.querySelector("#polymer-toast").undo = {
-                patent: _.map(this.patent_selected, function(item) {
-                    return item._id;
-                }),
-                project: this.item._id
-            };
-
-            document.querySelector("#polymer-toast").toast(this.patent_selected.length + " patent removed");
-
-            this.clear_patent_selected();
-        },
-
-        remove_project_ok: function() {
-            if (Meteor.status().connected) {
-                Meteor.call("remove_project", this.item._id, function(error, response) {
-                    if (error) {
-                        document.querySelector("#polymer-toast").toast(error.reason);
-                    } else {
-                        document.querySelector("#polymer-toast").toast(response);
-
-                        // home page
-                    }
-                });
-            } else {
-                document.querySelector("#polymer-toast").toast("server connection required");
-            }
-
-            this.$["remove-project-prompt"].close();
-        },
-
-        return_title_text: function(item) {
-            return (item.projectName ? item.projectName : ((item.keyword ? item.keyword : "#") + (item.cluster_keyword ? " / " + item.cluster_keyword : "")));
-        },
-
-        searchbar: function() {
-            FlowRouter.setQueryParams({
-                "route": "search"
-            });
-        },
-
-        _scroll: function(e, d) {
-            if (d.target.scrollHeight - (d.target.clientHeight * 1.5) < d.target.scrollTop) {
-                if (this.item.match && this.item.position && this.item.position < this.item.match) {
-                    this.$["project-progress"].hidden = false;
-
-                    Meteor.call("update_project", this.item._id, function(error, response) {
-                        if (error) {
-                            document.querySelector("#polymer-toast").toast(error.reason);
-                        }
-                    });
-                }
-            }
-        },
-
-        _vis_network: function() {
-            this.debounce("_vis_network", function() {
-                if (this.item.patent) {
-                    listA = {};
-                    listZ = {};
-
-                    this.item.patent.forEach(function(A) {
-                        if (A.concept) {
-                            var B = A.concept.split(/;/).filter(Boolean);
-
-                            B.forEach(function(C) {
-                                _key(listA, [C, A.p_no]);
-                            });
-                        }
-
-                        A.project.tag.forEach(function(tag) {
-                            _key(listA, [tag, A.p_no]);
-                        });
-                    });
-
-                    Object.keys(listA).sort(function(keyA, keyZ) {
-                        return (_.size(listA[keyZ]) - _.size(listA[keyA]));
-                    }).forEach(function(index) {
-                        if (_.size(listZ) < 10 && 1 < _.size(listA[index])) {
-                            listZ[index] = listA[index];
-                        }
-                    });
-
-                    var edges = _.map(_edges.get(), function(item) {
-                            return item.id;
-                        }),
-                        nodes = _.map(_nodes.get(), function(item) {
-                            return item.id;
-                        });
-
-                    _.each(listZ, function(valueA, keyA, list) {
-                        var A = nodes.indexOf(keyA);
-
-                        if (-1 < A) {
-                            nodes.splice(A, 1);
-                        } else {
-                            _nodes.update({
-                                group: "taxonomy",
-                                id: keyA,
-                                label: keyA,
-                                // size: _.size(valueA)
-                            });
-                        }
-
-                        _.each(valueA, function(valueZ, keyZ, list) {
-                            var Z = nodes.indexOf(keyZ);
-
-                            if (-1 < Z) {
-                                nodes.splice(Z, 1);
-                            } else {
-                                _nodes.update({
-                                    group: "patent",
-                                    id: keyZ,
-                                    label: keyZ,
-                                    // size: _.size(valueA)
-                                });
-                            }
-
-                            var index = edges.indexOf(keyZ + " | " + keyA);
-
-                            if (-1 < index) {
-                                edges.splice(index, 1);
-                            } else {
-                                _edges.update({
-                                    from: keyZ,
-                                    id: keyZ + " | " + keyA,
-                                    to: keyA
-                                });
-                            }
-                        });
-                    });
-
-                    _edges.remove(edges);
-                    _nodes.remove(nodes);
-                }
-            }, 400);
+    properties: {
+      item: {
+        type: Object,
+        value: function() {
+          return {};
         }
+      },
+      patent_selected: {
+        type: Array,
+        value: function() {
+          return [];
+        }
+      }
+    },
 
-    });
-    </script>
+    remove_patent: function() {
+      $("inbox-item.iron-selected").addClass("undo");
+
+      document.querySelector("#polymer-toast").undo = {
+        patent: _.map(this.patent_selected, function(item) {
+          return item._id;
+        }),
+        project: this.item._id
+      };
+
+      document.querySelector("#polymer-toast").toast(this.patent_selected.length + " patent removed");
+
+      this.clear_patent_selected();
+    },
+
+    remove_project_ok: function() {
+      if (Meteor.status().connected) {
+        Meteor.call("remove_project", this.item._id, function(error, response) {
+          if (error) {
+            document.querySelector("#polymer-toast").toast(error.reason);
+          } else {
+            document.querySelector("#polymer-toast").toast(response);
+
+            // home page
+          }
+        });
+      } else {
+        document.querySelector("#polymer-toast").toast("server connection required");
+      }
+
+      this.$["remove-project-prompt"].close();
+    },
+
+    return_title_text: function(item) {
+      return (item.projectName ? item.projectName : ((item.keyword ? item.keyword : "#") + (item.cluster_keyword ? " / " + item.cluster_keyword : "")));
+    },
+
+    searchbar: function() {
+      FlowRouter.setQueryParams({
+        "route": "search"
+      });
+    },
+
+    _scroll: function(e, d) {
+      if (d.target.scrollHeight - (d.target.clientHeight * 1.5) < d.target.scrollTop) {
+        if (this.item.match && this.item.position && this.item.position < this.item.match) {
+          this.$["project-progress"].hidden = false;
+
+          Meteor.call("update_project", this.item._id, function(error, response) {
+            if (error) {
+              document.querySelector("#polymer-toast").toast(error.reason);
+            }
+          });
+        }
+      }
+    },
+
+    _vis_network: function() {
+      this.debounce("_vis_network", function() {
+        this._echarts();
+
+        // if (this.item.patent) {
+        //     listA = {};
+        //     listZ = {};
+
+        //     this.item.patent.forEach(function(A) {
+        //         if (A.concept) {
+        //             var B = A.concept.split(/;/).filter(Boolean);
+
+        //             B.forEach(function(C) {
+        //                 _key(listA, [C, A.p_no]);
+        //             });
+        //         }
+
+        //         A.project.tag.forEach(function(tag) {
+        //             _key(listA, [tag, A.p_no]);
+        //         });
+        //     });
+
+        //     Object.keys(listA).sort(function(keyA, keyZ) {
+        //         return (_.size(listA[keyZ]) - _.size(listA[keyA]));
+        //     }).forEach(function(index) {
+        //         if (_.size(listZ) < 10 && 1 < _.size(listA[index])) {
+        //             listZ[index] = listA[index];
+        //         }
+        //     });
+
+        //     var edges = _.map(_edges.get(), function(item) {
+        //             return item.id;
+        //         }),
+        //         nodes = _.map(_nodes.get(), function(item) {
+        //             return item.id;
+        //         });
+
+        //     _.each(listZ, function(valueA, keyA, list) {
+        //         var A = nodes.indexOf(keyA);
+
+        //         if (-1 < A) {
+        //             nodes.splice(A, 1);
+        //         } else {
+        //             _nodes.update({
+        //                 group: "taxonomy",
+        //                 id: keyA,
+        //                 label: keyA,
+        //                 // size: _.size(valueA)
+        //             });
+        //         }
+
+        //         _.each(valueA, function(valueZ, keyZ, list) {
+        //             var Z = nodes.indexOf(keyZ);
+
+        //             if (-1 < Z) {
+        //                 nodes.splice(Z, 1);
+        //             } else {
+        //                 _nodes.update({
+        //                     group: "patent",
+        //                     id: keyZ,
+        //                     label: keyZ,
+        //                     // size: _.size(valueA)
+        //                 });
+        //             }
+
+        //             var index = edges.indexOf(keyZ + " | " + keyA);
+
+        //             if (-1 < index) {
+        //                 edges.splice(index, 1);
+        //             } else {
+        //                 _edges.update({
+        //                     from: keyZ,
+        //                     id: keyZ + " | " + keyA,
+        //                     to: keyA
+        //                 });
+        //             }
+        //         });
+        //     });
+
+        //     _edges.remove(edges);
+        //     _nodes.remove(nodes);
+        // }
+      }, 400);
+    },
+
+    _echarts: function() {
+      // based ready dom, initialization echarts instance 
+      var myChart = echarts.init(document.querySelector("#vis-network"));
+
+      // Specify configurations and data graphs 
+      var option = {
+        backgroundColor: '#2c343c',
+        visualMap: {
+          show: false,
+          min: 80,
+          max: 600,
+          inRange: {
+            colorLightness: [0, 1]
+          }
+        },
+        series: [{
+          name: '访问来源',
+          type: 'pie',
+          radius: '55%',
+          data: [{
+            value: 235,
+            name: '视频广告'
+          }, {
+            value: 274,
+            name: '联盟广告'
+          }, {
+            value: 310,
+            name: '邮件营销'
+          }, {
+            value: 335,
+            name: '直接访问'
+          }, {
+            value: 400,
+            name: '搜索引擎'
+          }],
+          roseType: 'angle',
+          label: {
+            normal: {
+              textStyle: {
+                color: 'rgba(255, 255, 255, 0.3)'
+              }
+            }
+          },
+          labelLine: {
+            normal: {
+              lineStyle: {
+                color: 'rgba(255, 255, 255, 0.3)'
+              }
+            }
+          },
+          itemStyle: {
+            normal: {
+              color: '#c23531',
+              shadowBlur: 200,
+              shadowColor: 'rgba(0, 0, 0, 0.5)'
+            }
+          }
+        }]
+      };
+
+      // Just use the specified configurations and data graphs. 
+      myChart.setOption(option);
+    }
+
+  });
+  </script>
 
 </dom-module>

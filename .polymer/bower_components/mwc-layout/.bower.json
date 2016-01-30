@@ -12,11 +12,11 @@
     "url": "https://github.com/meteorwebcomponents/layout.git"
   },
   "homepage": "https://github.com/meteorwebcomponents/layout",
-  "_release": "0c12377210",
+  "_release": "f82c1fe525",
   "_resolution": {
     "type": "branch",
     "branch": "master",
-    "commit": "0c12377210bceedd462591100d2a27c94f8f7f0e"
+    "commit": "f82c1fe525c518df6472000eecc814732a22231c"
   },
   "_source": "git://github.com/meteorwebcomponents/layout.git",
   "_target": "*",

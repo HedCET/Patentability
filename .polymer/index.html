@@ -2,117 +2,119 @@
 
 <head>
 
-    <meta name="viewport" content="initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no">
+  <meta name="viewport" content="initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no">
 
-    <title>Patentability</title>
-    <link href="img/icon.png" rel="shortcut icon">
+  <title>Patentability</title>
+  <link href="img/icon.png" rel="shortcut icon">
 
-    <script src="bower_components/webcomponentsjs/webcomponents-lite.min.js"></script>
+  <script src="bower_components/webcomponentsjs/webcomponents-lite.min.js"></script>
 
-    <link href="bower_components/load-awesome/css/line-scale-pulse-out-rapid.min.css" rel="stylesheet">
+  <link href="bower_components/load-awesome/css/line-scale-pulse-out-rapid.min.css" rel="stylesheet">
 
-    <script src="bower_components/vis/dist/vis.min.js"></script>
-    <link href="bower_components/vis/dist/vis.min.css" rel="stylesheet">
+  <script src="lib/echarts-3.0.2.js"></script>
+
+  <!-- <script src="bower_components/vis/dist/vis.min.js"></script> -->
+  <!-- <link href="bower_components/vis/dist/vis.min.css" rel="stylesheet"> -->
 
 </head>
 
 <body>
 
-    <iron-localstorage id="patentability_db" name="patentability_db"></iron-localstorage>
+  <iron-localstorage id="patentability_db" name="patentability_db"></iron-localstorage>
 
-    <style>
-    * {
-        -moz-tap-highlight-color: rgba(0, 0, 0, 0);
-        -moz-touch-callout: none;
-        -moz-user-select: none;
-        -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
-        -webkit-touch-callout: none;
-        -webkit-user-select: none;
-        outline: 0;
-        tap-highlight-color: rgba(0, 0, 0, 0);
-        touch-callout: none;
-        user-select: none;
-    }
-    
-    *:-moz-focusring {
-        color: transparent;
-    }
-    
-    html,
-    body {
-        background: #EEE;
-        font-family: 'RobotoDraft', sans-serif;
-        overflow: hidden;
-    }
-    
-    .cursor-d {
-        cursor: default;
-    }
-    
-    .cursor-p {
-        cursor: pointer;
-    }
-    
-    .etc {
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-    }
-    
-    .hover:hover {
-        background: #EEE;
-    }
-    
-    .iron-selected {
-        background: #EEE;
-    }
-    
+  <style>
+  * {
+    -moz-tap-highlight-color: rgba(0, 0, 0, 0);
+    -moz-touch-callout: none;
+    -moz-user-select: none;
+    -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    outline: 0;
+    tap-highlight-color: rgba(0, 0, 0, 0);
+    touch-callout: none;
+    user-select: none;
+  }
+  
+  *:-moz-focusring {
+    color: transparent;
+  }
+  
+  html,
+  body {
+    background: #EEE;
+    font-family: 'RobotoDraft', sans-serif;
+    overflow: hidden;
+  }
+  
+  .cursor-d {
+    cursor: default;
+  }
+  
+  .cursor-p {
+    cursor: pointer;
+  }
+  
+  .etc {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  
+  .hover:hover {
+    background: #EEE;
+  }
+  
+  .iron-selected {
+    background: #EEE;
+  }
+  
+  .li {
+    width: 480px;
+  }
+  
+  .lowercase {
+    text-transform: lowercase;
+  }
+  
+  .relative {
+    position: relative;
+  }
+  
+  .undo {
+    display: none!important;
+  }
+  
+  @media (max-width: 480px) {
     .li {
-        width: 480px;
+      width: 100%;
     }
-    
-    .lowercase {
-        text-transform: lowercase;
+  }
+  
+  @media (min-width: 480px) {
+    .li {
+      width: 480px;
     }
-    
-    .relative {
-        position: relative;
-    }
-    
-    .undo {
-        display: none!important;
-    }
-    
-    @media (max-width: 480px) {
-        .li {
-            width: 100%;
-        }
-    }
-    
-    @media (min-width: 480px) {
-        .li {
-            width: 480px;
-        }
-    }
-    </style>
+  }
+  </style>
 
-    <exit-controller id="exit-controller"></exit-controller>
-    <load-awesome id="load-awesome"></load-awesome>
-    <polymer-toast id="polymer-toast"></polymer-toast>
+  <exit-controller id="exit-controller"></exit-controller>
+  <load-awesome id="load-awesome"></load-awesome>
+  <polymer-toast id="polymer-toast"></polymer-toast>
 
-    <mwc-layout id="inbox">
-        <div region="layout-inbox"></div>
-        <div region="project-upload"></div>
-        <div region="search-view"></div>
-    </mwc-layout>
+  <mwc-layout id="inbox">
+    <div region="layout-inbox"></div>
+    <div region="project-upload"></div>
+    <div region="search-view"></div>
+  </mwc-layout>
 
-    <mwc-layout id="main">
-        <div region="body"></div>
-    </mwc-layout>
+  <mwc-layout id="main">
+    <div region="body"></div>
+  </mwc-layout>
 
-    <mwc-layout id="set-password">
-        <div region="opt"></div>
-    </mwc-layout>
+  <mwc-layout id="set-password">
+    <div region="opt"></div>
+  </mwc-layout>
 
 </body>
 

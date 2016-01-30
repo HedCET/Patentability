@@ -285,7 +285,7 @@
         },
 
         menu_toggle: function() {
-            if (this.$.drawer.narrow && this.$.drawer.getBoundingClientRect().width < parseInt(this.$.drawer.responsiveWidth)) {
+            if (this.$.drawer.narrow && this.$.drawer.getBoundingClientRect().width <= parseInt(this.$.drawer.responsiveWidth)) {
                 this.$.drawer.togglePanel();
             } else {
                 this.$.drawer.forceNarrow = !this.$.drawer.forceNarrow;
