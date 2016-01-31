@@ -14795,6 +14795,10 @@ The `aria-labelledby` attribute will be set to the header element, if one exists
 </script>
 
 
+
+
+
+
 <script>
 
   /**
@@ -20433,6 +20437,43 @@ mwcLayout = new PolymerLayout();
     </style>
   </template>
 </dom-module>
+<dom-module id="paper-icon-item" assetpath="/bower_components/paper-item/">
+  <template>
+    <style include="paper-item-shared-styles"></style>
+    <style>
+      :host {
+        @apply(--layout-horizontal);
+        @apply(--layout-center);
+        @apply(--paper-font-subhead);
+
+        @apply(--paper-item);
+        @apply(--paper-icon-item);
+      }
+
+      .content-icon {
+        @apply(--layout-horizontal);
+        @apply(--layout-center);
+
+        width: var(--paper-item-icon-width, 56px);
+      }
+    </style>
+
+    <div id="contentIcon" class="content-icon">
+      <content select="[item-icon]"></content>
+    </div>
+    <content></content>
+  </template>
+
+  <script>
+    Polymer({
+      is: 'paper-icon-item',
+
+      behaviors: [
+        Polymer.PaperItemBehavior
+      ]
+    });
+  </script>
+</dom-module>
 <dom-module id="paper-item" assetpath="/bower_components/paper-item/">
   <template>
     <style include="paper-item-shared-styles"></style>
@@ -20456,6 +20497,48 @@ mwcLayout = new PolymerLayout();
       behaviors: [
         Polymer.PaperItemBehavior
       ]
+    });
+  </script>
+</dom-module>
+<dom-module id="paper-item-body" assetpath="/bower_components/paper-item/">
+  <template>
+    <style>
+      :host {
+        overflow: hidden; /* needed for text-overflow: ellipsis to work on ff */
+        @apply(--layout-vertical);
+        @apply(--layout-center-justified);
+        @apply(--layout-flex);
+      }
+
+      :host([two-line]) {
+        min-height: var(--paper-item-body-two-line-min-height, 72px);
+      }
+
+      :host([three-line]) {
+        min-height: var(--paper-item-body-three-line-min-height, 88px);
+      }
+
+      :host > ::content > * {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      :host > ::content [secondary] {
+        @apply(--paper-font-body1);
+
+        color: var(--paper-item-body-secondary-color, --secondary-text-color);
+
+        @apply(--paper-item-body-secondary);
+      }
+    </style>
+
+    <content></content>
+  </template>
+
+  <script>
+    Polymer({
+      is: 'paper-item-body'
     });
   </script>
 </dom-module>
@@ -23865,7 +23948,7 @@ mwcLayout = new PolymerLayout();
           
 
           <paper-dropdown-menu class="flex" label="option" no-label-float="" noink="" style="margin: 4px 12px;">
-            <paper-menu attr-for-selected="data-id" class="dropdown-content" selected="Details" style="min-width: 200px;">
+            <paper-menu attr-for-selected="data-id" class="dropdown-content" selected="{{selected}}" style="min-width: 200px;">
               <paper-item class="cursor-p" data-id="Details">Details</paper-item>
               <paper-item class="cursor-p" data-id="Technologies">Technologies</paper-item>
             </paper-menu>
@@ -23873,34 +23956,55 @@ mwcLayout = new PolymerLayout();
         </div>
       </div>
 
-      <div class="center-justified horizontal layout">
-        <div class="li white">
-          <div class="layout vertical" style="margin: 16px;">
-            <div style="color: #AAA; font-size: 16px; line-height: 24px;">Title</div>
-            <div class="lowercase" style="font-size: 16px; line-height: 24px;">[[item.title]]</div>
-          </div>
+      <neon-animated-pages attr-for-selected="data-id" id="patent-page" selected="[[selected]]">
+        <neon-animatable data-id="Details" entry-animation="slide-from-right-animation" exit-animation="slide-left-animation">
+          <div class="center-justified horizontal layout">
+            <div class="li white">
+              <div class="layout vertical" style="margin: 16px;">
+                <div style="color: #AAA; font-size: 16px; line-height: 24px;">Title</div>
+                <div class="lowercase" style="font-size: 16px; line-height: 24px;">[[item.title]]</div>
+              </div>
 
-          <div class="layout vertical" style="margin: 16px;">
-            <div style="color: #AAA; font-size: 16px; line-height: 24px;">Abstract</div>
-            <div class="lowercase" style="font-size: 16px; line-height: 24px;">[[item.abstract]]</div>
-          </div>
+              <div class="layout vertical" style="margin: 16px;">
+                <div style="color: #AAA; font-size: 16px; line-height: 24px;">Abstract</div>
+                <div class="lowercase" style="font-size: 16px; line-height: 24px;">[[item.abstract]]</div>
+              </div>
 
-          <div class="layout vertical" style="margin: 16px;">
-            <div style="color: #AAA; font-size: 16px; line-height: 24px;">Keyword</div>
-            <div class="lowercase" style="font-size: 16px; line-height: 24px;">[[return_keyword_text(item.keyword)]]</div>
-          </div>
+              <div class="layout vertical" style="margin: 16px;">
+                <div style="color: #AAA; font-size: 16px; line-height: 24px;">Keyword</div>
+                <div class="lowercase" style="font-size: 16px; line-height: 24px;">[[return_keyword_text(item.keyword)]]</div>
+              </div>
 
-          <div class="layout vertical" style="margin: 16px;">
-            <div style="color: #AAA; font-size: 16px; line-height: 24px;">Filed</div>
-            <div style="font-size: 16px; line-height: 24px;">[[item.app_date]]</div>
-          </div>
+              <div class="layout vertical" style="margin: 16px;">
+                <div style="color: #AAA; font-size: 16px; line-height: 24px;">Filed</div>
+                <div style="font-size: 16px; line-height: 24px;">[[item.app_date]]</div>
+              </div>
 
-          <div class="layout vertical" style="margin: 16px; margin-bottom: 48px;">
-            <div style="color: #AAA; font-size: 16px; line-height: 24px;">Assignee</div>
-            <div class="lowercase" style="font-size: 16px; line-height: 24px;">[[return_assignee_text(item.assignee)]]</div>
+              <div class="layout vertical" style="margin: 16px; margin-bottom: 48px;">
+                <div style="color: #AAA; font-size: 16px; line-height: 24px;">Assignee</div>
+                <div class="lowercase" style="font-size: 16px; line-height: 24px;">[[return_assignee_text(item.assignee)]]</div>
+              </div>
+            </div>
           </div>
-        </div>
-      </div>
+        </neon-animatable>
+
+        <neon-animatable data-id="Technologies" entry-animation="slide-from-right-animation" exit-animation="slide-left-animation">
+          <div class="center-justified horizontal layout">
+            <div class="li white">
+              <template is="dom-repeat" items="[[return_ipc(item.ipc)]]">
+                <paper-icon-item class="cursor-d">
+                  <selectable-icon icon_class$="[[return_ipc_icon_class(item)]]" icon_text$="[[return_ipc_icon_text(item)]]" item-icon=""></selectable-icon>
+
+                  <paper-item-body two-line="">
+                    <div>[[item]]</div>
+                    <div secondary="">[[return_ipc_description(item)]]</div>
+                  </paper-item-body>
+                </paper-icon-item>
+              </template>
+            </div>
+          </div>
+        </neon-animatable>
+      </neon-animated-pages>
 
       <div style="min-height: 88px;"></div>
     </paper-scroll-header-panel>
@@ -23985,6 +24089,10 @@ mwcLayout = new PolymerLayout();
       },
       item: {
         type: Object
+      },
+      selected: {
+        type: String,
+        value: "Technologies"
       }
     },
 
@@ -24031,6 +24139,25 @@ mwcLayout = new PolymerLayout();
 
     return_assignee_text: function(text) {
       return (text ? text.replace(/;/g, ", ") : "#");
+    },
+
+    return_ipc: function(text) {
+      return (text ? text.split(";").filter(Boolean) : []);
+    },
+
+    return_ipc_description: function(text) {
+      if (text) {
+        var A = text.substr(0, 4);
+        return (_ipc[A] ? _ipc[A] : "#");
+      } else return "#";
+    },
+
+    return_ipc_icon_class: function(text) {
+      return polymer_color(text ? text.substr(0, 1) : "#");
+    },
+
+    return_ipc_icon_text: function(text) {
+      return (text ? text.substr(0, 1) : "#");
     },
 
     return_keyword_text: function(text) {
