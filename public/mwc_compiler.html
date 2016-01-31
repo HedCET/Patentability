@@ -23992,7 +23992,7 @@ mwcLayout = new PolymerLayout();
           <div class="center-justified horizontal layout">
             <div class="li white">
               <template is="dom-repeat" items="[[return_ipc(item.ipc)]]">
-                <paper-icon-item class="cursor-d">
+                <paper-icon-item class="cursor-d" on-click="ipc">
                   <selectable-icon icon_class$="[[return_ipc_icon_class(item)]]" icon_text$="[[return_ipc_icon_text(item)]]" item-icon=""></selectable-icon>
 
                   <paper-item-body two-line="">
@@ -24080,6 +24080,10 @@ mwcLayout = new PolymerLayout();
       }
     },
 
+    ipc: function() {
+      document.querySelector("#polymer-toast").toast("under development");
+    },
+
     is: "patent-view",
 
     properties: {
@@ -24092,7 +24096,7 @@ mwcLayout = new PolymerLayout();
       },
       selected: {
         type: String,
-        value: "Technologies"
+        value: "Details"
       }
     },
 
