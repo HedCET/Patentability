@@ -23986,13 +23986,15 @@ mwcLayout = new PolymerLayout();
               </div>
             </div>
           </div>
+
+          <div style="min-height: 88px;"></div>
         </neon-animatable>
 
         <neon-animatable data-id="Technologies" entry-animation="slide-from-right-animation" exit-animation="slide-left-animation">
-          <div class="center-justified horizontal layout">
-            <div class="li white">
-              <template is="dom-repeat" items="[[return_ipc(item.ipc)]]">
-                <paper-icon-item class="cursor-d" on-click="ipc">
+          <template is="dom-repeat" items="[[return_ipc(item.ipc)]]">
+            <div class="center-justified horizontal layout">
+              <div class="li white">
+                <paper-icon-item class="cursor-d" on-click="ipc" style="border-bottom: 1px solid #EEE;">
                   <selectable-icon icon_class$="[[return_ipc_icon_class(item)]]" icon_text$="[[return_ipc_icon_text(item)]]" item-icon=""></selectable-icon>
 
                   <paper-item-body two-line="">
@@ -24000,13 +24002,13 @@ mwcLayout = new PolymerLayout();
                     <div secondary="">[[return_ipc_description(item)]]</div>
                   </paper-item-body>
                 </paper-icon-item>
-              </template>
+              </div>
             </div>
-          </div>
+          </template>
+
+          <div style="min-height: 88px;"></div>
         </neon-animatable>
       </neon-animated-pages>
-
-      <div style="min-height: 88px;"></div>
     </paper-scroll-header-panel>
 
     <paper-dialog id="remove-patent-prompt" style="width: 320px;" with-backdrop="">
